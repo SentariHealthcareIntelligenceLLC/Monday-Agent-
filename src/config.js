@@ -10,6 +10,11 @@ const config = {
   tz: process.env.TZ || 'America/Los_Angeles',
   adminPassword: process.env.ADMIN_PASSWORD || 'change-me',
   databaseFile: process.env.DATABASE_FILE || './data/qcms.sqlite',
+  // Set -> Postgres/Supabase backend; unset -> SQLite file backend.
+  databaseUrl: process.env.DATABASE_URL || process.env.POSTGRES_URL || '',
+  databaseSsl: bool(process.env.DATABASE_SSL, true),
+  // Shared secret Vercel Cron sends as `Authorization: Bearer ...`.
+  cronSecret: process.env.CRON_SECRET || '',
   dryRun: bool(process.env.DRY_RUN, true),
   whatsapp: {
     phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID || '',

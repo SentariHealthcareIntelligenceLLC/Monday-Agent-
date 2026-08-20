@@ -17,20 +17,23 @@ const { db } = require('../db');
 const base = () =>
   `https://graph.facebook.com/${config.whatsapp.apiVersion}/${config.whatsapp.phoneNumberId}/messages`;
 
-function logMessage(row) {
-  db.prepare(`INSERT INTO messages
-      (direction, person_id, wa_number, wa_message_id, body, kind, task_run_id, status, error)
-      VALUES (@direction, @person_id, @wa_number, @wa_message_id, @body, @kind, @task_run_id, @status, @error)`)
-    .run({
-      direction: 'out', person_id: null, wa_number: null, wa_message_id: null,
-      body: null, kind: null, task_run_id: null, status: null, error: null, ...row,
-    });
+async function logMessage(row) {
+  const r = {
+    direction: 'out', person_id: null, wa_number: null, wa_message_id: null,
+    body: null, kind: null, task_run_id: null, status: null, error: null, ...row,
+  };
+  await db.run(
+    `INSERT INTO messages
+       (direction, person_id, wa_number, wa_message_id, body, kind, task_run_id, status, error)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+    [r.direction, r.person_id, r.wa_number, r.wa_message_id, r.body, r.kind, r.task_run_id, r.status, r.error]
+  );
 }
 
 async function post(payload, meta = {}) {
   if (config.dryRun || !config.whatsapp.token || !config.whatsapp.phoneNumberId) {
     logger.info({ payload }, 'DRY_RUN: WhatsApp message not sent');
-    logMessage({ ...meta, wa_number: payload.to, body: JSON.stringify(payload), status: 'dry_run' });
+    await logMessage({ ...meta, wa_number: payload.to, body: JSON.stringify(payload), status: 'dry_run' });
     return { dryRun: true };
   }
   try {
@@ -45,17 +48,17 @@ async function post(payload, meta = {}) {
     const json = await res.json();
     if (!res.ok) {
       logger.error({ status: res.status, json }, 'WhatsApp send failed');
-      logMessage({ ...meta, wa_number: payload.to, body: JSON.stringify(payload), status: 'failed', error: JSON.stringify(json) });
+      await logMessage({ ...meta, wa_number: payload.to, body: JSON.stringify(payload), status: 'failed', error: JSON.stringify(json) });
       return { error: json };
     }
-    logMessage({
+    await logMessage({
       ...meta, wa_number: payload.to, body: JSON.stringify(payload),
       wa_message_id: json.messages?.[0]?.id, status: 'sent',
     });
     return json;
   } catch (err) {
     logger.error({ err }, 'WhatsApp send threw');
-    logMessage({ ...meta, wa_number: payload.to, body: JSON.stringify(payload), status: 'failed', error: String(err) });
+    await logMessage({ ...meta, wa_number: payload.to, body: JSON.stringify(payload), status: 'failed', error: String(err) });
     return { error: String(err) };
   }
 }

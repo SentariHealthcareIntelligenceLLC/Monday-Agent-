@@ -43,9 +43,9 @@ function register(app, path = '/webhook/whatsapp') {
 async function handleMessage(msg) {
   const from = msg.from;
   const text = msg.text?.body || msg.button?.text || msg.interactive?.button_reply?.title || '';
-  const person = T.personByNumber(from);
+  const person = await T.personByNumber(from);
 
-  wa.logMessage({
+  await wa.logMessage({
     direction: 'in', person_id: person?.id || null, wa_number: from,
     wa_message_id: msg.id, body: text, kind: 'reply', status: 'received',
   });
@@ -54,7 +54,7 @@ async function handleMessage(msg) {
     return wa.sendText(from, 'This number is not registered with QCMS task management. Please contact your manager.');
   }
 
-  const open = T.openRunsForPerson(person.id);
+  const open = await T.openRunsForPerson(person.id);
   const listText = open.length
     ? open.map((r, i) => `${i + 1}. ${r.title} (due ${r.due_date} ${r.due_time})`).join('\n')
     : 'Nothing open — you are all caught up. 👍';
@@ -93,10 +93,10 @@ async function handleMessage(msg) {
         return wa.sendText(from, `Got it — what is blocking "${target.title}"? Reply BLOCKED ${index || 1} <reason>.`,
           { person_id: person.id, kind: 'ack' });
       }
-      T.markRun(target.id, action, note);
+      await T.markRun(target.id, action, note);
 
       if (action === 'blocked') {
-        const [boss] = T.chainOfCommand(person.id);
+        const [boss] = await T.chainOfCommand(person.id);
         if (boss?.whatsapp_number) {
           await wa.sendText(boss.whatsapp_number,
             `⚠️ ${person.name} flagged a blocker on "${target.title}" (due ${target.due_date}): ${note}`,
@@ -104,7 +104,7 @@ async function handleMessage(msg) {
         }
       }
       const verb = { done: 'marked complete ✅', blocked: 'flagged as blocked ⚠️', snoozed: 'snoozed ⏱' }[action];
-      const remaining = T.openRunsForPerson(person.id).length;
+      const remaining = (await T.openRunsForPerson(person.id)).length;
       return wa.sendText(from,
         `"${target.title}" ${verb}. ${remaining ? `${remaining} task(s) still open — reply LIST to see them.` : 'Nothing else open today.'}`,
         { person_id: person.id, kind: 'ack', task_run_id: target.id });

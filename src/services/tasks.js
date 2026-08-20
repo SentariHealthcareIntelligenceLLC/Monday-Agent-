@@ -7,26 +7,30 @@ const today = (tz = config.tz) => todayIn(tz);
 
 /** Is a task due on the given ISO date? */
 function isDue(task, isoDate) {
-  if (task.cadence === 'daily') return weekdayOf(isoDate) <= 5 || task.critical === 1;
+  if (task.cadence === 'daily') return weekdayOf(isoDate) <= 5 || Number(task.critical) === 1;
   if (task.cadence === 'weekly') return weekdayOf(isoDate) === (task.weekday || 1);
   if (task.cadence === 'monthly') return dayOf(isoDate) === (task.day_of_month || 1);
   return false;
 }
 
 /** Create task_runs rows for everything due on isoDate. Idempotent. */
-function materializeRuns(isoDate = today()) {
-  const tasks = db.prepare('SELECT * FROM tasks WHERE active = 1').all();
-  const ins = db.prepare(
-    'INSERT OR IGNORE INTO task_runs (task_id, due_date, status) VALUES (?, ?, \'pending\')'
-  );
-  let created = 0;
-  const tx = db.transaction(() => {
-    for (const t of tasks) {
-      if (isDue(t, isoDate)) created += ins.run(t.id, isoDate).changes;
+async function materializeRuns(isoDate = today()) {
+  const tasks = await db.all('SELECT * FROM tasks WHERE active = 1');
+  const due = tasks.filter((t) => isDue(t, isoDate));
+  if (!due.length) return 0;
+
+  return db.tx(async (t) => {
+    let created = 0;
+    for (const task of due) {
+      const { rowCount } = await t.query(
+        `INSERT INTO task_runs (task_id, due_date, status) VALUES ($1, $2, 'pending')
+         ON CONFLICT (task_id, due_date) DO NOTHING`,
+        [task.id, isoDate]
+      );
+      created += rowCount;
     }
+    return created;
   });
-  tx();
-  return created;
 }
 
 const RUN_JOIN = `
@@ -38,39 +42,43 @@ const RUN_JOIN = `
   WHERE p.active = 1`;
 
 const openRunsFor = (isoDate = today()) =>
-  db.prepare(`${RUN_JOIN} AND r.due_date = ? AND r.status IN ('pending','snoozed') ORDER BY t.due_time`).all(isoDate);
+  db.all(`${RUN_JOIN} AND r.due_date = $1 AND r.status IN ('pending','snoozed') ORDER BY t.due_time`, [isoDate]);
 
 const runsFor = (isoDate = today()) =>
-  db.prepare(`${RUN_JOIN} AND r.due_date = ? ORDER BY t.due_time`).all(isoDate);
+  db.all(`${RUN_JOIN} AND r.due_date = $1 ORDER BY t.due_time`, [isoDate]);
 
 const openRunsForPerson = (personId, isoDate = today()) =>
-  db.prepare(`${RUN_JOIN} AND p.id = ? AND r.due_date <= ? AND r.status IN ('pending','snoozed')
-              ORDER BY r.due_date, t.due_time`).all(personId, isoDate);
+  db.all(`${RUN_JOIN} AND p.id = $1 AND r.due_date <= $2 AND r.status IN ('pending','snoozed')
+          ORDER BY r.due_date, t.due_time`, [personId, isoDate]);
 
 const overdueRuns = (isoDate = today()) =>
-  db.prepare(`${RUN_JOIN} AND r.due_date <= ? AND r.status IN ('pending','snoozed','blocked')
-              AND r.escalated_at IS NULL ORDER BY r.due_date`).all(isoDate);
+  db.all(`${RUN_JOIN} AND r.due_date <= $1 AND r.status IN ('pending','snoozed','blocked')
+          AND r.escalated_at IS NULL ORDER BY r.due_date`, [isoDate]);
 
-function markRun(runId, status, note = null) {
-  return db.prepare(
-    `UPDATE task_runs SET status = ?, responded_at = datetime('now'), note = COALESCE(?, note) WHERE id = ?`
-  ).run(status, note, runId).changes;
-}
+const markRun = (runId, status, note = null) =>
+  db.run(
+    `UPDATE task_runs SET status = $1, responded_at = now(), note = COALESCE($2, note) WHERE id = $3`,
+    [status, note, runId]
+  );
 
-const stamp = (runId, column) =>
-  db.prepare(`UPDATE task_runs SET ${column} = datetime('now') WHERE id = ?`).run(runId);
+/** column is an internal literal, never user input. */
+const STAMPABLE = new Set(['reminded_at', 'nudged_at', 'responded_at', 'escalated_at']);
+const stamp = (runId, column) => {
+  if (!STAMPABLE.has(column)) throw new Error(`refusing to stamp unknown column: ${column}`);
+  return db.run(`UPDATE task_runs SET ${column} = now() WHERE id = $1`, [runId]);
+};
 
 const personByNumber = (num) =>
-  db.prepare('SELECT * FROM people WHERE whatsapp_number = ? AND active = 1').get(String(num).replace(/^\+/, ''));
+  db.one('SELECT * FROM people WHERE whatsapp_number = $1 AND active = 1', [String(num).replace(/^\+/, '')]);
 
-const personById = (id) => db.prepare('SELECT * FROM people WHERE id = ?').get(id);
+const personById = (id) => db.one('SELECT * FROM people WHERE id = $1', [id]);
 
 /** Walk up the chain of command from a person. */
-function chainOfCommand(personId, max = 4) {
+async function chainOfCommand(personId, max = 4) {
   const chain = [];
-  let cur = personById(personId);
+  let cur = await personById(personId);
   while (cur && cur.reports_to_id && chain.length < max) {
-    cur = personById(cur.reports_to_id);
+    cur = await personById(cur.reports_to_id);
     if (cur) chain.push(cur);
   }
   return chain;
@@ -79,30 +87,38 @@ function chainOfCommand(personId, max = 4) {
 /**
  * Gap analysis: completion rates and recurring problem areas over N days.
  */
-function analyzeGaps(days = 30) {
+async function analyzeGaps(days = 30) {
   const since = addDays(today(), -days);
-  const byPerson = db.prepare(`
+  const byPerson = await db.all(`
     SELECT p.id, p.name, p.role,
            COUNT(*) AS total,
            SUM(CASE WHEN r.status = 'done' THEN 1 ELSE 0 END) AS done,
-           SUM(CASE WHEN r.status IN ('missed','pending') AND r.due_date < ? THEN 1 ELSE 0 END) AS missed,
+           SUM(CASE WHEN r.status IN ('missed','pending') AND r.due_date < $1 THEN 1 ELSE 0 END) AS missed,
            SUM(CASE WHEN r.status = 'blocked' THEN 1 ELSE 0 END) AS blocked
     FROM task_runs r
     JOIN tasks t  ON t.id = r.task_id
     JOIN people p ON p.id = t.assignee_id
-    WHERE r.due_date >= ?
-    GROUP BY p.id ORDER BY missed DESC`).all(today(), since);
+    WHERE r.due_date >= $2
+    GROUP BY p.id, p.name, p.role ORDER BY missed DESC`, [today(), since]);
 
-  const byTask = db.prepare(`
+  // NOTE: ordering repeats the ratio expression rather than referencing the
+  // `done`/`total` output aliases — Postgres does not allow aliases inside an
+  // ORDER BY expression, only as a bare term.
+  const byTask = await db.all(`
     SELECT t.id, t.title, t.category, t.cadence,
            COUNT(*) AS total,
            SUM(CASE WHEN r.status = 'done' THEN 1 ELSE 0 END) AS done
     FROM task_runs r JOIN tasks t ON t.id = r.task_id
-    WHERE r.due_date >= ?
-    GROUP BY t.id ORDER BY (1.0 * done / total) ASC`).all(since);
+    WHERE r.due_date >= $1
+    GROUP BY t.id, t.title, t.category, t.cadence
+    ORDER BY (1.0 * SUM(CASE WHEN r.status = 'done' THEN 1 ELSE 0 END) / COUNT(*)) ASC`, [since]);
 
   const withRate = (rows) =>
-    rows.map((r) => ({ ...r, rate: r.total ? Math.round((100 * r.done) / r.total) : null }));
+    rows.map((r) => {
+      const total = Number(r.total) || 0;
+      const done = Number(r.done) || 0;
+      return { ...r, total, done, rate: total ? Math.round((100 * done) / total) : null };
+    });
 
   const people = withRate(byPerson);
   const tasks = withRate(byTask);
@@ -111,7 +127,7 @@ function analyzeGaps(days = 30) {
     if (p.total >= 5 && p.rate !== null && p.rate < 80) {
       findings.push(`${p.name} (${p.role}) completed ${p.rate}% of ${p.total} assigned task instances — below the 80% threshold.`);
     }
-    if (p.blocked >= 3) findings.push(`${p.name} reported BLOCKED ${p.blocked} times — likely a process or supply bottleneck, not a person problem.`);
+    if (Number(p.blocked) >= 3) findings.push(`${p.name} reported BLOCKED ${p.blocked} times — likely a process or supply bottleneck, not a person problem.`);
   }
   for (const t of tasks) {
     if (t.total >= 4 && t.rate !== null && t.rate < 60) {

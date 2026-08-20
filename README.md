@@ -10,8 +10,13 @@ and surgery-center operations.
 - An **admin dashboard** shows today's board, who is behind, and where the process
   itself is failing.
 
-**Zero npm dependencies.** Runs on Node 20.16+ / 22+ using the built-in SQLite and HTTP
-modules, so it installs and deploys anywhere without a build step.
+**One npm dependency (`pg`).** Runs on Node 20.16+ / 22+ using the built-in HTTP
+and SQLite modules, so it installs and deploys anywhere without a build step.
+
+**Two deployment shapes, one codebase.** Set `DATABASE_URL` and it runs on
+Vercel against Supabase Postgres with Vercel Cron driving the jobs; leave it
+empty and it runs as a long-lived Docker/VPS process against a local SQLite file
+with in-process cron. See [docs/VERCEL_SUPABASE.md](docs/VERCEL_SUPABASE.md).
 
 ---
 
@@ -109,6 +114,9 @@ The ones that matter most:
 | `WHATSAPP_*` | Meta Cloud API credentials — see the setup doc |
 | `DAILY_REMINDER_CRON` etc. | Schedule, evaluated in `TZ` |
 | `DATABASE_FILE` | SQLite path; put it on a persistent disk in production |
+| `DATABASE_URL` | Set → Postgres/Supabase backend. Empty → SQLite. Required on Vercel. |
+| `DATABASE_SSL` | `true` for Supabase; `false` for a local postgres |
+| `CRON_SECRET` | Bearer token Vercel Cron sends to `/api/cron/*` |
 
 ## API
 
@@ -123,6 +131,12 @@ GET    /api/tasks                     POST /api/tasks    DELETE /api/tasks/:id
 GET    /api/gaps?days=30              completion rates + findings
 GET    /api/messages                  last 100 WhatsApp messages
 POST   /api/run/reminders|nudges|escalations    trigger a job now
+
+GET    /api/cron/:job                 Vercel Cron entrypoint (Bearer CRON_SECRET,
+                                      not Basic auth). :job is one of
+                                      materialize|reminders|nudges|escalations.
+                                      No-ops unless the local hour matches the
+                                      job's schedule; ?force=1 overrides.
 ```
 
 ## Project layout
@@ -130,13 +144,18 @@ POST   /api/run/reminders|nudges|escalations    trigger a job now
 ```
 src/
   lib/        env loader, tz-aware dates, cron engine, mini HTTP router
-  db/         schema.sql, SQLite wrapper, migrate, seed
+  db/         schema.sql (SQLite) + schema.pg.sql (Postgres),
+              index.js facade, sqlite.js / postgres.js backends, migrate, seed
   services/   whatsapp.js, tasks.js, replies.js
   jobs/       reminders.js (reminders/nudges/escalation), scheduler.js
-  routes/     webhook.js (Meta), api.js (admin)
-  server.js
+  routes/     webhook.js (Meta), api.js (admin), cron.js (Vercel Cron)
+  app.js      builds the request handler (shared by both entrypoints)
+  server.js   long-running entrypoint (Docker/VPS)
+api/
+  index.js    Vercel serverless entrypoint
+vercel.json   rewrites + cron schedules
 public/       dashboard (single self-contained HTML file)
-docs/         WHATSAPP_SETUP.md, DEPLOY.md
+docs/         WHATSAPP_SETUP.md, DEPLOY.md, VERCEL_SUPABASE.md
 tests/        node:test suites
 ```
 

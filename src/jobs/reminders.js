@@ -21,8 +21,8 @@ function byPerson(runs) {
  * Template variables: {{1}} name, {{2}} count, {{3}} task list.
  */
 async function sendDailyReminders(isoDate = T.today()) {
-  T.materializeRuns(isoDate);
-  const groups = byPerson(T.openRunsFor(isoDate));
+  await T.materializeRuns(isoDate);
+  const groups = byPerson(await T.openRunsFor(isoDate));
   let sent = 0;
   for (const { person, runs } of groups.values()) {
     if (!person.whatsapp_number) {
@@ -36,7 +36,7 @@ async function sendDailyReminders(isoDate = T.today()) {
       [person.person_name, String(runs.length), list],
       { person_id: person.person_id, kind: 'reminder', task_run_id: runs[0].id }
     );
-    runs.forEach((r) => T.stamp(r.id, 'reminded_at'));
+    await Promise.all(runs.map((r) => T.stamp(r.id, 'reminded_at')));
     sent += 1;
   }
   logger.info({ isoDate, people: sent }, 'Daily reminders sent');
@@ -45,7 +45,7 @@ async function sendDailyReminders(isoDate = T.today()) {
 
 /** Afternoon nudge to anyone still holding open items (24h window: plain text). */
 async function sendNudges(isoDate = T.today()) {
-  const groups = byPerson(T.openRunsFor(isoDate));
+  const groups = byPerson(await T.openRunsFor(isoDate));
   let sent = 0;
   for (const { person, runs } of groups.values()) {
     if (!person.whatsapp_number) continue;
@@ -56,7 +56,7 @@ async function sendNudges(isoDate = T.today()) {
     await wa.sendText(person.whatsapp_number, body, {
       person_id: person.person_id, kind: 'nudge', task_run_id: runs[0].id,
     });
-    runs.forEach((r) => T.stamp(r.id, 'nudged_at'));
+    await Promise.all(runs.map((r) => T.stamp(r.id, 'nudged_at')));
     sent += 1;
   }
   logger.info({ isoDate, people: sent }, 'Nudges sent');
@@ -68,16 +68,16 @@ async function sendNudges(isoDate = T.today()) {
  * chain of command (manager, then owner for critical items).
  */
 async function runEscalations(isoDate = T.today()) {
-  const overdue = T.overdueRuns(isoDate);
+  const overdue = await T.overdueRuns(isoDate);
   const groups = byPerson(overdue);
   let escalations = 0;
 
   for (const { person, runs } of groups.values()) {
-    runs.forEach((r) => {
-      if (r.status !== 'blocked') T.markRun(r.id, 'missed');
-    });
+    for (const r of runs) {
+      if (r.status !== 'blocked') await T.markRun(r.id, 'missed');
+    }
 
-    const chain = T.chainOfCommand(person.person_id);
+    const chain = await T.chainOfCommand(person.person_id);
     const recipients = runs.some((r) => r.critical) ? chain : chain.slice(0, 1);
     const list = runs.map((r) => `${r.title} (${r.due_date}${r.status === 'blocked' ? ', blocked' : ''})`).join(' | ');
 
@@ -91,7 +91,7 @@ async function runEscalations(isoDate = T.today()) {
       );
       escalations += 1;
     }
-    runs.forEach((r) => T.stamp(r.id, 'escalated_at'));
+    await Promise.all(runs.map((r) => T.stamp(r.id, 'escalated_at')));
   }
   logger.info({ isoDate, escalations }, 'Escalations processed');
   return escalations;

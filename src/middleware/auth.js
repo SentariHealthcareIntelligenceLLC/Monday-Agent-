@@ -6,7 +6,8 @@ const config = require('../config');
  * HTTP Basic auth for the dashboard and admin API.
  * Public paths (health check, WhatsApp webhook) are skipped.
  */
-const PUBLIC = [/^\/health$/, /^\/webhook\//];
+// /api/cron/* carries its own CRON_SECRET bearer check (see routes/cron.js).
+const PUBLIC = [/^\/health$/, /^\/webhook\//, /^\/api\/cron\//];
 
 module.exports = function basicAuth(req, res, next) {
   if (PUBLIC.some((rx) => rx.test(req.path))) return next();
