@@ -24,9 +24,18 @@ CREATE INDEX IF NOT EXISTS idx_msg_person ON messages(person_id, created_at);
 
 -- ------------------------------------------------- normalize stored numbers
 -- Rewrites each number to the E.164 digits Meta sends. Only rows that actually
--- change are touched, and only when the normalized form is not already taken
--- by somebody else — people.whatsapp_number is UNIQUE, and a genuine duplicate
--- is a data problem to resolve by hand rather than silently here.
+-- change are touched.
+--
+-- people.whatsapp_number is UNIQUE, so a rewrite must not create a duplicate —
+-- and there are two ways it could. The number might already be held by another
+-- row, or two rows being rewritten together might normalize onto each other
+-- ("8185550143" and "(818) 555-0143"). Both are guarded: the first by NOT
+-- EXISTS, the second by keeping only the lowest id per normalized value.
+--
+-- A skipped row keeps its original text and simply will not match an inbound
+-- reply, which is visible and fixable from the dashboard. That is the right
+-- trade against aborting the whole migration — a genuine duplicate is a data
+-- problem for a human to resolve, not something to guess at here.
 WITH normalized AS (
   SELECT id,
          whatsapp_number AS was,
@@ -37,11 +46,17 @@ WITH normalized AS (
          END AS now_
     FROM people
    WHERE whatsapp_number IS NOT NULL AND whatsapp_number <> ''
+),
+candidates AS (
+  SELECT id, was, now_,
+         row_number() OVER (PARTITION BY now_ ORDER BY id) AS rn
+    FROM normalized
+   WHERE now_ <> was
+     AND length(now_) BETWEEN 8 AND 15
 )
 UPDATE people p
-   SET whatsapp_number = n.now_
-  FROM normalized n
- WHERE p.id = n.id
-   AND n.now_ <> n.was
-   AND length(n.now_) BETWEEN 8 AND 15
-   AND NOT EXISTS (SELECT 1 FROM people o WHERE o.whatsapp_number = n.now_ AND o.id <> n.id);
+   SET whatsapp_number = c.now_
+  FROM candidates c
+ WHERE p.id = c.id
+   AND c.rn = 1
+   AND NOT EXISTS (SELECT 1 FROM people o WHERE o.whatsapp_number = c.now_ AND o.id <> c.id);
