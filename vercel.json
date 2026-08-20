@@ -28,6 +28,14 @@
     {
       "path": "/api/cron/escalations",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/credentials",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/digest",
+      "schedule": "0 * * * *"
     }
   ]
 }

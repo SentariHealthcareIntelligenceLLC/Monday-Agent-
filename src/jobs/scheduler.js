@@ -2,7 +2,9 @@
 const cron = require('../lib/cron');
 const config = require('../config');
 const logger = require('../logger');
-const { sendDailyReminders, sendNudges, runEscalations } = require('./reminders');
+const {
+  sendDailyReminders, sendNudges, runEscalations, credentialAlerts, clockDigest,
+} = require('./reminders');
 const T = require('../services/tasks');
 
 function start() {
@@ -24,6 +26,8 @@ function start() {
   add('daily-reminders', config.cron.daily, sendDailyReminders);
   add('midday-nudge', config.cron.midday, sendNudges);
   add('escalation', config.cron.escalation, runEscalations);
+  add('credentials', config.cron.credentials, credentialAlerts);
+  add('clock-digest', config.cron.digest, clockDigest);
 
   return { jobs, stop: () => jobs.forEach((j) => j.stop()) };
 }

@@ -12,6 +12,11 @@ const PUBLIC = [/^\/health$/, /^\/webhook\//, /^\/api\/cron\//];
 module.exports = function basicAuth(req, res, next) {
   if (PUBLIC.some((rx) => rx.test(req.path))) return next();
 
+  // Local-development escape hatch for driving the dashboard in a browser.
+  // Deliberately impossible in production: NODE_ENV=production ignores it
+  // entirely, so a stray env var cannot expose a live deployment.
+  if (config.env !== 'production' && config.disableAuth) return next();
+
   const header = req.headers.authorization || '';
   const [scheme, encoded] = header.split(' ');
   if (scheme === 'Basic' && encoded) {

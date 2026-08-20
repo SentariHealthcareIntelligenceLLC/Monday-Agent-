@@ -15,11 +15,18 @@ function createApp() {
   const routes = [];
   const middlewares = [];
 
+  // ':name' matches one path segment; a trailing '*' matches the rest of the
+  // path including slashes (used for storage object keys).
   const compile = (pattern) => {
     const keys = [];
-    const rx = new RegExp('^' + pattern.replace(/:([A-Za-z_]\w*)/g, (_, k) => {
+    let body = pattern.replace(/:([A-Za-z_]\w*)/g, (_, k) => {
       keys.push(k); return '([^/]+)';
-    }).replace(/\/$/, '/?') + '$');
+    });
+    if (body.endsWith('*')) {
+      keys.push('rest');
+      body = body.slice(0, -1) + '(.*)';
+    }
+    const rx = new RegExp('^' + body.replace(/\/$/, '/?') + '$');
     return { rx, keys };
   };
 

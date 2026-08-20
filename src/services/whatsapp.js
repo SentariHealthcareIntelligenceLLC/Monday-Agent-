@@ -19,14 +19,15 @@ const base = () =>
 
 async function logMessage(row) {
   const r = {
-    direction: 'out', person_id: null, wa_number: null, wa_message_id: null,
+    direction: 'out', channel: 'wa', person_id: null, wa_number: null, wa_message_id: null,
     body: null, kind: null, task_run_id: null, status: null, error: null, ...row,
   };
   await db.run(
     `INSERT INTO messages
-       (direction, person_id, wa_number, wa_message_id, body, kind, task_run_id, status, error)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-    [r.direction, r.person_id, r.wa_number, r.wa_message_id, r.body, r.kind, r.task_run_id, r.status, r.error]
+       (direction, channel, person_id, wa_number, wa_message_id, body, kind, task_run_id, status, error)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+    [r.direction, r.channel, r.person_id, r.wa_number, r.wa_message_id, r.body,
+     r.kind, r.task_run_id, r.status, r.error]
   );
 }
 

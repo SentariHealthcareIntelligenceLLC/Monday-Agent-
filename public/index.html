@@ -1,160 +1,3098 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>QCMS Task Board</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QCMS Administration Dashboard</title>
 <style>
-  :root {
-    --bg:#0f1418; --panel:#161d23; --line:#26313a; --ink:#e8eef2; --muted:#93a4b1;
-    --accent:#4aa3df; --ok:#3fb27f; --warn:#e0a33e; --bad:#d9534f;
+  :root{
+    color-scheme: light;
+    --plane:#f9f9f7; --surface:#fcfcfb;
+    --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --ring:rgba(11,11,11,0.10);
+    --series-1:#2a78d6; --series-1-soft:#cde2fb; --series-2:#eb6834;
+    --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
+    --good-text:#006300;
+    --wash:rgba(11,11,11,0.04);
+    --chip:rgba(11,11,11,0.05);
+    --shift:#2c6e49;
   }
-  @media (prefers-color-scheme: light) {
-    :root { --bg:#f5f7f9; --panel:#fff; --line:#dde4ea; --ink:#16212b; --muted:#5d6f7d; }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --plane:#0d0d0d; --surface:#1a1a19;
+    --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,0.10);
+    --series-1:#3987e5; --series-1-soft:#184f95; --series-2:#d95926;
+    --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
+    --good-text:#0ca30c;
+    --wash:rgba(255,255,255,0.06);
+    --chip:rgba(255,255,255,0.07);
+    --shift:#35855b;
   }
-  * { box-sizing:border-box; }
-  body { margin:0; font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-         background:var(--bg); color:var(--ink); }
-  header { padding:18px 24px; border-bottom:1px solid var(--line); display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
-  h1 { font-size:18px; margin:0; font-weight:650; }
-  main { padding:24px; display:grid; gap:20px; max-width:1200px; margin:0 auto; }
-  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:18px; }
-  .card h2 { font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 14px; }
-  table { width:100%; border-collapse:collapse; font-size:14px; }
-  th { text-align:left; color:var(--muted); font-weight:600; padding:8px 10px; border-bottom:1px solid var(--line); }
-  td { padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
-  tr:last-child td { border-bottom:0; }
-  .pill { display:inline-block; padding:2px 9px; border-radius:99px; font-size:12px; font-weight:600; }
-  .pending{background:rgba(74,163,223,.15); color:var(--accent);}
-  .done{background:rgba(63,178,127,.15); color:var(--ok);}
-  .blocked,.snoozed{background:rgba(224,163,62,.15); color:var(--warn);}
-  .missed{background:rgba(217,83,79,.15); color:var(--bad);}
-  button { background:var(--accent); color:#fff; border:0; border-radius:7px; padding:7px 13px;
-           font:inherit; font-size:13px; cursor:pointer; }
-  button.ghost { background:transparent; color:var(--muted); border:1px solid var(--line); }
-  button:hover { filter:brightness(1.08); }
-  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; }
-  .stat { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
-  .stat b { display:block; font-size:26px; font-weight:650; line-height:1.2; }
-  .stat span { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.05em; }
-  .bar { height:7px; background:var(--line); border-radius:99px; overflow:hidden; min-width:80px; }
-  .bar i { display:block; height:100%; background:var(--ok); }
-  .muted { color:var(--muted); }
-  ul.findings { margin:0; padding-left:18px; } ul.findings li { margin-bottom:6px; }
-  input[type=date] { background:var(--panel); color:var(--ink); border:1px solid var(--line);
-                     border-radius:7px; padding:6px 9px; font:inherit; }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--plane); color:var(--ink);
+    font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:20px 16px 56px}
+
+  /* ---------- header ---------- */
+  header.top{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;margin-bottom:18px}
+  h1{font-size:20px;margin:0 0 2px;letter-spacing:-0.01em}
+  .orgedit{
+    font:inherit;font-size:20px;font-weight:700;letter-spacing:-0.01em;
+    background:none;color:var(--ink);border:none;border-bottom:1px dashed var(--axis);
+    padding:0 2px;cursor:pointer;border-radius:3px
+  }
+  .orgedit:hover{background:var(--wash);border-bottom-color:var(--series-1);color:var(--series-1)}
+  .orgedit::after{content:" ✎";font-size:12px;color:var(--muted);font-weight:400}
+  .orgedit:hover::after{color:var(--series-1)}
+  .facinput{width:100%;background:var(--surface);color:var(--ink);border:1px solid var(--ring);
+            border-radius:8px;padding:9px 10px;font:inherit;font-size:14px;margin-bottom:10px}
+  .rowbtns{display:flex;gap:8px;margin-top:10px}
+  .rowbtns .btn{flex:1}
+
+  /* ---------- month calendar ---------- */
+  .monthnav{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+  .monthnav .mtitle{font-size:15px;font-weight:600;min-width:150px}
+  .cal{display:grid;grid-template-columns:repeat(7,minmax(112px,1fr));gap:1px;background:var(--grid);
+       border:1px solid var(--grid);border-radius:10px;overflow:hidden;min-width:800px}
+  .cal .dow{background:var(--surface);padding:7px 8px;font-size:11px;text-transform:uppercase;
+            letter-spacing:.05em;color:var(--muted);font-weight:600;text-align:center}
+  .cal .day{background:var(--surface);min-height:104px;padding:6px}
+  .cal .day.out{background:var(--wash)}
+  .cal .day.today{box-shadow:inset 0 0 0 2px var(--series-1)}
+  .cal .dnum{font-size:11.5px;color:var(--ink2);font-variant-numeric:tabular-nums;margin-bottom:4px;display:block}
+  .cal .day.today .dnum{color:var(--series-1);font-weight:700}
+  .mchip{display:block;width:100%;text-align:left;font:inherit;font-size:11px;line-height:1.3;
+         background:var(--series-1-soft);color:var(--ink);border:none;border-left:3px solid var(--series-1);
+         border-radius:5px;padding:3px 5px;margin-bottom:3px;cursor:pointer}
+  .mchip:hover{filter:brightness(.96);text-decoration:line-through}
+  .mchip .mwho{display:block;color:var(--ink2);font-size:10px;letter-spacing:.02em}
+
+  /* ---------- compose ---------- */
+  .pickrow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  .tog{font:inherit;font-size:12.5px;background:var(--surface);color:var(--ink2);
+       border:1px solid var(--ring);border-radius:999px;padding:5px 11px;cursor:pointer}
+  .tog[aria-pressed="true"]{background:var(--series-1);border-color:transparent;color:#fff;font-weight:600}
+  .fieldlab{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);
+            font-weight:600;display:block;margin:0 0 6px}
+  textarea.msg{width:100%;min-height:110px;resize:vertical;background:var(--surface);color:var(--ink);
+    border:1px solid var(--ring);border-radius:8px;padding:9px 10px;font:inherit;font-size:13.5px;margin-bottom:4px}
+  .cnt{font-size:11px;color:var(--muted);text-align:right;margin:0 0 10px}
+
+  /* ---------- team ---------- */
+  .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+  .tcard{background:var(--surface);border:1px solid var(--ring);border-radius:12px;padding:14px;
+         text-align:left;font:inherit;color:var(--ink);cursor:pointer;display:block;width:100%}
+  .tcard:hover{background:var(--wash);border-color:var(--series-1)}
+  .tcard .hd{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+  .av-lg{width:42px;height:42px;border-radius:50%;flex:none;display:grid;place-items:center;
+         background:var(--series-1-soft);color:var(--ink);font-size:14px;font-weight:700}
+  .tcard .nm{font-weight:600;font-size:14px;line-height:1.25}
+  .tcard .rl{font-size:11.5px;color:var(--ink2)}
+  .tstats{display:flex;gap:14px;font-size:11.5px;color:var(--ink2);border-top:1px solid var(--grid);padding-top:9px}
+  .tstats b{display:block;font-size:16px;color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+  .tstats .bad b{color:var(--critical)}
+  .tstats .warn b{color:var(--warning)}
+
+  .phead{display:flex;gap:13px;align-items:center;flex-wrap:wrap;margin-bottom:4px}
+  .phead h2{font-size:18px;margin:0}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:13px;margin:0}
+  .kv dt{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em;
+         font-weight:600;align-self:center}
+  .kv dd{margin:0;color:var(--ink)}
+  .duty{padding:8px 0;border-bottom:1px solid var(--grid);font-size:13px}
+  .duty:last-child{border-bottom:none}
+  /* ---------- cadence duty boxes ---------- */
+  .dutygrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+  .dutybox{border:1px solid var(--ring);border-radius:11px;padding:12px 13px;background:var(--surface)}
+  .dutybox.hot{border-color:var(--warning)}
+  .dutybox.late{border-color:var(--critical)}
+  .dutybox h3{font-size:12px;margin:0 0 2px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink)}
+  .dutybox .bmeta{font-size:11px;color:var(--muted);margin:0 0 10px}
+  .dutybox .bmeta b{color:var(--critical)}
+  .ditem{padding:9px 0;border-top:1px solid var(--grid)}
+  .ditem:first-of-type{border-top:none;padding-top:2px}
+  .ditem .dh{font-weight:600;font-size:12.5px;display:block;margin-bottom:3px}
+  .ditem .dsub{font-size:11.5px;color:var(--muted);display:block;margin-bottom:5px}
+  .ditem .nag{font-size:11px;display:block;margin:5px 0 6px}
+  .ditem .nag b{font-variant-numeric:tabular-nums}
+  .ditem .nag .to{color:var(--muted);display:block}
+  .ditem .acts{display:flex;gap:6px;flex-wrap:wrap}
+  .duty .dt{font-weight:600;margin-right:6px}
+  .duty .dm{font-size:12px;color:var(--muted)}
+  #teamDetail td .freq{white-space:nowrap}
+  #teamDetail td:nth-child(3){white-space:nowrap}
+
+  /* ---------- chat ---------- */
+  .thread{background:var(--wash);border:1px solid var(--ring);border-radius:10px;padding:12px;
+          max-height:360px;overflow:auto;display:flex;flex-direction:column;gap:8px}
+  .bub{max-width:86%;padding:7px 10px;border-radius:12px;font-size:12.5px;line-height:1.4;position:relative}
+  .bub.out{align-self:flex-end;background:var(--series-1);color:#fff;border-bottom-right-radius:4px}
+  .bub.in{align-self:flex-start;background:var(--surface);border:1px solid var(--ring);border-bottom-left-radius:4px}
+  .bub .bts{display:block;font-size:10px;margin-top:3px;opacity:.75}
+  .bub.out .bts{color:#eaf2ff}
+  .bub.in .bts{color:var(--muted)}
+  .chatbar{display:flex;gap:8px;margin-top:10px}
+  .chatbar input{flex:1;background:var(--surface);color:var(--ink);border:1px solid var(--ring);
+                 border-radius:8px;padding:8px 10px;font:inherit;font-size:13px}
+  .sysline{align-self:center;font-size:11px;color:var(--muted);text-align:center;padding:2px 0}
+
+  /* ---------- scheduling ---------- */
+  .schedbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+  .wknav{display:flex;align-items:center;gap:6px}
+  .wknav .wk{font-size:14px;font-weight:600;min-width:158px;text-align:center}
+  .sched{border-collapse:separate;border-spacing:0;width:100%;min-width:940px;font-size:12.5px;table-layout:fixed}
+  .sched th,.sched td{border-bottom:1px solid var(--grid);border-right:1px solid var(--grid);vertical-align:top}
+  .sched th:last-child,.sched td:last-child{border-right:none}
+  .sched thead th{background:var(--surface);padding:8px 9px;text-align:left;position:sticky;top:0;z-index:3}
+  .sched .rowlab{width:170px;background:var(--surface);position:sticky;left:0;z-index:2;
+                 padding:8px 10px;font-size:12.5px}
+  .sched thead .rowlab{z-index:4}
+  .dhead .dd{font-weight:600;font-size:12.5px;color:var(--ink)}
+  .dhead .dm{font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums;margin:2px 0 5px;display:block}
+  .cov{display:flex;height:4px;border-radius:2px;overflow:hidden;background:var(--grid);gap:1px}
+  .cov i{display:block;height:100%}
+  .cov .fil{background:var(--good)} .cov .opn{background:var(--warning)} .cov .abs{background:var(--critical)}
+  .grouprow td{background:var(--wash);padding:7px 10px;font-weight:600;font-size:12.5px}
+  .grouprow .gmeta{font-weight:400;color:var(--muted);font-size:11px;margin-left:8px;font-variant-numeric:tabular-nums}
+  .grouprow .rowlab{background:var(--wash)}
+  .gtog{background:none;border:none;font:inherit;font-weight:600;color:var(--ink);cursor:pointer;padding:0}
+  .gtog:hover{color:var(--series-1)}
+  .rolerow .rowlab .rn{font-weight:600}
+  .rolerow .rowlab .rm{display:block;font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .cell2{padding:4px}
+  .dhead .dm{white-space:normal}
+  .shift{display:block;width:100%;text-align:left;font:inherit;font-size:10.5px;line-height:1.25;
+         overflow:hidden;
+         background:var(--shift);color:#fff;border:none;border-radius:6px;padding:5px 7px;margin-bottom:4px;cursor:pointer}
+  .shift:hover{filter:brightness(1.12)}
+  .shift .st{display:block;font-weight:700;font-variant-numeric:tabular-nums}
+  .shift .sw{display:block;opacity:.9}
+  .shift.open{background:transparent;color:var(--ink2);border:1px dashed var(--warning)}
+  .shift.open .st{color:var(--warning)}
+  .shift.absent{background:transparent;color:var(--critical);border:1px dashed var(--critical)}
+  .legend2{display:flex;flex-wrap:wrap;gap:14px;font-size:11.5px;color:var(--ink2);margin-top:12px}
+  .legend2 span{display:inline-flex;align-items:center;gap:6px}
+  .lk{width:11px;height:11px;border-radius:3px;flex:none}
+  .sumrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px}
+  .sumcell{background:var(--surface);border:1px solid var(--ring);border-radius:10px;padding:11px 13px}
+  .sumcell .l{font-size:11px;color:var(--ink2);margin-bottom:3px}
+  .sumcell .v{font-size:20px;font-variant-numeric:tabular-nums;letter-spacing:-0.01em}
+  .sub{color:var(--ink2);font-size:13px;margin:0}
+  .btn{
+    background:var(--surface);color:var(--ink);border:1px solid var(--ring);
+    border-radius:8px;padding:7px 12px;font:inherit;font-size:13px;cursor:pointer;
+  }
+  .btn:hover{background:var(--wash)}
+  .btn.primary{background:var(--series-1);color:#fff;border-color:transparent}
+  .btn.primary:hover{filter:brightness(1.07)}
+  .btn.sm{padding:4px 9px;font-size:12px;border-radius:6px}
+
+  /* ---------- tiles ---------- */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:10px;margin-bottom:18px}
+  .tile{background:var(--surface);border:1px solid var(--ring);border-radius:12px;padding:13px 14px}
+  .tile .lab{font-size:12px;color:var(--ink2);margin-bottom:6px}
+  .tile .val{font-size:28px;line-height:1.1;letter-spacing:-0.02em}
+  .tile .note{font-size:12px;color:var(--muted);margin-top:4px}
+  .tile .note.good{color:var(--good-text)}
+  .tile .note.bad{color:var(--critical)}
+
+  /* ---------- tabs ---------- */
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--ring);margin-bottom:16px;overflow-x:auto}
+  .tab{background:none;border:none;border-bottom:2px solid transparent;padding:9px 13px;font:inherit;
+       color:var(--ink2);cursor:pointer;white-space:nowrap}
+  .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--series-1);font-weight:600}
+
+  /* ---------- panels ---------- */
+  .panel{background:var(--surface);border:1px solid var(--ring);border-radius:12px;padding:16px;margin-bottom:16px}
+  .panel h2{font-size:14px;margin:0 0 3px;letter-spacing:-0.005em}
+  .panel .cap{font-size:12px;color:var(--muted);margin:0 0 14px}
+  .cols{display:grid;grid-template-columns:1.15fr 1fr;gap:16px}
+  @media(max-width:840px){.cols{grid-template-columns:1fr}}
+
+  /* ---------- filters ---------- */
+  .filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+  select,input[type=search]{
+    background:var(--surface);color:var(--ink);border:1px solid var(--ring);
+    border-radius:8px;padding:6px 9px;font:inherit;font-size:13px;min-height:32px
+  }
+  .filters .spacer{flex:1}
+
+  /* ---------- table ---------- */
+  .tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  .tblwrap > table:has(#rows){min-width:1060px}
+  #rows td:first-child{min-width:290px}
+  th{
+    text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--muted);font-weight:600;padding:0 10px 8px;border-bottom:1px solid var(--grid);white-space:nowrap
+  }
+  td{padding:10px;border-bottom:1px solid var(--grid);vertical-align:top}
+  tbody tr:hover{background:var(--wash)}
+  .tname{font-weight:600;display:block}
+  .thow{color:var(--muted);font-size:12px;display:block;margin-top:2px;max-width:330px}
+  .num{font-variant-numeric:tabular-nums}
+
+  /* ---------- chips ---------- */
+  .chip{
+    display:inline-flex;align-items:center;gap:5px;border-radius:999px;
+    padding:2px 9px 2px 7px;font-size:12px;font-weight:600;white-space:nowrap;
+    background:var(--chip);color:var(--ink)
+  }
+  .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .ico{font-size:11px;line-height:1;font-weight:700}
+  .chip.done{color:var(--good-text)} .chip.done .dot{background:var(--good)}
+  .chip.pending .dot{background:var(--axis)}
+  .chip.reminded .dot{background:var(--warning)}
+  .chip.overdue{color:var(--critical)} .chip.overdue .dot{background:var(--critical)}
+  .rolechip{display:inline-block;font-size:11px;color:var(--ink2);background:var(--chip);
+            border-radius:5px;padding:1px 6px;margin-left:6px;white-space:nowrap}
+  #rows td:nth-child(2){white-space:nowrap}
+  #rows td:nth-child(2) .rolechip{margin:3px 0 0;display:block;width:fit-content}
+  .freq{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+
+  /* ---------- escalation ---------- */
+  .esc{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--grid)}
+  .esc:last-child{border-bottom:none}
+  .av{width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;
+      background:var(--series-1-soft);color:var(--ink);font-size:11px;font-weight:700}
+  .esc .who{font-weight:600}
+  .esc .why{font-size:12px;color:var(--ink2)}
+  .esc .arrow{font-size:12px;color:var(--critical);font-weight:600;margin-left:auto;white-space:nowrap;text-align:right}
+
+  /* ---------- charts ---------- */
+  .chart{width:100%;overflow:visible;display:block}
+  .tt{position:fixed;pointer-events:none;opacity:0;transition:opacity .1s;z-index:60;
+      background:var(--surface);border:1px solid var(--ring);border-radius:8px;padding:7px 9px;
+      font-size:12px;box-shadow:0 6px 20px rgba(0,0,0,.16);max-width:220px}
+  .tt b{display:block;margin-bottom:2px}
+  .legendnote{font-size:12px;color:var(--muted);margin-top:8px}
+  .altbtn{float:right;margin-top:-2px}
+
+  /* ---------- planner ---------- */
+  .plan{overflow-x:auto}
+  .plan table{min-width:840px}
+  .plan th.day{text-align:center;font-size:11px}
+  .plan td.cell{min-width:112px;padding:6px;border-left:1px solid var(--grid)}
+  .plan td.who{min-width:180px}
+  /* ---- duty chips (weekly + monthly planner) ---- */
+  .pchip2{border-radius:6px;padding:5px 6px;margin-bottom:5px;font-size:11px;line-height:1.3;
+          background:var(--series-1-soft);border-left:3px solid var(--series-1);color:var(--ink)}
+  .pchip2.done{background:transparent;border:1px solid var(--good);border-left:3px solid var(--good)}
+  .pchip2.chasing{background:transparent;border:1px solid var(--warning);border-left:3px solid var(--warning)}
+  .pchip2.late{background:transparent;border:1px solid var(--critical);border-left:3px solid var(--critical)}
+  .pctop{display:flex;gap:5px;align-items:flex-start}
+  .ptick{flex:none;width:15px;height:15px;border-radius:4px;border:1.5px solid var(--axis);background:var(--surface);
+         cursor:pointer;font-size:10px;line-height:1;color:#fff;padding:0;display:grid;place-items:center;margin-top:1px}
+  .ptick:hover{border-color:var(--good)}
+  .ptick[aria-checked="true"]{background:var(--good);border-color:var(--good)}
+  .ptxt{flex:1;font-weight:600;word-break:break-word}
+  .pchip2.done .ptxt{font-weight:500;color:var(--ink2);text-decoration:line-through}
+  .pcbot{display:flex;gap:4px;align-items:center;margin-top:4px;flex-wrap:wrap}
+  .pstat{font-size:10px;flex:1;min-width:60px}
+  .pstat.run{color:var(--warning);font-weight:600}
+  .pstat.late{color:var(--critical);font-weight:600}
+  .pstat.ok{color:var(--good-text)}
+  .pico{border:none;background:var(--chip);color:var(--ink2);border-radius:4px;padding:1px 4px;
+        font-size:11px;line-height:1.4;cursor:pointer}
+  .pico:hover{background:var(--series-1);color:#fff}
+  .pico.need{background:var(--warning);color:#111}
+  .pthumb{display:block;width:100%;height:42px;object-fit:cover;border-radius:4px;margin-top:4px;cursor:pointer}
+  .todaycol{box-shadow:inset 0 0 0 2px var(--series-1)}
+  .planstat{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--ink2);margin-bottom:12px}
+  .planstat b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .imgview{max-width:100%;border-radius:10px;display:block}
+
+  /* ---------- facility switcher ---------- */
+  .facbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface);
+          border:1px solid var(--ring);border-radius:10px;padding:8px 10px;margin-bottom:14px}
+  .facbar .lab{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+  .facpill{font-size:11.5px;background:var(--chip);color:var(--ink2);border-radius:999px;padding:3px 9px}
+  .facpill.on{background:var(--series-1);color:#fff;font-weight:600}
+  .facrow{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .facrow input[type=text]{flex:1;background:var(--surface);color:var(--ink);border:1px solid var(--ring);
+    border-radius:7px;padding:6px 8px;font:inherit;font-size:13px}
+  .facrow .ck{display:flex;align-items:center;gap:6px;font-size:13px}
+
+  /* ---------- generic form rows in modals ---------- */
+  .frow{margin-bottom:10px}
+  .frow label{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);
+              font-weight:600;display:block;margin-bottom:4px}
+  .frow input,.frow select,.frow textarea{width:100%;background:var(--surface);color:var(--ink);
+    border:1px solid var(--ring);border-radius:8px;padding:8px 9px;font:inherit;font-size:13px}
+  .frow textarea{min-height:64px;resize:vertical}
+
+  /* ---------- time clock ---------- */
+  .clockgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+  .clockcell{background:var(--surface);border:1px solid var(--ring);border-radius:10px;padding:11px 13px}
+  .clockcell .v{font-size:24px;font-variant-numeric:tabular-nums;letter-spacing:-0.01em}
+  .clockcell .l{font-size:11.5px;color:var(--ink2);margin-top:2px}
+  .clockcell.warn .v{color:var(--warning)} .clockcell.bad .v{color:var(--critical)}
+  .clockcell.ok .v{color:var(--good-text)}
+
+  /* ---------- reports ---------- */
+  .repgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+  .repcell{background:var(--surface);border:1px solid var(--ring);border-radius:10px;padding:12px 13px}
+  .repcell .l{font-size:11px;color:var(--ink2);margin-bottom:4px}
+  .repcell .v{font-size:23px;font-variant-numeric:tabular-nums;letter-spacing:-0.02em}
+  .repcell .d{font-size:11px;color:var(--muted);margin-top:3px}
+  .repcell .d.good{color:var(--good-text)} .repcell .d.bad{color:var(--critical)}
+  @media print{ .tabs,.top,.tiles,.facbar,.btn{display:none!important} .panel{break-inside:avoid} }
+
+  /* ---------- daily lift ---------- */
+  .liftcard{background:var(--wash);border:1px solid var(--ring);border-radius:12px;padding:16px;margin-bottom:12px}
+  .liftcard .lt{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
+                font-weight:600;margin-bottom:6px}
+  .liftcard .lb{font-size:15px;line-height:1.5}
+  .liftcard .lm{font-size:12px;color:var(--muted);margin-top:8px}
+  .addbtn{width:100%;border:1px dashed var(--ring);background:none;color:var(--muted);
+          border-radius:5px;padding:3px;font:inherit;font-size:15px;line-height:1;cursor:pointer}
+  .addbtn:hover{background:var(--wash);color:var(--ink)}
+
+  /* ---------- modal ---------- */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;place-items:center;z-index:80;padding:16px}
+  .modal.open{display:grid}
+  .modal .box:has(.facrow){width:min(640px,100%)}
+  .modal .box{background:var(--surface);border:1px solid var(--ring);border-radius:14px;
+              padding:16px;width:min(420px,100%);max-height:80vh;overflow:auto}
+  .modal h3{margin:0 0 2px;font-size:15px}
+  .modal p.cap{margin:0 0 12px}
+  .opt{display:block;width:100%;text-align:left;font:inherit;font-size:13px;background:none;
+       border:1px solid var(--ring);border-radius:8px;padding:8px 10px;margin-bottom:6px;color:var(--ink);cursor:pointer}
+  .opt:hover{background:var(--wash)}
+
+  /* ---------- feed ---------- */
+  .feed{list-style:none;margin:0;padding:0;font-size:12.5px;max-height:280px;overflow:auto}
+  .feed li{padding:7px 0;border-bottom:1px solid var(--grid);color:var(--ink2)}
+  .feed li:last-child{border-bottom:none}
+  .feed .ts{color:var(--muted);font-variant-numeric:tabular-nums}
+
+  .rules{font-size:12.5px;color:var(--ink2);margin:0;padding-left:18px}
+  .rules li{margin-bottom:5px}
+  .hide{display:none !important}
+  .foot{font-size:12px;color:var(--muted);margin-top:22px;text-align:center}
 </style>
 </head>
 <body>
-<header>
-  <h1>QCMS Task Board</h1>
-  <div class="row" style="margin-left:auto">
-    <input type="date" id="date" />
-    <button class="ghost" onclick="run('reminders')">Send reminders</button>
-    <button class="ghost" onclick="run('nudges')">Send nudges</button>
-    <button class="ghost" onclick="run('escalations')">Run escalations</button>
-    <button onclick="loadAll()">Refresh</button>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <h1><button class="orgedit" id="orgBtn" title="Tap to change the facility or organization name">QCMS</button> Administration Dashboard</h1>
+      <p class="sub">Week of Aug 17–23, 2026 &nbsp;·&nbsp; Reminder agent — WhatsApp &amp; email &nbsp;·&nbsp; <strong id="dataMode">Live data</strong></p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <select id="chanSel" title="Channel used for reminders and messages">
+        <option value="wa">Send via WhatsApp</option>
+        <option value="em">Send via Email</option>
+        <option value="both" selected>Send via WhatsApp + Email</option>
+      </select>
+      <button class="btn" id="themeBtn">Dark mode</button>
+      <button class="btn" id="composeBtn">Send message</button>
+      <button class="btn primary" id="runBtn">Run reminder cycle</button>
+    </div>
+  </header>
+
+  <div class="tiles" id="tiles"></div>
+
+  <div class="facbar">
+    <span class="lab">Facility</span>
+    <select id="facSel" style="min-width:230px"></select>
+    <span id="facPills" style="display:flex;gap:5px;flex-wrap:wrap"></span>
+    <span style="flex:1"></span>
+    <span class="freq" id="facMeta"></span>
+    <button class="btn sm" id="facManage">Manage facilities</button>
   </div>
-</header>
 
-<main>
-  <div class="stats" id="stats"></div>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-view="board">Task board</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="team">Team profiles</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="planner">Weekly planner</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="monthly">Monthly planner</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="sched">Scheduling</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="clock">Time clock</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="reports">Reports</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="msg">Messages</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="lift">Daily lift</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="rules">Rules</button>
+  </div>
 
-  <section class="card">
-    <h2>Today’s tasks</h2>
-    <table><thead><tr>
-      <th>Task</th><th>Assignee</th><th>Cadence</th><th>Due</th><th>Status</th><th>Note</th><th></th>
-    </tr></thead><tbody id="board"></tbody></table>
+  <!-- ============ BOARD ============ -->
+  <section id="view-board">
+    <div class="cols">
+      <div class="panel">
+        <h2>Open workload by team member</h2>
+        <p class="cap">Tasks still not marked done. Red segment = past due and escalating.</p>
+        <button class="btn sm altbtn" data-alt="barTable">Table view</button>
+        <svg id="barChart" class="chart" role="img" aria-label="Open tasks by team member"></svg>
+        <div id="barTable" class="hide tblwrap" style="margin-top:12px"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Behind on tasks — escalate</h2>
+        <p class="cap">Rule: no “done” reply after 4 reminders → Manager. After 6 → Owner.</p>
+        <div id="escList"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Task board</h2>
+      <p class="cap">Every routine duty, who owns it, and whether the agent has heard back. “Done” writes a timestamp — that timestamp is your compliance record.</p>
+      <div class="filters">
+        <select id="fPerson"></select>
+        <select id="fFacility"></select>
+        <select id="fStatus">
+          <option value="all">All statuses</option>
+          <option value="overdue">Overdue / escalating</option>
+          <option value="reminded">Reminded, no reply</option>
+          <option value="pending">Pending</option>
+          <option value="done">Done</option>
+        </select>
+        <select id="fFreq">
+          <option value="all">All frequencies</option>
+          <option value="Daily">Daily</option>
+          <option value="Weekly">Weekly</option>
+          <option value="Monthly">Monthly</option>
+        </select>
+        <input type="search" id="fSearch" placeholder="Search tasks…">
+        <span class="spacer"></span>
+        <span id="rowCount" class="freq"></span>
+      </div>
+      <div class="tblwrap">
+        <table>
+          <thead><tr>
+            <th>Task</th><th>Assigned to</th><th>Facility</th><th>Due</th>
+            <th>Status</th><th>Reminders</th><th>Done (timestamp)</th><th></th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div class="panel">
+        <h2>On-time completion rate</h2>
+        <p class="cap">Share of tasks replied “done” before the second reminder, last 7 days.</p>
+        <button class="btn sm altbtn" data-alt="lineTable">Table view</button>
+        <svg id="lineChart" class="chart" role="img" aria-label="On-time completion rate, last 7 days"></svg>
+        <div id="lineTable" class="hide tblwrap" style="margin-top:12px"></div>
+      </div>
+      <div class="panel">
+        <h2>Agent activity log</h2>
+        <p class="cap">Every WhatsApp message out and every reply in.</p>
+        <ul class="feed" id="feed"></ul>
+      </div>
+    </div>
   </section>
 
-  <section class="card">
-    <h2>Gap analysis — last 30 days</h2>
-    <div id="findings"></div>
-    <table style="margin-top:14px"><thead><tr>
-      <th>Person</th><th>Role</th><th>Completion</th><th>Done</th><th>Missed</th><th>Blocked</th>
-    </tr></thead><tbody id="gaps"></tbody></table>
+  <!-- ============ TEAM ============ -->
+  <section id="view-team" class="hide">
+    <div class="panel" id="credAlertPanel">
+      <button class="btn primary sm altbtn" id="credSweep">Run today’s sweep</button>
+      <h2>Automatic credential reminders</h2>
+      <p class="cap">The agent watches every expiry date. At 30 days out it starts texting the person <strong>and</strong> the administration — every single day, until someone marks it renewed.</p>
+      <div class="tblwrap">
+        <table>
+          <thead><tr><th>Credential</th><th>Person</th><th>Expires</th><th>Status</th><th>Daily reminder</th><th>Goes to</th><th></th></tr></thead>
+          <tbody id="credAlertRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel" id="teamList">
+      <h2>Team profiles</h2>
+      <p class="cap">Tap anyone to open their profile — responsibilities, credentialing status, and the live WhatsApp thread the agent uses to remind them.</p>
+      <div class="tgrid" id="teamGrid"></div>
+    </div>
+    <div id="teamDetail" class="hide"></div>
   </section>
 
-  <section class="card">
-    <h2>Recent WhatsApp activity</h2>
-    <table><thead><tr><th>When</th><th>Dir</th><th>Number</th><th>Kind</th><th>Status</th><th>Body</th></tr></thead>
-    <tbody id="messages"></tbody></table>
+  <!-- ============ PLANNER ============ -->
+  <section id="view-planner" class="hide">
+    <div class="panel">
+      <h2>Weekly duty planner — Aug 17–23, 2026</h2>
+      <p class="cap"><strong>This is work duty, not shift coverage</strong> — coverage lives in the Scheduling tab. Tap <strong>+</strong> to give someone a duty on a specific day. On that day the agent texts them (copy: the administration) and <strong>keeps texting every day until it is closed</strong> — by replying DONE, ticking the box here, or uploading the photo. Duties marked 📷 don’t close until the picture is uploaded on that day.</p>
+      <div class="filters">
+        <span class="freq" id="planCount"></span>
+        <span class="spacer"></span>
+        <button class="btn sm" id="copyLast">Copy last week</button>
+        <button class="btn primary sm" id="publish">Publish week to WhatsApp</button>
+      </div>
+      <div class="plan tblwrap">
+        <table>
+          <thead><tr id="planHead"></tr></thead>
+          <tbody id="planBody"></tbody>
+        </table>
+      </div>
+    </div>
   </section>
-</main>
+
+  <!-- ============ MONTHLY ============ -->
+  <section id="view-monthly" class="hide">
+    <div class="panel">
+      <h2>Monthly duty planner</h2>
+      <p class="cap"><strong>Work duty, not shift coverage.</strong> The once-a-month jobs that are easiest to lose — drills, credentialing, QUAD A uploads, payroll, deep cleans. Tap a day to place a duty and assign it. On that day the agent texts the person and the administration, and repeats daily until it is closed by a DONE reply, a tick, or the 📷 photo.</p>
+      <div class="monthnav">
+        <button class="btn sm" id="mPrev">◀ Prev</button>
+        <span class="mtitle" id="mTitleCal"></span>
+        <button class="btn sm" id="mNext">Next ▶</button>
+        <span class="spacer" style="flex:1"></span>
+        <span class="freq" id="mCount"></span>
+        <button class="btn primary sm" id="mPublish">Publish month</button>
+      </div>
+      <div class="tblwrap">
+        <div class="cal" id="cal"></div>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div class="panel">
+        <h2>Recurring monthly duties</h2>
+        <p class="cap">These regenerate on the same schedule every month — you never re-enter them.</p>
+        <div class="tblwrap">
+          <table>
+            <thead><tr><th>Duty</th><th>Owner</th><th>Runs</th></tr></thead>
+            <tbody id="recurRows"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Month at a glance</h2>
+        <p class="cap">Monthly load per team member for the month shown.</p>
+        <button class="btn sm altbtn" data-alt="monTable">Table view</button>
+        <svg id="monChart" class="chart" role="img" aria-label="Monthly assignments by team member"></svg>
+        <div id="monTable" class="hide tblwrap" style="margin-top:12px"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SCHEDULING ============ -->
+  <section id="view-sched" class="hide">
+    <div class="panel">
+      <h2><span id="schedOrg">QCMS</span> Team Schedule</h2>
+      <p class="cap">Shift scheduling by location and role — the OR whiteboard, in the dashboard. Tap a cell to add a shift, tap a shift to remove it, then publish the week so every assigned person gets it on WhatsApp or email.</p>
+      <div class="schedbar">
+        <select id="sLoc"></select>
+        <div class="wknav">
+          <button class="btn sm" id="sPrev">◀</button>
+          <span class="wk" id="sWeek"></span>
+          <button class="btn sm" id="sNext">▶</button>
+        </div>
+        <span style="flex:1"></span>
+        <span class="freq" id="sStat"></span>
+        <button class="btn sm" id="sCopy">Copy last week</button>
+        <button class="btn primary sm" id="sPublish">Publish schedule</button>
+      </div>
+      <div class="tblwrap"><table class="sched" id="schedTbl"></table></div>
+      <div class="legend2">
+        <span><i class="lk" style="background:var(--shift)"></i> Assigned shift</span>
+        <span><i class="lk" style="border:1px dashed var(--warning)"></i> Open — unfilled</span>
+        <span><i class="lk" style="border:1px dashed var(--critical)"></i> Called out / sick</span>
+        <span><i class="lk" style="background:var(--good)"></i> Coverage bar: filled</span>
+        <span><i class="lk" style="background:var(--warning)"></i> Coverage bar: open</span>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div class="panel">
+        <h2>Weekly summary</h2>
+        <p class="cap">What this week costs in hours and coverage.</p>
+        <div class="sumrow" id="sSummary"></div>
+      </div>
+      <div class="panel">
+        <h2>Scheduled hours by person</h2>
+        <p class="cap">Who is carrying the week. Red marks anyone over 40 scheduled hours.</p>
+        <button class="btn sm altbtn" data-alt="hrsTable">Table view</button>
+        <svg id="hrsChart" class="chart" role="img" aria-label="Scheduled hours by person this week"></svg>
+        <div id="hrsTable" class="hide tblwrap" style="margin-top:12px"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TIME CLOCK ============ -->
+  <section id="view-clock" class="hide">
+    <div class="panel">
+      <button class="btn primary sm altbtn" id="clockRun">Send due clock reminders</button>
+      <h2>Time clock — <span id="clockDay">Tuesday, Aug 18 2026</span></h2>
+      <p class="cap">The agent watches every published shift and texts the person to clock in, break for lunch, come back, and clock out. Late clock-ins are flagged to the administration.</p>
+      <div class="clockgrid" id="clockTiles"></div>
+      <div class="filters">
+        <select id="clockLoc"></select>
+        <select id="clockFilter">
+          <option value="all">Everyone scheduled</option>
+          <option value="due">Needs a nudge</option>
+          <option value="late">Late</option>
+          <option value="in">Clocked in now</option>
+        </select>
+        <span style="flex:1"></span>
+        <span class="freq" id="clockCount"></span>
+      </div>
+      <div class="tblwrap">
+        <table><thead><tr>
+          <th>Name</th><th>Facility / room</th><th>Scheduled</th><th>Clock in</th><th>Lunch</th><th>Clock out</th><th>Worked</th><th>Status</th><th></th>
+        </tr></thead><tbody id="clockRows"></tbody></table>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Reminder rules</h2>
+      <p class="cap">Set once, applied to every published shift at every facility.</p>
+      <div class="cols">
+        <div><dl class="kv" id="clockRules"></dl></div>
+        <div><ol class="rules">
+          <li><strong>Clock in.</strong> 10 minutes before shift start. If nothing is punched 5 minutes after start, the person is texted again and marked <em>running late</em> to the administration.</li>
+          <li><strong>Lunch out.</strong> 4 hours into the shift, if no break has been taken.</li>
+          <li><strong>Lunch in.</strong> 30 minutes after lunch out — a missed return is a wage-and-hour problem, so this one escalates.</li>
+          <li><strong>Clock out.</strong> At shift end, then every 15 minutes until punched, so nobody accidentally banks overtime.</li>
+          <li><strong>Digest.</strong> End of day, the administration gets attendance, late punches and missed breaks in one message.</li>
+        </ol></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MONTHLY REPORT ============ -->
+  <section id="view-reports" class="hide">
+    <div class="panel">
+      <div class="schedbar">
+        <select id="repScope"></select>
+        <select id="repMonth"></select>
+        <span style="flex:1"></span>
+        <button class="btn sm" id="repPrint">Print / save PDF</button>
+        <button class="btn primary sm" id="repSend">Send to owner</button>
+      </div>
+      <h2 id="repTitle">Monthly activity report</h2>
+      <p class="cap" id="repSub"></p>
+      <div class="repgrid" id="repTiles"></div>
+    </div>
+
+    <div class="cols">
+      <div class="panel">
+        <h2>Room utilization &amp; turnover</h2>
+        <p class="cap">Case minutes vs. turnover minutes per room. Turnover is the number to attack.</p>
+        <button class="btn sm altbtn" data-alt="roomTable">Table view</button>
+        <svg id="roomChart" class="chart" role="img" aria-label="Room utilization and turnover"></svg>
+        <div id="roomTable" class="hide tblwrap" style="margin-top:12px"></div>
+      </div>
+      <div class="panel">
+        <h2>Average turnover by week</h2>
+        <p class="cap">Minutes between wheels-out and wheels-in for the next case.</p>
+        <button class="btn sm altbtn" data-alt="turnTable">Table view</button>
+        <svg id="turnChart" class="chart" role="img" aria-label="Average turnover by week"></svg>
+        <div id="turnTable" class="hide tblwrap" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Physician activity</h2>
+      <p class="cap">Cases, room time and on-time first starts by physician — the conversation to have at the quarterly meeting.</p>
+      <div class="tblwrap">
+        <table><thead><tr>
+          <th>Physician</th><th>Cases</th><th>Room minutes</th><th>Avg case</th><th>Avg turnover after</th>
+          <th>First-case on time</th><th>Est. facility revenue</th>
+        </tr></thead><tbody id="docRows"></tbody></table>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div class="panel">
+        <h2>Case mix</h2>
+        <p class="cap">Volume by procedure for the period.</p>
+        <button class="btn sm altbtn" data-alt="mixTable">Table view</button>
+        <svg id="mixChart" class="chart" role="img" aria-label="Case mix by procedure"></svg>
+        <div id="mixTable" class="hide tblwrap" style="margin-top:12px"></div>
+      </div>
+      <div class="panel">
+        <h2>Compliance &amp; accountability</h2>
+        <p class="cap">Did the routine work actually get done, and can you prove it?</p>
+        <div class="tblwrap"><table><tbody id="compRows"></tbody></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MESSAGES ============ -->
+  <section id="view-msg" class="hide">
+    <div class="cols">
+      <div class="panel">
+        <h2>Send a message</h2>
+        <p class="cap">Mass text the whole team or pick people. Goes out over WhatsApp, email, or both.</p>
+
+        <span class="fieldlab">Send to</span>
+        <div class="pickrow" id="msgScope">
+          <button class="tog" data-mscope="all" aria-pressed="true">Everyone</button>
+          <button class="tog" data-mscope="role">By role</button>
+          <button class="tog" data-mscope="fac">By facility</button>
+          <button class="tog" data-mscope="pick">Pick people</button>
+        </div>
+        <div id="msgScopeBody" style="margin-bottom:12px"></div>
+
+        <span class="fieldlab">Channel</span>
+        <div class="pickrow">
+          <button class="tog" id="mcWA" aria-pressed="true">WhatsApp</button>
+          <button class="tog" id="mcEM" aria-pressed="false">Email</button>
+        </div>
+
+        <span class="fieldlab">Templates</span>
+        <div class="pickrow" id="msgTpl"></div>
+
+        <span class="fieldlab">Message</span>
+        <textarea class="msg" id="msgText" placeholder="Type your message…"></textarea>
+        <p class="cnt" id="msgMeta">0 characters</p>
+        <div class="rowbtns">
+          <button class="btn" id="msgClear">Clear</button>
+          <button class="btn primary" id="msgSend">Send now</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Sent history</h2>
+        <p class="cap">Every blast, who got it, and on which channel.</p>
+        <div id="msgHistory"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DAILY LIFT ============ -->
+  <section id="view-lift" class="hide">
+    <div class="cols">
+      <div class="panel">
+        <h2>Daily lift</h2>
+        <p class="cap">One light message a day to the whole team — a joke, a fact, a word. Small thing, but it makes the reminder channel something people actually open.</p>
+        <div class="liftcard">
+          <div class="lt" id="liftCat">Medical fun fact</div>
+          <div class="lb" id="liftBody"></div>
+          <div class="lm" id="liftMeta"></div>
+        </div>
+        <div class="rowbtns">
+          <button class="btn" id="liftNext">Show another</button>
+          <button class="btn primary" id="liftSend">Send now</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Settings</h2>
+        <p class="cap">Pick what goes out, when, and to whom.</p>
+        <div class="frow">
+          <label>Daily lift is</label>
+          <div class="pickrow"><button class="tog" id="liftOn" aria-pressed="true">On</button>
+            <button class="tog" id="liftOff" aria-pressed="false">Off</button></div>
+        </div>
+        <span class="fieldlab">Categories in rotation</span>
+        <div class="pickrow" id="liftCats"></div>
+        <div class="frow"><label>Send at</label>
+          <select id="liftTime">
+            <option>7:00 AM — before first case</option>
+            <option selected>9:00 AM — mid morning</option>
+            <option>12:00 PM — lunch</option>
+            <option>4:30 PM — end of day</option>
+          </select></div>
+        <div class="frow"><label>Send to</label>
+          <select id="liftWho">
+            <option value="all">Everyone</option>
+            <option value="clin">Clinical staff only</option>
+            <option value="va">Virtual assistants only</option>
+          </select></div>
+        <div class="frow"><label>Days</label>
+          <select id="liftDays">
+            <option value="wd" selected>Weekdays only</option>
+            <option value="all">Every day</option>
+            <option value="mon">Mondays only</option>
+          </select></div>
+        <p class="cap" id="liftSummary" style="margin-top:12px"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RULES ============ -->
+  <section id="view-rules" class="hide">
+    <div class="cols">
+      <div class="panel">
+        <h2>How the reminder agent behaves</h2>
+        <p class="cap">Straight from the Aug 18 planning call.</p>
+        <ol class="rules">
+          <li><strong>Two pushes a day.</strong> 8:00 AM and 2:00 PM local, per assignee, over WhatsApp.</li>
+          <li><strong>It doesn’t stop.</strong> If the person doesn’t reply <em>done</em>, the same reminder repeats the next morning and afternoon, and the next, until they do.</li>
+          <li><strong>It tells them how.</strong> Each reminder carries the short “what to do / how to do it” note attached to the task, so nobody has to ask.</li>
+          <li><strong>“Done” is a timestamp.</strong> The reply writes name + date + time to the board — that log is what you hand a surveyor asking for proof the step was performed.</li>
+          <li><strong>Escalation.</strong> 4 unanswered reminders → the Manager is notified. 6 → the Owner is notified. Both land in “Behind on tasks”.</li>
+          <li><strong>You pick how often.</strong> Every duty and every person carries a reminder frequency — <em>twice a day, once a day, every other day, once a week, every other week, or once a month</em>. Set a default on someone’s profile; override it on any individual duty with the ⏱ button. Nothing is one-size-fits-all.</li>
+          <li><strong>One dashboard, many facilities.</strong> The facility switcher at the top runs one site on its own, or several together as a combined view. Manage facilities to rename sites, add rooms and ORs, or build your own group — a single owner running three facilities sees them as one board or one at a time.</li>
+          <li><strong>Three ways to close a duty.</strong> A planner duty is closed when the person <em>replies DONE</em>, <em>ticks the box</em> on the dashboard, or <em>uploads the photo</em>. Duties marked 📷 — crash cart, autoclave log, deep clean, facility checklist, drills — are not closed by a tick alone; the picture has to be uploaded on the day of the duty. Until one of those happens, the daily texts keep going to the person and to Fredshon, and to Karina once it carries past its day.</li>
+          <li><strong>Planners are work duty, not coverage.</strong> The weekly and monthly planners assign <em>jobs</em> to people on specific days. Who is staffing which room is a separate thing and lives in the Scheduling tab.</li>
+          <li><strong>Recurring duties chase themselves.</strong> Every profile carries standing responsibilities in five boxes — <em>weekly, monthly, quarterly, every 6 months, yearly</em>. Each opens its own reminder window ahead of the due date (2 days for weekly, 5 monthly, 14 quarterly, 30 semi-annual, 45 yearly). Once open, the agent texts the person <strong>and</strong> Fredshon every day at 8:00 AM. Past due, Karina is copied too. Marking it done timestamps it, stops the reminders, and schedules the next occurrence automatically.</li>
+          <li><strong>Credentials chase themselves.</strong> Every expiry date is watched. A credential turns <em>Expiring</em> at 60 days for visibility; at <strong>30 days out the daily reminder starts</strong> and goes to the person <strong>and</strong> Fredshon at 8:00 AM, every day. Once it expires, Karina is copied too and the message says the person can’t be scheduled. It only stops when someone marks it renewed — then the new expiry date is written and the clock restarts.</li>
+          <li><strong>WhatsApp, email, or both.</strong> Set the default channel in the header. Every reminder, weekly publish, monthly publish and ad-hoc message goes out on that channel — email gives you a written record for people who don’t watch WhatsApp during a case.</li>
+          <li><strong>You are the only administrator.</strong> Tasks are added by you — typed in here, or forwarded to the agent by WhatsApp and approved by you before they go on the board.</li>
+        </ol>
+      </div>
+      <div class="panel">
+        <h2>Not in this version (phase 2)</h2>
+        <p class="cap">Agreed on the call but deliberately parked so the reminder engine ships first.</p>
+        <ol class="rules">
+          <li><strong>Credentialing tracker</strong> — BLS, HIPAA, sexual-harassment, license and board expirations per person, with the “10 people’s BLS expires” nag that runs daily until each box is checked.</li>
+          <li><strong>Turnaround-time tracking</strong> — the Scheduling tab now covers shifts by location and role (the Connecteam replacement). Still to come: case time and turnaround estimates per procedure, so the schedule can tell you how many cases a room can actually take.</li>
+          <li><strong>Quarterly optimization view</strong> — turnaround-time trend to present at the quarterly meeting, plus the cost line showing what the Connect Team subscription is replaced by.</li>
+          <li><strong>Course delivery</strong> — click-through HIPAA / harassment / compliance modules that check themselves off when completed.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <p class="foot"><strong id="orgFoot">QCMS</strong> · Prototype built from “Task Management System Planning”, Aug 18 2026 — Fredshon Gevera &amp; Kenny Nelson. Sample data; no live WhatsApp connection.</p>
+</div>
+
+<div class="tt" id="tt"></div>
+
+<div class="modal" id="modal">
+  <div class="box">
+    <h3 id="mTitle">Assign a task</h3>
+    <p class="cap" id="mCap"></p>
+    <div id="mOpts"></div>
+    <button class="btn" style="width:100%;margin-top:6px" id="mCancel">Cancel</button>
+  </div>
+</div>
+
+<div class="modal" id="composeModal">
+  <div class="box" style="width:min(520px,100%)">
+    <h3>Send a message</h3>
+    <p class="cap">Goes out over WhatsApp, email, or both — and lands in the activity log either way.</p>
+
+    <span class="fieldlab">To</span>
+    <div class="pickrow" id="toRow"></div>
+
+    <span class="fieldlab">Channel</span>
+    <div class="pickrow">
+      <button class="tog" id="cWA" aria-pressed="true">WhatsApp</button>
+      <button class="tog" id="cEM" aria-pressed="false">Email</button>
+    </div>
+
+    <span class="fieldlab">Quick templates</span>
+    <div class="pickrow" id="tplRow"></div>
+
+    <span class="fieldlab">Message</span>
+    <textarea class="msg" id="msgBody" placeholder="Type your message…"></textarea>
+    <p class="cnt" id="msgCnt">0 characters</p>
+
+    <div class="rowbtns">
+      <button class="btn" id="cCancel">Cancel</button>
+      <button class="btn primary" id="cSend">Send</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="facModal">
+  <div class="box">
+    <h3>Facility / organization name</h3>
+    <p class="cap">This is the name at the top of the dashboard and on every WhatsApp reminder the agent sends.</p>
+    <input class="facinput" id="facInput" type="text" maxlength="48" placeholder="e.g. QCMS, CVEC, EVSLA…">
+    <p class="cap" style="margin:2px 0 6px">Or pick one you already run:</p>
+    <div id="facQuick"></div>
+    <div class="rowbtns">
+      <button class="btn" id="facCancel">Cancel</button>
+      <button class="btn primary" id="facSave">Save name</button>
+    </div>
+  </div>
+</div>
 
 <script>
-const $ = (id) => document.getElementById(id);
-const api = (p, o) => fetch('/api' + p, o).then(r => r.json());
-const esc = (s) => String(s ?? '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+/* ======================= LIVE DATA (QCMS API) =======================
+   The layout, styling and rendering below are the approved prototype. This
+   block replaces its hardcoded sample arrays: it fetches from the admin API
+   and reshapes each response into exactly the structures the renderers
+   already expect, so the view code stays untouched.
 
-$('date').value = new Date().toISOString().slice(0,10);
-$('date').onchange = loadAll;
+   Anything the API cannot answer yet degrades to an empty list rather than
+   fabricating numbers — an operations dashboard that invents data is worse
+   than one that shows a gap.
+=================================================================== */
+const API = {
+  async get(p){
+    const r = await fetch('/api'+p, {headers:{accept:'application/json'}});
+    if(!r.ok) throw new Error(`GET ${p} → ${r.status}`);
+    return r.json();
+  },
+  async send(method,p,body){
+    const r = await fetch('/api'+p,{
+      method, headers:{'content-type':'application/json'},
+      body: body===undefined?undefined:JSON.stringify(body)
+    });
+    if(!r.ok) throw new Error(`${method} ${p} → ${r.status}`);
+    return r.json();
+  },
+  post:(p,b)=>API.send('POST',p,b),
+  patch:(p,b)=>API.send('PATCH',p,b),
+  del:(p)=>API.send('DELETE',p),
+};
 
-async function loadAll() { await Promise.all([loadBoard(), loadGaps(), loadMessages()]); }
+function banner(msg){
+  let el=document.getElementById('loadErr');
+  if(!el){
+    el=document.createElement('div');
+    el.id='loadErr';
+    el.style.cssText='margin:0 0 14px;padding:10px 12px;border-radius:9px;'+
+      'background:var(--critical);color:#fff;font-size:13px';
+    document.querySelector('.wrap').prepend(el);
+  }
+  el.textContent=msg;
+}
 
-async function loadBoard() {
-  const { runs } = await api('/board?date=' + $('date').value);
-  const count = (s) => runs.filter(r => r.status === s).length;
-  $('stats').innerHTML = [
-    ['Due today', runs.length], ['Done', count('done')],
-    ['Open', count('pending') + count('snoozed')],
-    ['Blocked', count('blocked')], ['Missed', count('missed')],
-  ].map(([l,v]) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`).join('');
+const initialsOf = n => String(n||'').split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+const ROLE_LABEL = {
+  owner:'Owner', manager:'Manager', medical_assistant:'Medical Assistant',
+  virtual_assistant:'Virtual Assistant', or_supervisor:'OR Supervisor',
+};
+const CADENCE_LABEL = {
+  daily:'Daily', weekly:'Weekly', monthly:'Monthly',
+  quarterly:'Quarterly', semiannual:'Semi', yearly:'Yearly',
+};
+const FREQ_WINDOW = {'2x':'8:00 AM / 2:00 PM','1x':'8:00 AM','alt':'8:00 AM, alternate days',
+  'wk':'Monday 8:00 AM','2wk':'Every 2nd Monday','mo':'1st of the month'};
 
-  $('board').innerHTML = runs.length ? runs.map(r => `
+/** Prototype status vocabulary, derived from a run's real state. */
+function runStatus(r, today){
+  if(r.status==='done') return 'done';
+  if(r.status==='missed'||r.due_date<today||Number(r.escalated_level)>0) return 'overdue';
+  if(Number(r.reminder_count)>0) return 'reminded';
+  return 'pending';
+}
+const fmtStamp = iso => iso
+  ? new Date(iso).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})
+  : '';
+const fmtDue = (d,t) =>
+  new Date(`${d}T${(t||'17:00')}:00`).toLocaleString('en-US',
+    {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+
+/* ---- globals the renderers read; filled by loadAll() ---- */
+let PEOPLE=[], P={}, CREDS={}, DUTIES={}, TASKS=[], LIFTS={}, SCHED={0:[],'-1':[]},
+    FACS=[], VIEWS=[], FEED=[], CHATS={}, PUNCH={}, PLAN={}, MONTHPLAN={},
+    RECURRING=[], TREND=[], SERVER_TODAY=new Date().toISOString().slice(0,10),
+    RULES={}, CLOCK_CFG={}, LIFT_CFG={}, SHIFT_ROWS=[], CLOCK_ROWS=[];
+let FACILITIES=[], FACBYNAME={}, LIB={}, SCHED_WEEK_START='';
+/* Minutes since midnight, local — drives the time-clock ladder. */
+let NOW_MIN = (()=>{const d=new Date();return d.getHours()*60+d.getMinutes();})();
+let TODAY=new Date(), TODAY_IDX=0;
+
+async function loadAll(){
+  const [fac, people, board, creds, shifts, clock, lift, cfg, msgs] = await Promise.all([
+    API.get('/facilities'), API.get('/people'), API.get('/board?window=1'),
+    API.get('/credentials'), API.get('/shifts'), API.get('/clock'),
+    API.get('/lift'), API.get('/settings'), API.get('/messages'),
+  ]);
+
+  SERVER_TODAY = board.date;
+  const [ty,tm,td] = SERVER_TODAY.split('-').map(Number);
+  TODAY = new Date(ty, tm-1, td);
+  RULES = cfg.rules||{}; CLOCK_CFG = cfg.clock||{}; LIFT_CFG = cfg.lift||{};
+
+  /* -- facilities -- */
+  FACS = fac.facilities.map(f=>({id:f.code, dbId:f.id, name:f.name, kind:f.kind,
+                                 group:f.group_name, rooms:f.rooms||[]}));
+  VIEWS = [{id:'ALL', name:'All facilities — combined', ids:null},
+    ...fac.views.map(v=>({id:v.code, name:v.name,
+      ids:(v.facility_ids||[]).map(id=>(fac.facilities.find(f=>f.id===id)||{}).code).filter(Boolean)}))];
+  FACILITIES = FACS.map(f=>f.name);
+  FACBYNAME = Object.fromEntries(FACS.map(f=>[f.name,f.id]));
+  const facCodeById = Object.fromEntries(fac.facilities.map(f=>[f.id,f.code]));
+  const facNameById = Object.fromEntries(fac.facilities.map(f=>[f.id,f.name]));
+
+  /* -- people -- */
+  PEOPLE = people.filter(p=>Number(p.active)===1).map(p=>({
+    id:String(p.id), name:p.name, role:ROLE_LABEL[p.role]||p.role, init:initialsOf(p.name),
+    wa:p.whatsapp_number?`+${p.whatsapp_number}`:'—', em:p.email||'—',
+    emp:p.employee_no||'—', hired:p.hired_on||'—',
+    base:facNameById[p.facility_id]||p.site||'—',
+    window:FREQ_WINDOW[p.reminder_freq]||'8:00 AM', chan:p.channel||'wa',
+    lang:p.languages||'—', freq:p.reminder_freq||'2x', reports_to:p.reports_to_id,
+  }));
+  P = Object.fromEntries(PEOPLE.map(p=>[p.id,p]));
+
+  /* -- credentialing -- */
+  CREDS = {};
+  for(const c of creds){
+    (CREDS[String(c.person_id)] ||= []).push([c.name, c.issuer||'', c.expires_on]);
+  }
+
+  /* -- task runs -> the board's TASKS shape -- */
+  TASKS = (board.runs||[]).map(r=>({
+    id:r.id, t:r.title, how:r.details||'', p:String(r.person_id),
+    f:r.facility_name||'—', fr:CADENCE_LABEL[r.cadence]||r.cadence,
+    due:fmtDue(r.due_date, r.due_time), dueISO:r.due_date,
+    s:runStatus(r, SERVER_TODAY), r:Number(r.reminder_count)||0,
+    done:r.status==='done'?fmtStamp(r.responded_at):'',
+    photo:Number(r.requires_photo)===1, photo_path:r.photo_path||'',
+  }));
+
+  /* -- recurring duty library grouped by assignee -- */
+  const tasks = await API.get('/tasks');
+  DUTIES = {};
+  for(const t of tasks.filter(x=>Number(x.active)===1)){
+    (DUTIES[String(t.assignee_id)] ||= []).push({
+      c:CADENCE_LABEL[t.cadence]||t.cadence, t:t.title,
+      due:'', how:t.details||'', last:'', fq:'', id:t.id,
+      photo:Number(t.requires_photo)===1,
+    });
+  }
+
+  /* -- schedule grid: real dates -> the prototype's day index -- */
+  SHIFT_ROWS = shifts.shifts||[];
+  const weekStart = shifts.week_start;
+  SCHED_WEEK_START = weekStart;
+  const dayIndex = iso => Math.round((new Date(iso+'T00:00:00') - new Date(weekStart+'T00:00:00'))/86400000);
+  SCHED = {0:[], '-1':[]};
+  for(const s of SHIFT_ROWS){
+    SCHED[0].push({
+      l: s.absence_kind ? 'ab' : (facCodeById[s.facility_id]||'?'),
+      r: s.role, d: dayIndex(s.work_date),
+      t: s.on_call ? 'On call' : `${s.starts_at||''}-${s.ends_at||''}`,
+      w: s.person_name || s.staff_name || '', id:s.id,
+    });
+  }
+  TODAY_IDX = dayIndex(SERVER_TODAY);
+
+  /* -- time clock -- */
+  CLOCK_ROWS = clock.rows||[];
+  PUNCH = {};
+  for(const r of CLOCK_ROWS){
+    if(r.punch) PUNCH[`${r.person_name||r.staff_name}|${r.role}|${dayIndex(r.work_date)}`] = {
+      in:r.punch.clock_in, lo:r.punch.lunch_out, li:r.punch.lunch_in, out:r.punch.clock_out,
+    };
+  }
+
+  /* -- daily lift -- */
+  LIFTS = {};
+  for(const i of (lift.items||[])) (LIFTS[i.category] ||= []).push(i.body);
+
+  /* -- message threads, newest last, grouped by person -- */
+  CHATS = {};
+  for(const m of [...msgs].reverse()){
+    if(!m.person_id) continue;
+    let body = m.body||'';
+    if(m.direction==='out' && body.startsWith('{')){
+      try{ const j=JSON.parse(body); body = j.text?.body || j.template?.name || body; }catch{}
+    }
+    (CHATS[String(m.person_id)] ||= []).push({
+      f:m.direction==='in'?'in':'out', ts:fmtStamp(m.created_at), t:body,
+    });
+  }
+
+  /* -- activity feed from the same message log -- */
+  FEED = msgs.slice(0,25).map(m=>({
+    ts:fmtStamp(m.created_at),
+    txt:`${m.direction==='in'?'Reply from':'Sent to'} ${(P[String(m.person_id)]||{}).name||'unknown'}`
+        + (m.kind?` — ${m.kind}`:'') + (m.status==='dry_run'?' (dry run)':''),
+  }));
+
+  /* -- planner grids -- */
+  const [wk, mo] = await Promise.all([
+    API.get('/planner/week'), API.get('/planner/month'),
+  ]);
+  // The weekly grid is indexed by weekday (0 = Monday), one bucket per person
+  // per day, so every person always has exactly 7 cells even when empty.
+  PLAN = {}; MONTHPLAN = {};
+  const emptyWeek = () => Array.from({length:7}, () => []);
+  for(const p of PEOPLE) PLAN[p.id] = emptyWeek();
+  for(const i of wk){
+    const key=String(i.person_id);
+    PLAN[key] ||= emptyWeek();
+    const d=dayIndex(i.plan_date);
+    if(d<0||d>6) continue;
+    PLAN[key][d].push({
+      t:i.title, photo:Number(i.requires_photo)===1, done:fmtStamp(i.done_at),
+      by:i.done_by||'', img:i.photo_path||'', f:i.facility_code||'', fq:i.frequency||'',
+      room:i.room||'', id:i.id, date:i.plan_date,
+    });
+  }
+  for(const i of mo){
+    (MONTHPLAN[i.plan_date] ||= []).push({
+      t:i.title, p:String(i.person_id), photo:Number(i.requires_photo)===1,
+      done:fmtStamp(i.done_at), by:i.done_by||'', img:i.photo_path||'',
+      f:i.facility_name||'', fq:i.frequency||'', room:i.room||'', id:i.id,
+    });
+  }
+
+  /* -- daily completion trend -- */
+  try{
+    const t = await API.get('/trend?days=7');
+    TREND = t.map(r=>({
+      d:new Date(r.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}),
+      v:r.rate,
+    }));
+  }catch{ TREND = []; }
+
+  RECURRING = tasks
+    .filter(t=>['monthly','quarterly','semiannual','yearly'].includes(t.cadence))
+    .map(t=>[t.title, String(t.assignee_id),
+             `${CADENCE_LABEL[t.cadence]} — day ${t.day_of_month||1}`]);
+}
+
+/* ---- date labels driven by the server's today, not the prototype's ---- */
+const fmtDay = iso => new Date(iso+'T00:00:00')
+  .toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric',year:'numeric'});
+function weekRangeLabel(){
+  const start = SCHED_WEEK_START || SERVER_TODAY;
+  const end = new Date(new Date(start+'T00:00:00').getTime()+6*86400000);
+  const s = new Date(start+'T00:00:00');
+  const mon = d=>d.toLocaleDateString('en-US',{month:'short'});
+  const same = s.getMonth()===end.getMonth();
+  return same
+    ? `${mon(s)} ${s.getDate()}–${end.getDate()}, ${end.getFullYear()}`
+    : `${mon(s)} ${s.getDate()} – ${mon(end)} ${end.getDate()}, ${end.getFullYear()}`;
+}
+/** Rewrite every date label the prototype hardcoded. */
+function paintDates(){
+  const wk = weekRangeLabel();
+  const sub = document.querySelector('header.top .sub');
+  if(sub) sub.innerHTML = `Week of ${wk} &nbsp;·&nbsp; Reminder agent — WhatsApp &amp; email &nbsp;·&nbsp; <strong id="dataMode">Live data</strong>`;
+  const planH = document.querySelector('#view-planner h2');
+  if(planH) planH.textContent = `Weekly duty planner — ${wk}`;
+  const cd = document.getElementById('clockDay');
+  if(cd) cd.textContent = fmtDay(SERVER_TODAY);
+  const foot = document.querySelector('p.foot');
+  if(foot) foot.innerHTML = `<strong id="orgFoot">${ORG||'QCMS'}</strong> · QCMS task management — live data from the reminder agent.`;
+}
+
+/* Runs an async write with the button disabled, surfacing any failure rather
+   than leaving the UI showing a change that never reached the server. */
+async function busy(btn, fn){
+  const label=btn.textContent;
+  btn.disabled=true; btn.textContent='Working…';
+  try{ await fn(); }
+  catch(err){ banner(`Action failed — ${err.message}`); }
+  finally{ btn.disabled=false; btn.textContent=label; }
+}
+
+/* ---- writes ---- */
+async function apiMarkRun(runId, status, note){
+  await API.post(`/runs/${runId}/status`, {status, note:note||null});
+}
+async function apiPunch(shiftId, field, at){
+  await API.post(`/clock/${shiftId}/${field}`, {at});
+}
+async function apiRunJob(job){ return API.post(`/run/${job}`); }
+async function apiPlannerDone(id, by){ return API.post(`/planner/${id}/done`, {done_by:by}); }
+
+
+/* ============================ DATA ============================ */
+
+/* credentialing — exp dates measured against Aug 18 2026 */
+
+/* ---------- recurring responsibilities by cadence ----------
+   Each one auto-texts the person AND the administration, daily, until DONE.
+   `lead` = how many days before the due date the daily reminder starts.       */
+const CADENCES=[
+  {k:'Weekly',          label:'Weekly',          lead:2,  step:{d:7}},
+  {k:'Monthly',         label:'Monthly',         lead:5,  step:{m:1}},
+  {k:'Quarterly',       label:'Quarterly',       lead:14, step:{m:3}},
+  {k:'Semi',            label:'Every 6 months',  lead:30, step:{m:6}},
+  {k:'Yearly',          label:'Yearly',          lead:45, step:{m:12}},
+];
+const CAD=Object.fromEntries(CADENCES.map(c=>[c.k,c]));
+const D=(c,t,due,how,fq)=>({c,t,due,how,last:'',fq:fq||''});
+
+/* seeded WhatsApp threads */
+
+/* ============ FACILITIES — switch, combine, customize ============ */
+let activeFac='ALL';
+const facName=id=>{const f=FACS.find(x=>x.id===id);return f?f.name:id;};
+function facIds(){
+  if(activeFac==='ALL') return FACS.map(f=>f.id);
+  const v=VIEWS.find(x=>x.id===activeFac);
+  if(v) return v.ids||FACS.map(f=>f.id);
+  return [activeFac];
+}
+function facLabel(){
+  if(activeFac==='ALL') return 'All facilities — combined';
+  const v=VIEWS.find(x=>x.id===activeFac);
+  return v?v.name:facName(activeFac);
+}
+const inScope=facId=>facIds().includes(facId);
+
+/* ============ REMINDER FREQUENCY ============ */
+const FREQS=[
+  {k:'2x', label:'Twice a day',      when:'8:00 AM & 2:00 PM',        perDay:2},
+  {k:'1x', label:'Once a day',       when:'8:00 AM',                  perDay:1},
+  {k:'alt',label:'Every other day',  when:'8:00 AM, alternate days',  perDay:0.5},
+  {k:'wk', label:'Once a week',      when:'Monday 8:00 AM',           perDay:1/7},
+  {k:'2wk',label:'Every other week', when:'Every 2nd Monday, 8:00 AM',perDay:1/14},
+  {k:'mo', label:'Once a month',     when:'1st of the month, 8:00 AM',perDay:1/30},
+];
+const FQ=Object.fromEntries(FREQS.map(f=>[f.k,f]));
+const freqLabel=k=>(FQ[k]||FQ['2x']).label;
+const freqWhen =k=>(FQ[k]||FQ['2x']).when;
+
+// status: done | pending | reminded | overdue
+
+
+/* Duty library — `photo:true` means the duty is only complete once a picture is uploaded. */
+const LIBRARY = [
+  {t:'Confirm tomorrow’s patients',photo:false},{t:'Insurance eligibility check',photo:false},
+  {t:'No-show follow-up calls',photo:false},{t:'Angiosuite supervisor checklist',photo:true},
+  {t:'OR turnover log',photo:true},{t:'Autoclave / sterilizer log',photo:true},
+  {t:'Crash cart check',photo:true},{t:'Supply inventory count',photo:true},
+  {t:'Reorder below-par supplies',photo:false},{t:'Weekly facility checklist',photo:true},
+  {t:'Claims submission batch',photo:false},{t:'Denied claim worklist',photo:false},
+  {t:'Sedation chart audit',photo:true},{t:'BLS expiration follow-up',photo:false},
+  {t:'Credentialing packet chase',photo:false},{t:'Payroll hours review',photo:false},
+  {t:'Cash / copay reconcile',photo:true},{t:'Exam room deep clean',photo:true},
+  {t:'Fire / emergency drill + log',photo:true},{t:'Eyewash station check',photo:true},
+  {t:'Arrange coverage for Johnny',photo:false},{t:'QUAD A data upload',photo:true},
+];
+/* a planner duty: t=task, done=timestamp, by=how it was completed, img=uploaded photo */
+const PD=(t,done,by,f,fq,room)=>({t,photo:!!LIB[t],done:done||'',by:by||'',img:'',
+                                   f:f||'',fq:fq||'',room:room||''});
+
+const DAYS = ['Mon 17','Tue 18','Wed 19','Thu 20','Fri 21','Sat 22','Sun 23'];
+
+/* ---------- monthly plan (key: YYYY-M-D) ---------- */
+const MD=(t,p,photo,done,by,f,fq,room)=>({t,p,photo:!!photo,done:done||'',by:by||'',img:'',
+                                          f:f||'',fq:fq||'',room:room||''});
+let calY, calM; // set from the server's today in boot()
+
+/* ---------- scheduling (Connecteam-style job schedule) ---------- */
+const SCHED_LOCS=[
+  {id:'ab',name:'Absences',open:true,roles:['Off — call out','Call out sick']},
+  {id:'tz',name:'CVEC Tarzana',open:true,
+   roles:['0. Team Lead','1. Scrub 1','2. Scrub 2','3. Circulator','4. Rad Tech','5. Anesthesia / CRNA','6. Recovery / PACU','7. Dictation']},
+  {id:'al',name:'CVEC Alden',open:true,
+   roles:['0. Team Lead','1. Scrub 1','2. Circulator','3. Rad Tech','4. Anesthesia / CRNA','5. Recovery / PACU']},
+  {id:'gl',name:'EVSLA Glendale — clinic',open:false,
+   roles:['Front desk','Ultrasound tech','Medical assistant','Vein ablation RN']},
+  {id:'cl',name:'CICVI Los Angeles — opening',open:false,
+   roles:['0. Team Lead','1. Scrub 1','2. Circulator','3. Anesthesia / CRNA']},
+];
+const STAFF=['John Basilio','Karina Canul','Skye Centeno','Esmeralda Terroness','Evelyn Diego','Roberto Lopez',
+  'Gillian Guzman','Alyssa Bridges','Darel Gevera','Ezhan Mirza','Hugo Hurtado','June Caparida','Gavin Mckim',
+  'Lillian Ponce','Lauren Torok','Damaris Govea','Fredshon Gevera',
+  'Matthew Baidya (CRNA)','Sunny Sircar (CRNA)','Diego Cavenaghi (CRNA)'];
+const SHIFT_TIMES=['06:30-15:00','07:00-15:30','07:30-16:00','08:00-16:30','08:30-17:00','10:00-18:30','13:00-17:00','On call'];
+const S=(l,r,d,t,w)=>({l,r,d,t,w});
+let wkOff=0, locFilter='all';
+
+/* ---------- messaging ---------- */
+let CHANNEL='both';
+const TEMPLATES = {
+  'Task reminder':'Reminder: your task “{task}” is still open. Please complete it and reply DONE so it timestamps on the board.',
+  'Schedule change':'Schedule change: coverage is needed at {facility} tomorrow afternoon. Reply CONFIRM if you can take it.',
+  'Credential expiring':'Your BLS certification expires in 60 days. The renewal class is booked — reply DONE once you have completed it.',
+  'Team announcement':'Team: monthly staff meeting is this Friday at 8:00 AM before clinic. Please confirm attendance.',
+};
+
+
+/* ============================ HELPERS ============================ */
+const $  = s=>document.querySelector(s);
+const $$ = s=>[...document.querySelectorAll(s)];
+const esc = s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STATUS = {
+  done:    {label:'Done',      ico:'✓'},
+  pending: {label:'Pending',   ico:'•'},
+  reminded:{label:'Reminded',  ico:'!'},
+  overdue: {label:'Escalating',ico:'▲'},
+};
+const chip = s=>`<span class="chip ${s}"><span class="dot"></span><span class="ico">${STATUS[s].ico}</span>${STATUS[s].label}</span>`;
+function nowStamp(){
+  const d=new Date();
+  return d.toLocaleString('en-US',{month:'short',day:'numeric'})+', '+
+         d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+}
+
+/* ============================ TILES ============================ */
+function renderTiles(){
+  const open   = TASKS.filter(t=>t.s!=='done').length;
+  const done   = TASKS.filter(t=>t.s==='done').length;
+  const over   = TASKS.filter(t=>t.s==='overdue').length;
+  const rem    = TASKS.reduce((a,t)=>a+t.r,0);
+  const rate   = Math.round(done/TASKS.length*100);
+  const behind = new Set(TASKS.filter(t=>t.s==='overdue').map(t=>t.p)).size;
+  const ca = credAlerts(), caExp = ca.filter(x=>x.s==='overdue').length;
+  const da = dutyAlerts(), daLate = da.filter(x=>x.s==='overdue').length;
+  const pa = planAlerts(), paLate = pa.filter(x=>x.st.s==='late').length;
+  $('#tiles').innerHTML = [
+    ['Open tasks', open, `${TASKS.length} assigned this week`, ''],
+    ['Completed', done, `${rate}% of the board`, 'good'],
+    ['Escalating', over, `${behind} team member${behind===1?'':'s'} behind`, over?'bad':''],
+    ['Reminders sent', rem, `${chanLabel(CHANNEL)}, last 48 hours`, ''],
+    ['On-time rate', '79%', '↑ 5 pts vs last week', 'good'],
+    ['Auto-chased daily', ca.length+da.length+pa.length, `${ca.length} credential${ca.length===1?'':'s'} · ${da.length} recurring · ${pa.length} planner`, (caExp+daLate+paLate)?'bad':''],
+  ].map(([l,v,n,c])=>`<div class="tile"><div class="lab">${l}</div><div class="val num">${v}</div><div class="note ${c}">${n}</div></div>`).join('');
+}
+
+/* ============================ TABLE ============================ */
+function fillFilters(){
+  $('#fPerson').innerHTML   = '<option value="all">All team members</option>'+
+    PEOPLE.map(p=>`<option value="${p.id}">${esc(p.name)} — ${p.role}</option>`).join('');
+  $('#fFacility').innerHTML = '<option value="all">All facilities in view</option>'+
+    FACS.filter(f=>facIds().includes(f.id)).map(f=>`<option value="${esc(f.name)}">${esc(f.name)}</option>`).join('');
+}
+function filtered(){
+  const p=$('#fPerson').value,f=$('#fFacility').value,s=$('#fStatus').value,
+        fr=$('#fFreq').value,q=$('#fSearch').value.trim().toLowerCase();
+  return TASKS.filter(t=>
+    inScope(FACBYNAME[t.f]||'')&&
+    (p==='all'||t.p===p)&&(f==='all'||t.f===f)&&(s==='all'||t.s===s)&&
+    (fr==='all'||t.fr===fr)&&(!q||(t.t+' '+t.how).toLowerCase().includes(q)));
+}
+function renderRows(){
+  const rows=filtered();
+  $('#rowCount').textContent = `${rows.length} of ${TASKS.length} tasks`;
+  $('#rows').innerHTML = rows.length ? rows.map(t=>`
     <tr>
-      <td><strong>${esc(r.title)}</strong>${r.critical ? ' <span class="pill missed">critical</span>' : ''}
-          ${r.details ? `<div class="muted">${esc(r.details)}</div>` : ''}</td>
-      <td>${esc(r.person_name)}<div class="muted">${esc(r.role)}</div></td>
-      <td>${esc(r.cadence)}</td>
-      <td>${esc(r.due_time)}</td>
-      <td><span class="pill ${r.status}">${r.status}</span></td>
-      <td class="muted">${esc(r.note || '')}</td>
-      <td class="row">
-        <button onclick="setStatus(${r.id},'done')">Done</button>
-        <button class="ghost" onclick="setStatus(${r.id},'blocked')">Block</button>
+      <td><span class="tname">${esc(t.t)}</span><span class="thow">${esc(t.how)}</span></td>
+      <td>${esc(P[t.p].name)}<span class="rolechip">${P[t.p].role}</span></td>
+      <td>${esc(t.f)}</td>
+      <td>${esc(t.due)}<br><span class="freq">${t.fr}</span></td>
+      <td>${chip(t.s)}</td>
+      <td class="num">${t.r}${t.r>=4?' <span class="freq" style="color:var(--critical)">esc.</span>':''}</td>
+      <td class="num" style="color:${t.done?'var(--good-text)':'var(--muted)'}">${t.done||'—'}</td>
+      <td style="white-space:nowrap">
+        ${t.s==='done'
+          ? '<button class="btn sm" data-undo="'+t.id+'">Reopen</button>'
+          : '<button class="btn sm" data-done="'+t.id+'">Mark done</button> <button class="btn sm" data-remind="'+t.id+'">Remind</button>'}
       </td>
-    </tr>`).join('') : `<tr><td colspan="7" class="muted">Nothing scheduled for this date.</td></tr>`;
+    </tr>`).join('')
+    : '<tr><td colspan="8" style="color:var(--muted);padding:22px 10px">No tasks match these filters.</td></tr>';
 }
 
-async function loadGaps() {
-  const g = await api('/gaps?days=30');
-  $('findings').innerHTML = g.findings.length
-    ? `<ul class="findings">${g.findings.map(f => `<li>${esc(f)}</li>`).join('')}</ul>`
-    : `<p class="muted">No gaps detected above threshold yet — needs a few weeks of history.</p>`;
-  $('gaps').innerHTML = g.people.map(p => `
-    <tr><td>${esc(p.name)}</td><td class="muted">${esc(p.role)}</td>
-      <td><div class="row"><div class="bar" style="flex:1"><i style="width:${p.rate ?? 0}%"></i></div>
-      <span class="muted">${p.rate ?? '–'}%</span></div></td>
-      <td>${p.done}</td><td>${p.missed}</td><td>${p.blocked}</td></tr>`).join('');
+/* ============================ ESCALATION ============================ */
+function renderEsc(){
+  const by={};
+  TASKS.filter(t=>t.s!=='done').forEach(t=>{(by[t.p]=by[t.p]||[]).push(t)});
+  const list=Object.entries(by)
+    .map(([id,ts])=>({id,ts,worst:Math.max(...ts.map(t=>t.r)),over:ts.filter(t=>t.s==='overdue').length}))
+    .filter(x=>x.over>0).sort((a,b)=>b.worst-a.worst);
+  $('#escList').innerHTML = list.length ? list.map(x=>{
+    const p=P[x.id], to = x.worst>=6 ? 'Owner (Fredshon)' : 'Manager (Karina)';
+    return `<div class="esc">
+      <div class="av">${p.init}</div>
+      <div>
+        <div class="who">${esc(p.name)}<span class="rolechip">${p.role}</span></div>
+        <div class="why">${x.over} task${x.over===1?'':'s'} past due · ${x.worst} reminders unanswered</div>
+        <div class="why" style="color:var(--muted)">${esc(x.ts.filter(t=>t.s==='overdue').map(t=>t.t).join(' · '))}</div>
+      </div>
+      <div class="arrow">▲ notify<br>${to}</div>
+    </div>`;
+  }).join('') : '<p class="cap" style="margin:0">Nobody is past the escalation threshold. Everything answered inside two reminder cycles.</p>';
 }
 
-async function loadMessages() {
-  const m = await api('/messages');
-  $('messages').innerHTML = m.slice(0, 25).map(x => `
-    <tr><td class="muted">${esc(x.created_at)}</td><td>${esc(x.direction)}</td>
-      <td>${esc(x.wa_number || '')}</td><td>${esc(x.kind || '')}</td><td>${esc(x.status || '')}</td>
-      <td class="muted">${esc((x.body || '').slice(0, 120))}</td></tr>`).join('')
-    || `<tr><td colspan="6" class="muted">No messages yet.</td></tr>`;
+/* ============================ CHARTS ============================ */
+const tt=$('#tt');
+function showTT(e,html){tt.innerHTML=html;tt.style.opacity=1;moveTT(e);}
+function moveTT(e){
+  const x=Math.min(e.clientX+14,innerWidth-tt.offsetWidth-8);
+  const y=Math.max(8,e.clientY-tt.offsetHeight-12);
+  tt.style.left=x+'px';tt.style.top=y+'px';
 }
+function hideTT(){tt.style.opacity=0;}
 
-async function setStatus(id, status) {
-  const note = status === 'blocked' ? prompt('Reason for the blocker?') : null;
-  await fetch('/api/runs/' + id + '/status', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status, note }),
+function renderBar(){
+  const data=PEOPLE.map(p=>{
+    const ts=TASKS.filter(t=>t.p===p.id&&t.s!=='done');
+    return {p, total:ts.length, over:ts.filter(t=>t.s==='overdue').length};
+  }).sort((a,b)=>b.total-a.total);
+  const W=560,rowH=34,PAD_L=142,PAD_R=34,H=data.length*rowH+22;
+  const max=Math.max(4,...data.map(d=>d.total));
+  const sx=v=>v/max*(W-PAD_L-PAD_R);
+  let g='';
+  for(let i=0;i<=max;i+=Math.ceil(max/4)){
+    const x=PAD_L+sx(i);
+    g+=`<line x1="${x}" y1="0" x2="${x}" y2="${H-20}" stroke="var(--grid)" stroke-width="1"/>
+        <text x="${x}" y="${H-6}" fill="var(--muted)" font-size="10" text-anchor="middle">${i}</text>`;
+  }
+  const bars=data.map((d,i)=>{
+    const y=i*rowH+6, h=18, wTot=sx(d.total), wOver=sx(d.over);
+    const ok=Math.max(0,wTot-wOver);
+    return `
+    <text x="${PAD_L-10}" y="${y+13}" fill="var(--ink2)" font-size="11.5" text-anchor="end">${esc(d.p.name.split(' ')[0])} ${esc(d.p.name.split(' ')[1])}</text>
+    <g class="hit" data-tt="${esc(d.p.name)}|${d.total}|${d.over}" style="cursor:default">
+      <rect x="${PAD_L}" y="${y-3}" width="${W-PAD_L-PAD_R}" height="${h+6}" fill="transparent"/>
+      ${ok>0?`<path d="M${PAD_L},${y} h${Math.max(0,ok-4)} a4,4 0 0 1 4,4 v${h-8} a4,4 0 0 1 -4,4 h-${Math.max(0,ok-4)} z" fill="var(--series-1)"/>`:''}
+      ${d.over>0?`<path d="M${PAD_L+ok+2},${y} h${Math.max(0,wOver-6)} a4,4 0 0 1 4,4 v${h-8} a4,4 0 0 1 -4,4 h-${Math.max(0,wOver-6)} z" fill="var(--critical)"/>`:''}
+      <text x="${PAD_L+wTot+8}" y="${y+13}" fill="var(--ink2)" font-size="11.5" class="num">${d.total}</text>
+    </g>`;
+  }).join('');
+  const svg=$('#barChart');
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.innerHTML=g+bars+`<line x1="${PAD_L}" y1="0" x2="${PAD_L}" y2="${H-20}" stroke="var(--axis)" stroke-width="1"/>`;
+  svg.querySelectorAll('.hit').forEach(el=>{
+    el.addEventListener('mousemove',e=>{
+      const [n,t,o]=el.dataset.tt.split('|');
+      showTT(e,`<b>${esc(n)}</b>${t} open · <span style="color:var(--critical)">${o} escalating</span>`);
+    });
+    el.addEventListener('mouseleave',hideTT);
   });
-  loadBoard();
+  $('#barTable').innerHTML='<table><thead><tr><th>Team member</th><th>Open</th><th>Escalating</th></tr></thead><tbody>'+
+    data.map(d=>`<tr><td>${esc(d.p.name)}</td><td class="num">${d.total}</td><td class="num">${d.over}</td></tr>`).join('')+'</tbody></table>';
 }
 
-async function run(job) {
-  const r = await fetch('/api/run/' + job, { method: 'POST' }).then(r => r.json());
-  alert(job + ': ' + JSON.stringify(r));
-  loadAll();
+function renderLine(){
+  const W=520,H=210,L=38,R=14,T=14,B=28;
+  if(TREND.length<2){
+    $('#lineChart').innerHTML=
+      `<text x="${W/2}" y="${H/2}" fill="var(--muted)" font-size="12" text-anchor="middle">`+
+      `Not enough history yet — the trend appears after two days of task runs.</text>`;
+    $('#lineChart').setAttribute('viewBox',`0 0 ${W} ${H}`);
+    return;
+  }
+  const xs=i=>L+i*(W-L-R)/(TREND.length-1);
+  const ys=v=>T+(100-v)/(100-50)*(H-T-B);
+  let g='';
+  [50,60,70,80,90,100].forEach(v=>{
+    g+=`<line x1="${L}" y1="${ys(v)}" x2="${W-R}" y2="${ys(v)}" stroke="var(--grid)" stroke-width="1"/>
+        <text x="${L-8}" y="${ys(v)+3.5}" fill="var(--muted)" font-size="10" text-anchor="end">${v}%</text>`;
+  });
+  const path=TREND.map((d,i)=>`${i?'L':'M'}${xs(i)},${ys(d.v)}`).join(' ');
+  const area=path+` L${xs(TREND.length-1)},${ys(50)} L${xs(0)},${ys(50)} Z`;
+  const pts=TREND.map((d,i)=>`<circle cx="${xs(i)}" cy="${ys(d.v)}" r="4.5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"/>`).join('');
+  const labs=TREND.map((d,i)=>`<text x="${xs(i)}" y="${H-8}" fill="var(--muted)" font-size="10" text-anchor="middle">${d.d.replace('Aug ','')}</text>`).join('');
+  const hits=TREND.map((d,i)=>`<rect class="lhit" data-i="${i}" x="${xs(i)-18}" y="${T}" width="36" height="${H-T-B}" fill="transparent" style="cursor:default"/>`).join('');
+  const svg=$('#lineChart');
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.innerHTML=g+
+    `<path d="${area}" fill="var(--series-1)" opacity="0.10"/>`+
+    `<path d="${path}" fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`+
+    pts+labs+hits+
+    `<text x="${xs(TREND.length-1)}" y="${ys(TREND[TREND.length-1].v)-12}" fill="var(--ink2)" font-size="11" text-anchor="end" class="num">${TREND[TREND.length-1].v}%</text>`+
+    `<line x1="${L}" y1="${ys(50)}" x2="${W-R}" y2="${ys(50)}" stroke="var(--axis)" stroke-width="1"/>`;
+  svg.querySelectorAll('.lhit').forEach(el=>{
+    el.addEventListener('mousemove',e=>{const d=TREND[+el.dataset.i];
+      showTT(e,`<b>${esc(d.d)}</b>${d.v}% replied “done” on the first cycle`);});
+    el.addEventListener('mouseleave',hideTT);
+  });
+  $('#lineTable').innerHTML='<table><thead><tr><th>Date</th><th>On-time rate</th></tr></thead><tbody>'+
+    TREND.map(d=>`<tr><td>${d.d}</td><td class="num">${d.v}%</td></tr>`).join('')+'</tbody></table>';
 }
 
-loadAll();
+/* ============================ FEED ============================ */
+function renderFeed(){
+  $('#feed').innerHTML=FEED.map(f=>`<li><span class="ts">${esc(f.ts)}</span> — ${esc(f.txt)}</li>`).join('');
+}
+function logFeed(txt){
+  FEED.unshift({ts:new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}),txt});
+  renderFeed();
+}
+
+/* ============================ PLANNER DUTIES ============================
+   A planner entry is a work duty, not shift coverage. On the assigned day the
+   agent texts the person (copy: administration) and repeats every day until it
+   is completed — by replying DONE, ticking the box, or uploading the photo.  */
+function dutyStatus(item,daysSince){
+  if(item.done) return {s:'done', day:0};
+  if(daysSince<0) return {s:'sched', day:0};
+  return {s: daysSince>0?'late':'chasing', day: daysSince+1};
+}
+function completeItem(item,how,pid,when){
+  if(item.photo && how!=='photo' && !item.img) return false;   // photo still required
+  item.done=when||nowStamp(); item.by=how;
+  if(pid){
+    (CHATS[pid]=CHATS[pid]||[]).push(
+      {f:'in',ts:item.done,t:how==='photo'?'[photo] DONE':'DONE'},
+      {f:'out',ts:item.done,t:`Logged — “${item.t}” completed ${item.done} (${how}). Daily reminders stopped.`});
+    const via = how==='photo' ? 'photo upload' : how==='checkbox' ? 'checkbox' : 'text reply';
+    logFeed(`${P[pid].name} closed “${item.t}” by ${via} — ${item.done}. Daily reminders stopped.`);
+    logFeed(`→ Administration notified: Fredshon (Owner)${item.img?' — photo attached':''}. ${P[pid].name} · “${item.t}” · ${item.done}.`);
+    if(item.img) logFeed(`   Photo filed against ${esc(item.t)} for ${item.done.split(',')[0]} — available as proof of completion.`);
+  }
+  return true;
+}
+/* ref encodes where the item lives: "w|pid|day|idx" or "m|dateKey|idx" */
+function chipHTML(ref,item,pid,daysSince,extra){
+  const st=dutyStatus(item,daysSince);
+  const cls=st.s==='done'?'done':st.s==='late'?'late':st.s==='chasing'?'chasing':'';
+  const needPhoto=item.photo&&!item.img;
+  let status;
+  if(st.s==='done') status=`<span class="pstat ok">✓ ${esc(item.done)} · ${esc(item.by)}</span>`;
+  else if(st.s==='sched') status=`<span class="pstat">scheduled</span>`;
+  else status=`<span class="pstat ${st.s==='late'?'late':'run'}">Day ${st.day} · ${esc(freqLabel(item.fq||(P[pid]||{}).freq||'2x').toLowerCase())}${needPhoto?' · photo required':''}</span>`;
+  return `<div class="pchip2 ${cls}">
+    <div class="pctop">
+      <button class="ptick" role="checkbox" aria-checked="${st.s==='done'}" data-ptick="${ref}" title="${needPhoto?'Photo required first':'Mark done'}">${st.s==='done'?'✓':''}</button>
+      <span class="ptxt">${esc(item.t)}${item.photo?' <span title="Photo required" style="opacity:.7">📷</span>':''}
+        ${item.f?`<span class="freq" style="display:block;font-weight:400">${esc(facName(item.f))}${item.room?' · '+esc(item.room):''}</span>`:''}</span>
+    </div>
+    ${extra||''}
+    ${item.img?`<img class="pthumb" src="${item.img}" alt="Proof photo for ${esc(item.t)}" data-pview="${ref}">`:''}
+    <div class="pcbot">
+      ${status}
+      ${item.photo?`<label class="pico ${needPhoto&&st.s!=='sched'?'need':''}" title="Upload the photo for this duty">📷<input type="file" accept="image/*" capture="environment" data-pcam="${ref}" hidden></label>`:''}
+      ${st.s!=='done'?`<button class="pico" data-pfq="${ref}" title="Reminder frequency — ${esc(freqLabel(item.fq||(P[pid]||{}).freq||'2x'))}">⏱</button>`:''}
+      ${st.s!=='done'&&st.s!=='sched'?`<button class="pico" data-pnag="${ref}" title="Send the reminder now">⤴</button>`:''}
+      <button class="pico" data-pdel="${ref}" title="Remove this duty">×</button>
+    </div>
+  </div>`;
+}
+function refItem(ref){
+  const a=ref.split('|');
+  if(a[0]==='w') return {item:PLAN[a[1]][+a[2]][+a[3]], pid:a[1], days:TODAY_IDX-(+a[2]),
+                         list:PLAN[a[1]][+a[2]], idx:+a[3]};
+  const list=MONTHPLAN[a[1]]||[], item=list[+a[2]];
+  const d=a[1].split('-');
+  return {item, pid:item&&item.p, days:-dayDiff(`${d[0]}-${String(+d[1]+1).padStart(2,'0')}-${String(d[2]).padStart(2,'0')}`),
+          list, idx:+a[2]};
+}
+function planAlerts(){
+  const out=[];
+  PEOPLE.forEach(p=>(PLAN[p.id]||[]).forEach((cell,d)=>cell.forEach((it,i)=>{
+    const st=dutyStatus(it,TODAY_IDX-d); if(st.s==='chasing'||st.s==='late') out.push({pid:p.id,it,st,ref:`w|${p.id}|${d}|${i}`});
+  })));
+  Object.entries(MONTHPLAN).forEach(([k,list])=>list.forEach((it,i)=>{
+    const d=k.split('-');
+    const days=-dayDiff(`${d[0]}-${String(+d[1]+1).padStart(2,'0')}-${String(d[2]).padStart(2,'0')}`);
+    const st=dutyStatus(it,days); if(st.s==='chasing'||st.s==='late') out.push({pid:it.p,it,st,ref:`m|${k}|${i}`});
+  }));
+  return out;
+}
+function planNagText(it,st){
+  return (st.s==='late'
+    ? `⚠ STILL OPEN — “${it.t}” was due ${st.day-1} day${st.day-1===1?'':'s'} ago.`
+    : `Today’s duty — “${it.t}”.`)
+    + `\nComplete it one of three ways: reply DONE, tick it off on the dashboard${it.photo?', or upload the photo':''}.`
+    + (it.photo?`\n📷 This duty needs a picture before it counts as done.`:'')
+    + `\nCopy: Fredshon (Owner)${st.s==='late'?', Karina (Manager)':''}. Day ${st.day} — reminding ${freqLabel(it.fq||'2x').toLowerCase()}.`;
+}
+function runPlanCycle(){
+  const a=planAlerts();
+  if(!a.length) return 0;
+  a.forEach(x=>chatPush(x.pid,'out',planNagText(x.it,x.st)));
+  const late=a.filter(x=>x.st.s==='late').length, ph=a.filter(x=>x.it.photo&&!x.it.img).length;
+  logFeed(`Planner duty sweep — ${a.length} reminder${a.length===1?'':'s'} sent to ${new Set(a.map(x=>x.pid)).size} staff via ${chanLabel(CHANNEL)}, copied to Fredshon (Owner)${late?`; ${late} carried over and copied to Karina (Manager)`:''}${ph?`; ${ph} waiting on a photo`:''}.`);
+  return a.length;
+}
+
+/* ============================ PLANNER ============================ */
+function renderPlan(){
+  $('#planHead').innerHTML='<th class="who">Team member</th>'+
+    DAYS.map((d,i)=>`<th class="day${i===TODAY_IDX?' todaycol':''}">${d}${i===TODAY_IDX?' · today':''}</th>`).join('');
+  $('#planBody').innerHTML=PEOPLE.map(p=>`<tr>
+      <td class="who"><strong>${esc(p.name)}</strong><br><span class="freq">${p.role}</span></td>
+      ${(PLAN[p.id]||[]).map((cell,di)=>`<td class="cell${di===TODAY_IDX?' todaycol':''}">
+        ${cell.filter(it=>!it.f||inScope(it.f)).map((it,ti)=>chipHTML(`w|${p.id}|${di}|${cell.indexOf(it)}`,it,p.id,TODAY_IDX-di)).join('')}
+        <button class="addbtn" data-add="${p.id}|${di}">+</button>
+      </td>`).join('')}
+    </tr>`).join('');
+  const all=PEOPLE.flatMap(p=>(PLAN[p.id]||[]).flatMap((c,d)=>c.map(it=>({it,d}))));
+  const done=all.filter(x=>x.it.done).length;
+  const chasing=all.filter(x=>!x.it.done&&TODAY_IDX-x.d>=0).length;
+  const photos=all.filter(x=>x.it.img).length;
+  const waiting=all.filter(x=>!x.it.done&&x.it.photo&&!x.it.img&&TODAY_IDX-x.d>=0).length;
+  $('#planCount').innerHTML=
+    `<b>${all.length}</b> duties · <b>${done}</b> done · <b>${chasing}</b> being texted daily · <b>${photos}</b> photos on file${waiting?` · <b style="color:var(--warning)">${waiting}</b> waiting on a photo`:''}`;
+}
+/* ---------- facility / organization name ---------- */
+let ORG='QCMS';
+const ORG_QUICK=['QCMS','CVEC','EVSLA','CICVI Los Angeles','Cardiovascular Surgicenter of Beverly Hills'];
+function setOrg(name){
+  ORG=(name||'').trim()||'QCMS';
+  $('#orgBtn').textContent=ORG;
+  document.title=ORG+' Administration Dashboard — Prototype';
+  $('#orgFoot').textContent=ORG;
+  const so=$('#schedOrg'); if(so) so.textContent=ORG;
+}
+function openFacModal(){
+  $('#facInput').value=ORG;
+  $('#facQuick').innerHTML=ORG_QUICK.map(f=>`<button class="opt" data-org="${esc(f)}">${esc(f)}</button>`).join('');
+  $('#facModal').classList.add('open');
+  setTimeout(()=>{$('#facInput').focus();$('#facInput').select();},40);
+}
+function closeFacModal(){$('#facModal').classList.remove('open');}
+
+let pendingCell=null;
+function openModal(pid,di){
+  pendingCell=[pid,di];
+  $('#mTitle').textContent='Assign a task';
+  $('#mCap').textContent=`${P[pid].name} · ${DAYS[di]}`;
+  $('#mOpts').innerHTML=LIBRARY.map(x=>`<button class="opt" data-pick="${esc(x.t)}">${esc(x.t)}${x.photo?' <span style="opacity:.7">📷 photo required</span>':''}</button>`).join('');
+  $('#modal').classList.add('open');
+}
+function closeModal(){$('#modal').classList.remove('open');pendingCell=null;}
+
+/* ============================ TEAM PROFILES ============================ */
+function credState(expISO){
+  const [y,m,d]=expISO.split('-').map(Number);
+  const days=Math.round((new Date(y,m-1,d)-TODAY)/86400000);
+  if(days<0)   return {days,s:'overdue', label:'Expired',  note:`${Math.abs(days)} days ago`};
+  if(days<=60) return {days,s:'reminded',label:'Expiring', note:`in ${days} days`};
+  return {days,s:'done',label:'Valid', note:`in ${days} days`};
+}
+/* --- automatic recurring-duty reminder engine ---
+   Same rule as credentials: once the window opens, the agent texts the person
+   AND the administration every day at 8:00 AM until someone replies DONE.     */
+const dayDiff=iso=>{const [y,m,d]=iso.split('-').map(Number);return Math.round((new Date(y,m-1,d)-TODAY)/86400000);};
+function addMonthsISO(iso,n){
+  const [y,m,d]=iso.split('-').map(Number);
+  const dt=new Date(y,m-1+n,d);
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+}
+function addDaysISO(iso,n){
+  const [y,m,d]=iso.split('-').map(Number);
+  const dt=new Date(y,m-1,d+n);
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+}
+function dutyState(du){
+  const c=CAD[du.c], days=dayDiff(du.due);
+  const s = days<0 ? 'overdue' : days<=c.lead ? 'reminded' : 'pending';
+  return {days, s, active:s!=='pending', day:c.lead-days+1, lead:c.lead,
+          note: days<0 ? `${Math.abs(days)} days overdue` : days===0 ? 'due today' : `in ${days} days`};
+}
+function dutyRecipients(pid,st){
+  const p=P[pid];
+  return st.s==='overdue'
+    ? `${p.name.split(' ')[0]} · Fredshon (Owner) · Karina (Manager)`
+    : `${p.name.split(' ')[0]} · Fredshon (Owner)`;
+}
+function dutyText(pid,du){
+  const st=dutyState(du), c=CAD[du.c];
+  return (st.s==='overdue'
+    ? `⚠ ${c.label.toUpperCase()} DUTY OVERDUE — “${du.t}” was due ${fmtExp(du.due)} (${Math.abs(st.days)} days ago).`
+    : `${c.label} duty — “${du.t}” is due ${fmtExp(du.due)} (${st.note}).`)
+    + `\n${du.how}\nReply DONE when finished.\nCopy: ${st.s==='overdue'?'Fredshon (Owner), Karina (Manager)':'Fredshon (Owner)'}. Day ${st.day} of daily reminders.`;
+}
+function sendDutyNag(pid,du,quiet){
+  chatPush(pid,'out',dutyText(pid,du));
+  if(!quiet) logFeed(`${CAD[du.c].label} duty reminder sent to ${P[pid].name} via ${chanLabel(P[pid].chan)} — “${du.t}” — copied to the administration.`);
+}
+function dutyAlerts(){
+  const out=[];
+  PEOPLE.forEach(p=>(DUTIES[p.id]||[]).forEach((du,i)=>{
+    const st=dutyState(du); if(st.active) out.push({pid:p.id,i,du,...st});
+  }));
+  return out.sort((a,b)=>a.days-b.days);
+}
+function completeDuty(pid,i){
+  const du=DUTIES[pid][i], c=CAD[du.c], ts=nowStamp();
+  du.last=ts;
+  du.due = c.step.d ? addDaysISO(du.due,c.step.d) : addMonthsISO(du.due,c.step.m);
+  (CHATS[pid]=CHATS[pid]||[]).push({f:'in',ts,t:'DONE'},
+    {f:'out',ts,t:`Logged — “${du.t}” completed ${ts}. Daily reminders stopped. Next ${c.label.toLowerCase()} occurrence: ${fmtExp(du.due)}.`});
+  logFeed(`${P[pid].name} replied “done” — ${c.label.toLowerCase()} duty “${du.t}”. Timestamped; next due ${fmtExp(du.due)}.`);
+}
+function runDutyCycle(){
+  const a=dutyAlerts();
+  if(!a.length) return 0;
+  a.forEach(x=>sendDutyNag(x.pid,x.du,true));
+  const late=a.filter(x=>x.s==='overdue').length;
+  logFeed(`Recurring-duty sweep — ${a.length} daily reminder${a.length===1?'':'s'} sent to ${new Set(a.map(x=>x.pid)).size} staff via ${chanLabel(CHANNEL)}, all copied to Fredshon (Owner)${late?`; ${late} overdue item${late===1?'':'s'} also copied to Karina (Manager)`:''}.`);
+  return a.length;
+}
+
+/* --- automatic credential reminder engine ---
+   Status turns "Expiring" at 60 days (visibility).
+   The DAILY reminder starts at 30 days out and never stops until renewed —
+   it goes to the person AND the administration, escalating once expired.   */
+const NAG_START = 30;
+let CREDNAG = {};              // "pid|credential" -> {stopped:true} once renewed
+const nagKey=(pid,n)=>`${pid}|${n}`;
+function nagInfo(pid,name,exp){
+  const st=credState(exp);
+  const active = st.days<=NAG_START && !(CREDNAG[nagKey(pid,name)]||{}).stopped;
+  return {...st, active, day: NAG_START - st.days + 1};
+}
+function credAlerts(){
+  const out=[];
+  PEOPLE.forEach(p=>(CREDS[p.id]||[]).forEach(([n,by,exp])=>{
+    const ni=nagInfo(p.id,n,exp);
+    if(ni.active) out.push({pid:p.id,name:n,by,exp,...ni});
+  }));
+  return out.sort((a,b)=>a.days-b.days);
+}
+function nagRecipients(pid,st){
+  const p=P[pid];
+  return st.s==='overdue'
+    ? `${p.name.split(' ')[0]} · Fredshon (Owner) · Karina (Manager)`
+    : `${p.name.split(' ')[0]} · Fredshon (Owner)`;
+}
+function nagText(pid,name,exp){
+  const ni=nagInfo(pid,name,exp);
+  return ni.s==='overdue'
+    ? `⚠ CREDENTIAL EXPIRED — your ${name} expired ${fmtExp(exp)} (${Math.abs(ni.days)} days ago). You cannot be scheduled until it is renewed. Reply DONE with the new expiration date.\nCopy: Fredshon (Owner), Karina (Manager). Day ${ni.day} of daily reminders.`
+    : `Your ${name} expires ${fmtExp(exp)} — in ${ni.days} days. Book the renewal and reply DONE with the new date.\nCopy: Fredshon (Owner). Day ${ni.day} of daily reminders.`;
+}
+function sendNag(pid,name,exp,quiet){
+  chatPush(pid,'out',nagText(pid,name,exp));
+  if(!quiet) logFeed(`Credential reminder sent to ${P[pid].name} via ${chanLabel(P[pid].chan)} — “${name}” — copied to the administration.`);
+}
+function addYears(iso,y){
+  const [Y,M,D]=iso.split('-').map(Number);
+  return `${Y+y}-${String(M).padStart(2,'0')}-${String(D).padStart(2,'0')}`;
+}
+function markRenewed(pid,name){
+  const row=(CREDS[pid]||[]).find(c=>c[0]===name); if(!row) return;
+  const yrs=/annual|Annual|TB |Fit test|badge|portal/.test(name+row[1])?1:2;
+  row[2]=addYears(row[2].replace(/^\d{4}/,String(TODAY.getFullYear())),yrs);
+  CREDNAG[nagKey(pid,name)]={stopped:true};
+  chatPush(pid,'out',`Logged — ${name} renewed, new expiration ${fmtExp(row[2])}. Daily reminders stopped. Thank you.`);
+  logFeed(`${P[pid].name} — “${name}” marked renewed to ${fmtExp(row[2])}. Daily reminders stopped.`);
+}
+function runCredCycle(){
+  const a=credAlerts();
+  if(!a.length){logFeed('Credential sweep — nothing in alert. No reminders sent.');return 0;}
+  a.forEach(x=>sendNag(x.pid,x.name,x.exp,true));
+  const expired=a.filter(x=>x.s==='overdue').length;
+  logFeed(`Credential sweep — ${a.length} daily reminder${a.length===1?'':'s'} sent to ${new Set(a.map(x=>x.pid)).size} staff via ${chanLabel(CHANNEL)}, all copied to Fredshon (Owner)${expired?`; ${expired} expired item${expired===1?'':'s'} also copied to Karina (Manager)`:''}.`);
+  return a.length;
+}
+function renderCredAlerts(){
+  const a=credAlerts();
+  const el=$('#credAlertRows'); if(!el) return;
+  $('#credAlertPanel').querySelector('.cap').innerHTML=
+    `The agent watches every expiry date. At ${NAG_START} days out it starts texting the person <strong>and</strong> the administration — every single day, until someone marks it renewed. `+
+    (a.length?`<strong style="color:var(--critical)">${a.length} reminder${a.length===1?'':'s'} running right now.</strong>`:'Nothing in alert right now.');
+  el.innerHTML = a.length ? a.map(x=>`<tr>
+    <td><strong>${esc(x.name)}</strong><br><span class="freq">${esc(x.by)}</span></td>
+    <td>${esc(P[x.pid].name)}<span class="rolechip">${P[x.pid].role}</span></td>
+    <td class="num" style="white-space:nowrap">${fmtExp(x.exp)}<br><span class="freq">${esc(x.note)}</span></td>
+    <td>${credChip(x)}</td>
+    <td class="num" style="white-space:nowrap"><strong>Day ${x.day}</strong><br><span class="freq">8:00 AM daily</span></td>
+    <td style="font-size:12px;color:var(--ink2)">${esc(nagRecipients(x.pid,x))}</td>
+    <td style="white-space:nowrap">
+      <button class="btn sm" data-nagnow="${x.pid}|${esc(x.name)}">Send now</button>
+      <button class="btn sm" data-renew="${x.pid}|${esc(x.name)}">Mark renewed</button></td>
+  </tr>`).join('')
+  : '<tr><td colspan="7" style="color:var(--muted);padding:20px 10px">Every credential is more than 30 days out. Nothing is being chased.</td></tr>';
+}
+
+function credChip(st){
+  const ico=st.s==='overdue'?'▲':st.s==='reminded'?'!':'✓';
+  return `<span class="chip ${st.s}"><span class="dot"></span><span class="ico">${ico}</span>${st.label}</span>`;
+}
+function credSummary(id){
+  const c=(CREDS[id]||[]).map(x=>credState(x[2]));
+  return {exp:c.filter(x=>x.s==='overdue').length, soon:c.filter(x=>x.s==='reminded').length, total:c.length};
+}
+function fmtExp(iso){
+  const [y,m,d]=iso.split('-').map(Number);
+  return new Date(y,m-1,d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+function renderTeam(){
+  $('#teamGrid').innerHTML=PEOPLE.filter(p=>!p.fac||inScope(p.fac)).map(p=>{
+    const open=TASKS.filter(t=>t.p===p.id&&t.s!=='done').length;
+    const over=TASKS.filter(t=>t.p===p.id&&t.s==='overdue').length;
+    const cs=credSummary(p.id);
+    return `<button class="tcard" data-prof="${p.id}">
+      <div class="hd"><div class="av-lg">${p.init}</div>
+        <div><div class="nm">${esc(p.name)}</div><div class="rl">${p.role}</div>
+        <div class="rl" style="color:var(--muted)">${esc(p.base)}</div></div></div>
+      <div class="tstats">
+        <span><b>${open}</b>open</span>
+        <span class="${over?'bad':''}"><b>${over}</b>escalating</span>
+        <span class="${cs.exp?'bad':cs.soon?'warn':''}"><b>${cs.exp||cs.soon||0}</b>${cs.exp?'expired':cs.soon?'expiring':'creds ok'}</span>
+      </div></button>`;
+  }).join('');
+}
+
+let openProf=null;
+function renderProfile(id){
+  openProf=id;
+  const p=P[id];
+  const mine=TASKS.filter(t=>t.p===id);
+  const group=f=>mine.filter(t=>t.fr===f);
+  const dutyList=f=>{
+    const g=group(f);
+    return g.length ? g.map(t=>`<div class="duty"><span class="dt">${esc(t.t)}</span>
+        <span class="dm">${esc(t.f)} · due ${esc(t.due)} · ${chip(t.s)}</span>
+        <span class="dm">${esc(t.how)}</span></div>`).join('')
+      : '<p class="cap" style="margin:6px 0 0">No '+f.toLowerCase()+' duties assigned.</p>';
+  };
+  const monthly=Object.entries(MONTHPLAN).filter(([k,v])=>k.startsWith(`${calY}-${calM}-`)&&v.some(i=>i.p===id))
+    .map(([k,v])=>v.filter(i=>i.p===id).map(i=>`<div class="duty"><span class="dt">${esc(i.t)}</span><span class="dm">${MONTHS[calM]} ${k.split('-')[2]}, ${calY} · from the monthly planner</span></div>`).join('')).join('');
+  const cs=credSummary(id);
+
+  $('#teamDetail').innerHTML=`
+  <div class="panel">
+    <button class="btn sm" data-backteam="1" style="margin-bottom:12px">◀ All team</button>
+    <div class="phead">
+      <div class="av-lg" style="width:52px;height:52px;font-size:17px">${p.init}</div>
+      <div><h2>${esc(p.name)}</h2>
+        <p class="cap" style="margin:2px 0 0">${p.role} · ${esc(p.base)} · employee ${esc(p.emp)}</p></div>
+      <span class="spacer" style="flex:1"></span>
+      <button class="btn sm" data-msgone="${id}">Message</button>
+      <button class="btn primary sm" data-remindall="${id}">Remind all open tasks</button>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div>
+      <div class="panel">
+        <h2>Profile</h2>
+        <p class="cap">Where reminders go and when they fire.</p>
+        <dl class="kv">
+          <dt>WhatsApp</dt><dd>${esc(p.wa)}</dd>
+          <dt>Email</dt><dd>${esc(p.em)}</dd>
+          <dt>Channel</dt><dd>
+            <button class="tog" data-pchan="${id}|wa"   aria-pressed="${p.chan==='wa'||p.chan==='both'}">WhatsApp</button>
+            <button class="tog" data-pchan="${id}|em"   aria-pressed="${p.chan==='em'||p.chan==='both'}">Email</button></dd>
+          <dt>Reminders</dt><dd>${esc(p.window)}, repeating until DONE</dd>
+          <dt>Frequency</dt><dd><div class="pickrow" style="margin:0">${FREQS.map(f=>
+            `<button class="tog" data-pfreq="${id}|${f.k}" aria-pressed="${(p.freq||'2x')===f.k}" title="${esc(f.when)}">${esc(f.label)}</button>`).join('')}</div>
+            <span class="freq">${esc(freqWhen(p.freq||'2x'))} — applies to every duty unless the duty overrides it</span></dd>
+          <dt>Base</dt><dd>${esc(p.base)}</dd>
+          <dt>Hired</dt><dd>${esc(p.hired)}</dd>
+          <dt>Languages</dt><dd>${esc(p.lang)}</dd>
+          <dt>Escalates to</dt><dd>${id==='km'?'Owner (Fredshon)':'Manager (Karina) → Owner (Fredshon)'}</dd>
+        </dl>
+      </div>
+
+      <div class="panel">
+        <h2>Credentialing</h2>
+        <p class="cap">${cs.exp?`<strong style="color:var(--critical)">${cs.exp} expired</strong> · `:''}${cs.soon?`<strong style="color:var(--warning)">${cs.soon} expiring within 60 days</strong> · `:''}${cs.total} items tracked.
+        At ${NAG_START} days out the agent texts ${esc(p.name.split(' ')[0])} <strong>and</strong> the administration every day at 8:00 AM until it is marked renewed.</p>
+        <div class="tblwrap">
+          <table><thead><tr><th>Credential</th><th>Issued by</th><th>Expires</th><th>Status</th><th>Auto-reminder</th><th></th></tr></thead>
+          <tbody>${(CREDS[id]||[]).map(([n,by,exp])=>{
+            const ni=nagInfo(id,n,exp);
+            return `<tr><td><strong>${esc(n)}</strong></td><td style="color:var(--ink2)">${esc(by)}</td>
+              <td class="num">${fmtExp(exp)}<br><span class="freq">${ni.note}</span></td>
+              <td>${credChip(ni)}</td>
+              <td style="white-space:nowrap;font-size:12px">${ni.active
+                  ? `<strong style="color:${ni.s==='overdue'?'var(--critical)':'var(--warning)'}">Day ${ni.day} · running</strong><br><span class="freq">${esc(nagRecipients(id,ni))}</span>`
+                  : (CREDNAG[nagKey(id,n)]||{}).stopped ? '<span class="freq">Renewed — stopped</span>'
+                  : `<span class="freq">starts in ${ni.days-NAG_START} days</span>`}</td>
+              <td style="white-space:nowrap">${ni.active
+                  ? `<button class="btn sm" data-nagnow="${id}|${esc(n)}">Send now</button> <button class="btn sm" data-renew="${id}|${esc(n)}">Mark renewed</button>`
+                  : ''}</td></tr>`;
+          }).join('')}</tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <h2>Automatic reminder thread</h2>
+        <p class="cap">What the agent has actually sent ${esc(p.name.split(' ')[0])} over ${p.chan==='em'?'email':p.chan==='wa'?'WhatsApp':'WhatsApp + email'}, and what came back.</p>
+        <div class="thread" id="thread">${(CHATS[id]||[]).map(m=>
+          `<div class="bub ${m.f==='out'?'out':'in'}">${esc(m.t).replace(/\n/g,'<br>')}<span class="bts">${esc(m.ts)}${m.f==='out'?' · agent':''}</span></div>`).join('')
+          || '<p class="sysline">No messages yet.</p>'}</div>
+        <div class="chatbar">
+          <input type="text" id="chatIn" placeholder="Type a message to ${esc(p.name.split(' ')[0])}…">
+          <button class="btn primary sm" data-chatsend="${id}">Send</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Assigned on the task board</h2>
+        <p class="cap">Day-to-day work from the board and the planners.</p>
+        <span class="fieldlab" style="margin-top:4px">Daily</span>${dutyList('Daily')}
+        <span class="fieldlab" style="margin-top:14px">Weekly</span>${dutyList('Weekly')}
+        <span class="fieldlab" style="margin-top:14px">Monthly</span>${dutyList('Monthly')}
+        ${monthly?`<span class="fieldlab" style="margin-top:14px">From the ${MONTHS[calM]} planner</span>${monthly}`:''}
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Other responsibilities — recurring duties</h2>
+    <p class="cap">${esc(p.name.split(' ')[0])}’s standing duties by cadence. Each one opens its own reminder window, then the agent texts ${esc(p.name.split(' ')[0])} <strong>and</strong> the administration every day at 8:00 AM until it is marked done — at which point the next occurrence is scheduled automatically.</p>
+    <div class="dutygrid">${CADENCES.map(c=>{
+      const list=(DUTIES[id]||[]).map((du,i)=>({du,i})).filter(x=>x.du.c===c.k);
+      if(!list.length) return '';
+      const states=list.map(x=>dutyState(x.du));
+      const run=states.filter(s=>s.active).length, late=states.filter(s=>s.s==='overdue').length;
+      return `<div class="dutybox ${late?'late':run?'hot':''}">
+        <h3>${esc(c.label)}</h3>
+        <p class="bmeta">${list.length} ${list.length===1?'duty':'duties'} · reminders start ${c.lead} days before due${run?` · <b>${run} running now</b>`:''}</p>
+        <button class="btn sm" style="width:100%;margin-bottom:8px" data-addroutine="${id}|${c.k}">+ Add a ${esc(c.label.toLowerCase())} responsibility</button>
+        ${list.map(({du,i})=>{
+          const st=dutyState(du);
+          return `<div class="ditem">
+            <span class="dh">${esc(du.t)}</span>
+            <span class="dsub">${esc(du.how)}</span>
+            <span class="dsub" style="color:var(--ink2)">Due ${fmtExp(du.due)} · ${st.note}${du.last?` · last done ${esc(du.last)}`:''}</span>
+            ${st.active
+              ? `<span class="nag"><b style="color:${st.s==='overdue'?'var(--critical)':'var(--warning)'}">Day ${st.day} · ${esc(freqLabel(du.fq||p.freq||'2x').toLowerCase())}</b>
+                 <span class="to">→ ${esc(dutyRecipients(id,st))}</span></span>
+                 <span class="acts"><button class="btn sm" data-dnag="${id}|${i}">Send now</button>
+                 <button class="btn sm" data-ddone="${id}|${i}">Mark done</button>
+                 <button class="btn sm" data-dutyfreq="${id}|${i}" title="Reminder frequency">⏱</button>
+                 <button class="btn sm" data-delroutine="${id}|${i}" title="Remove">×</button></span>`
+              : `<span class="nag"><span class="to">Reminders start in ${st.days-st.lead} days · ${esc(freqLabel(du.fq||p.freq||'2x').toLowerCase())}</span></span>
+                 <span class="acts"><button class="btn sm" data-dutyfreq="${id}|${i}" title="Reminder frequency">⏱</button>
+                 <button class="btn sm" data-delroutine="${id}|${i}" title="Remove">×</button></span>`}
+          </div>`;
+        }).join('')}
+      </div>`;
+    }).join('')}</div>
+  </div>`;
+  $('#teamList').classList.add('hide');
+  $('#teamDetail').classList.remove('hide');
+  const th=$('#thread'); if(th) th.scrollTop=th.scrollHeight;
+}
+function chatPush(id,f,t){
+  (CHATS[id]=CHATS[id]||[]).push({f,ts:nowStamp(),t});
+  if(openProf===id) renderProfile(id);
+}
+
+/* ============================ MONTHLY PLANNER ============================ */
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DOW=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const key=(y,m,d)=>`${y}-${m}-${d}`;
+
+function renderMonth(){
+  $('#mTitleCal').textContent=`${MONTHS[calM]} ${calY}`;
+  const first=new Date(calY,calM,1);
+  const lead=(first.getDay()+6)%7;                 // Monday-first offset
+  const dim=new Date(calY,calM+1,0).getDate();
+  const prevDim=new Date(calY,calM,0).getDate();
+  let cells='';
+  DOW.forEach(d=>cells+=`<div class="dow">${d}</div>`);
+  for(let i=lead-1;i>=0;i--) cells+=`<div class="day out"><span class="dnum">${prevDim-i}</span></div>`;
+  for(let d=1;d<=dim;d++){
+    const k=key(calY,calM,d);
+    const items=MONTHPLAN[k]||[];
+    const iso=`${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const today=(iso===SERVER_TODAY)?' today':'';
+    cells+=`<div class="day${today}">
+      <span class="dnum">${d}</span>
+      ${items.map((it,ix)=>{
+        const days=-dayDiff(`${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
+        return chipHTML(`m|${k}|${ix}`,it,it.p,days,
+          `<span class="mwho">${esc(P[it.p].name.split(' ')[0])} · ${esc(P[it.p].role)}</span>`);
+      }).join('')}
+      <button class="addbtn" data-madd="${k}">+</button>
+    </div>`;
+  }
+  const tail=(7-((lead+dim)%7))%7;
+  for(let i=1;i<=tail;i++) cells+=`<div class="day out"><span class="dnum">${i}</span></div>`;
+  $('#cal').innerHTML=cells;
+
+  const n=Object.keys(MONTHPLAN).filter(k=>k.startsWith(`${calY}-${calM}-`))
+                                .reduce((a,k)=>a+MONTHPLAN[k].length,0);
+  $('#mCount').textContent=`${n} monthly duties scheduled · ${n*2} reminders queued`;
+
+  $('#recurRows').innerHTML=RECURRING.map(([t,p,when])=>
+    `<tr><td><strong>${esc(t)}</strong></td><td>${esc(P[p].name)}<span class="rolechip">${P[p].role}</span></td><td style="color:var(--ink2)">${esc(when)}</td></tr>`).join('');
+
+  renderMonChart();
+}
+
+function renderMonChart(){
+  const counts=Object.fromEntries(PEOPLE.map(p=>[p.id,0]));
+  Object.keys(MONTHPLAN).filter(k=>k.startsWith(`${calY}-${calM}-`))
+    .forEach(k=>MONTHPLAN[k].forEach(it=>counts[it.p]++));
+  const data=PEOPLE.map(p=>({p,n:counts[p.id]})).sort((a,b)=>b.n-a.n);
+  const W=520,rowH=32,PAD_L=142,PAD_R=34,H=data.length*rowH+22;
+  const max=Math.max(3,...data.map(d=>d.n));
+  const sx=v=>v/max*(W-PAD_L-PAD_R);
+  let g='';
+  for(let i=0;i<=max;i+=Math.ceil(max/3)){
+    const x=PAD_L+sx(i);
+    g+=`<line x1="${x}" y1="0" x2="${x}" y2="${H-20}" stroke="var(--grid)" stroke-width="1"/>
+        <text x="${x}" y="${H-6}" fill="var(--muted)" font-size="10" text-anchor="middle">${i}</text>`;
+  }
+  const bars=data.map((d,i)=>{
+    const y=i*rowH+6,h=17,w=sx(d.n);
+    return `<text x="${PAD_L-10}" y="${y+12}" fill="var(--ink2)" font-size="11.5" text-anchor="end">${esc(d.p.name)}</text>
+    <g class="mhit" data-tt="${esc(d.p.name)}|${d.n}">
+      <rect x="${PAD_L}" y="${y-3}" width="${W-PAD_L-PAD_R}" height="${h+6}" fill="transparent"/>
+      ${d.n>0?`<path d="M${PAD_L},${y} h${Math.max(0,w-4)} a4,4 0 0 1 4,4 v${h-8} a4,4 0 0 1 -4,4 h-${Math.max(0,w-4)} z" fill="var(--series-1)"/>`:''}
+      <text x="${PAD_L+w+8}" y="${y+12}" fill="var(--ink2)" font-size="11.5" class="num">${d.n}</text>
+    </g>`;
+  }).join('');
+  const svg=$('#monChart');
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.innerHTML=g+bars+`<line x1="${PAD_L}" y1="0" x2="${PAD_L}" y2="${H-20}" stroke="var(--axis)" stroke-width="1"/>`;
+  svg.querySelectorAll('.mhit').forEach(el=>{
+    el.addEventListener('mousemove',e=>{const [n,c]=el.dataset.tt.split('|');
+      showTT(e,`<b>${esc(n)}</b>${c} monthly ${c==='1'?'duty':'duties'} in ${MONTHS[calM]}`);});
+    el.addEventListener('mouseleave',hideTT);
+  });
+  $('#monTable').innerHTML='<table><thead><tr><th>Team member</th><th>Monthly duties</th></tr></thead><tbody>'+
+    data.map(d=>`<tr><td>${esc(d.p.name)}</td><td class="num">${d.n}</td></tr>`).join('')+'</tbody></table>';
+}
+
+/* two-step add: pick task, then pick person */
+let mAdd=null;
+function openMonthPick(k){
+  mAdd={k,t:null};
+  const d=k.split('-')[2];
+  $('#mTitle').textContent='Add a monthly duty';
+  $('#mCap').textContent=`${MONTHS[calM]} ${d}, ${calY} — step 1 of 2: pick the duty`;
+  const opts=[...new Set([...RECURRING.map(r=>r[0]),...LIBRARY.map(x=>x.t)])];
+  $('#mOpts').innerHTML=opts.map(t=>`<button class="opt" data-mtask="${esc(t)}">${esc(t)}${LIB[t]?' <span style="opacity:.7">📷 photo required</span>':''}</button>`).join('');
+  $('#modal').classList.add('open');
+}
+function openMonthPerson(){
+  $('#mTitle').textContent='Assign it to';
+  $('#mCap').textContent=`“${mAdd.t}” — step 2 of 2: pick the owner`;
+  $('#mOpts').innerHTML=PEOPLE.map(p=>`<button class="opt" data-mperson="${p.id}">${esc(p.name)} — ${p.role}</button>`).join('');
+}
+
+/* ============================ SCHEDULING ============================ */
+function shiftHrs(t){
+  if(t==='On call') return 0;
+  const [a,b]=t.split('-').map(x=>{const [h,m]=x.split(':').map(Number);return h*60+m;});
+  return (b-a)/60;
+}
+const hhmm=h=>`${String(Math.floor(h)).padStart(2,'0')}:${String(Math.round((h%1)*60)).padStart(2,'0')}`;
+function weekDates(off){
+  const start=new Date(new Date((SCHED_WEEK_START||SERVER_TODAY)+'T00:00:00').getTime()+off*7*86400000);
+  return Array.from({length:7},(_,i)=>new Date(start.getFullYear(),start.getMonth(),start.getDate()+i));
+}
+function weekLabel(off){
+  const d=weekDates(off), o={month:'short',day:'numeric'};
+  return `${d[0].toLocaleDateString('en-US',o)} – ${d[6].toLocaleDateString('en-US',o)}, ${d[6].getFullYear()}`;
+}
+const curShifts=()=>SCHED[wkOff]||(SCHED[wkOff]=[]);
+
+function renderSched(){
+  $('#sWeek').textContent=weekLabel(wkOff);
+  $('#sLoc').innerHTML='<option value="all">All locations in view</option>'+
+    SCHED_LOCS.filter(l=>l.id!=='ab'&&facIds().includes(l.id)).map(l=>`<option value="${l.id}"${locFilter===l.id?' selected':''}>${esc(l.name)}</option>`).join('');
+  const all=curShifts();
+  const dates=weekDates(wkOff);
+
+  /* day header meta */
+  const per=dates.map((_,d)=>{
+    const s=all.filter(x=>x.d===d&&x.l!=='ab');
+    const abs=all.filter(x=>x.d===d&&x.l==='ab').length;
+    const fil=s.filter(x=>x.w).length, opn=s.filter(x=>!x.w).length;
+    const hrs=s.filter(x=>x.w).reduce((a,x)=>a+shiftHrs(x.t),0);
+    const staff=new Set(s.filter(x=>x.w).map(x=>x.w)).size;
+    return {fil,opn,abs,hrs,staff,tot:fil+opn};
+  });
+
+  let head='<thead><tr><th class="rowlab">Location / role</th>'+
+    dates.map((dt,i)=>{
+      const m=per[i], tot=Math.max(1,m.tot);
+      return `<th class="dhead"><span class="dd">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i]} ${dt.getMonth()+1}/${dt.getDate()}</span>
+        <span class="dm">${hhmm(m.hrs)} · ${m.tot} shifts · ${m.staff} staff</span>
+        <span class="cov" title="${m.fil} filled, ${m.opn} open, ${m.abs} out">
+          ${m.fil?`<i class="fil" style="flex:${m.fil/tot}"></i>`:''}
+          ${m.opn?`<i class="opn" style="flex:${m.opn/tot}"></i>`:''}
+          ${m.abs?`<i class="abs" style="flex:${m.abs/tot*0.4}"></i>`:''}
+        </span></th>`;
+    }).join('')+'</tr></thead>';
+
+  let body='<tbody>';
+  SCHED_LOCS.filter(l=>l.id==='ab'||(facIds().includes(l.id)&&(locFilter==='all'||locFilter===l.id))).forEach(loc=>{
+    const ls=all.filter(x=>x.l===loc.id);
+    const lh=ls.filter(x=>x.w).reduce((a,x)=>a+shiftHrs(x.t),0);
+    const lstaff=new Set(ls.filter(x=>x.w).map(x=>x.w)).size;
+    body+=`<tr class="grouprow"><td class="rowlab" colspan="8">
+      <button class="gtog" data-gtog="${loc.id}">${loc.open?'▾':'▸'} ${esc(loc.name)}</button>
+      <span class="gmeta">${hhmm(lh)} · ${ls.length} shifts · ${lstaff} staff</span></td></tr>`;
+    if(!loc.open) return;
+    loc.roles.forEach(role=>{
+      const rs=ls.filter(x=>x.r===role);
+      const rh=rs.filter(x=>x.w).reduce((a,x)=>a+shiftHrs(x.t),0);
+      body+=`<tr class="rolerow"><td class="rowlab"><span class="rn">${esc(role)}</span>
+        <span class="rm">${hhmm(rh)} · ${rs.length} shifts</span></td>`;
+      for(let d=0;d<7;d++){
+        const cells=rs.filter(x=>x.d===d);
+        body+=`<td class="cell2">${cells.map(x=>{
+          const i=all.indexOf(x);
+          const cls=loc.id==='ab'?'absent':x.w?'':'open';
+          return `<button class="shift ${cls}" data-srm="${i}" title="Tap to remove">
+            <span class="st">${esc(x.t)}</span><span class="sw">${esc(x.w||'Open — unfilled')}</span></button>`;
+        }).join('')}<button class="addbtn" data-sadd="${loc.id}|${esc(role)}|${d}">+</button></td>`;
+      }
+      body+='</tr>';
+    });
+  });
+  body+='</tbody>';
+  $('#schedTbl').innerHTML=head+body;
+
+  const filled=all.filter(x=>x.w&&x.l!=='ab'), open=all.filter(x=>!x.w&&x.l!=='ab');
+  const hrs=filled.reduce((a,x)=>a+shiftHrs(x.t),0);
+  const staff=new Set(filled.map(x=>x.w)).size;
+  $('#sStat').textContent=`${filled.length} shifts filled · ${open.length} open`;
+  $('#sSummary').innerHTML=[
+    ['Scheduled hours',hhmm(hrs)],['Shifts',filled.length+open.length],['Staff scheduled',staff],
+    ['Open shifts',open.length],['Out this week',all.filter(x=>x.l==='ab').length],
+    ['Est. labor',`$${Math.round(hrs*42).toLocaleString()}`],
+  ].map(([l,v])=>`<div class="sumcell"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
+
+  renderHrsChart(filled);
+}
+
+function renderHrsChart(filled){
+  const by={};
+  filled.forEach(x=>{by[x.w]=(by[x.w]||0)+shiftHrs(x.t)});
+  const data=Object.entries(by).map(([w,h])=>({w,h})).sort((a,b)=>b.h-a.h).slice(0,12);
+  const W=520,rowH=26,PAD_L=168,PAD_R=40,H=Math.max(60,data.length*rowH+22);
+  const max=Math.max(8,...data.map(d=>d.h));
+  const sx=v=>v/max*(W-PAD_L-PAD_R);
+  let g='';
+  for(let i=0;i<=max;i+=Math.ceil(max/4)){
+    const x=PAD_L+sx(i);
+    g+=`<line x1="${x}" y1="0" x2="${x}" y2="${H-20}" stroke="var(--grid)" stroke-width="1"/>
+        <text x="${x}" y="${H-6}" fill="var(--muted)" font-size="10" text-anchor="middle">${i}h</text>`;
+  }
+  const bars=data.map((d,i)=>{
+    const y=i*rowH+5,h=15,w=sx(d.h),over=d.h>40;
+    return `<text x="${PAD_L-10}" y="${y+11}" fill="var(--ink2)" font-size="11" text-anchor="end">${esc(d.w.replace(' (CRNA)',''))}</text>
+    <g class="hhit" data-tt="${esc(d.w)}|${hhmm(d.h)}|${over?'1':'0'}">
+      <rect x="${PAD_L}" y="${y-3}" width="${W-PAD_L-PAD_R}" height="${h+6}" fill="transparent"/>
+      <path d="M${PAD_L},${y} h${Math.max(0,w-4)} a4,4 0 0 1 4,4 v${h-8} a4,4 0 0 1 -4,4 h-${Math.max(0,w-4)} z" fill="${over?'var(--critical)':'var(--series-1)'}"/>
+      <text x="${PAD_L+w+7}" y="${y+11}" fill="var(--ink2)" font-size="10.5" class="num">${hhmm(d.h)}</text>
+    </g>`;
+  }).join('');
+  const svg=$('#hrsChart');
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.innerHTML=g+bars+`<line x1="${PAD_L}" y1="0" x2="${PAD_L}" y2="${H-20}" stroke="var(--axis)" stroke-width="1"/>`;
+  svg.querySelectorAll('.hhit').forEach(el=>{
+    el.addEventListener('mousemove',e=>{const [n,h,o]=el.dataset.tt.split('|');
+      showTT(e,`<b>${esc(n)}</b>${h} scheduled${o==='1'?' — <span style="color:var(--critical)">over 40 h</span>':''}`);});
+    el.addEventListener('mouseleave',hideTT);
+  });
+  $('#hrsTable').innerHTML='<table><thead><tr><th>Person</th><th>Scheduled hours</th></tr></thead><tbody>'+
+    data.map(d=>`<tr><td>${esc(d.w)}</td><td class="num">${hhmm(d.h)}</td></tr>`).join('')+'</tbody></table>';
+}
+
+/* two-step add: pick person (or Open), then pick time */
+let sAdd=null;
+function openShiftPerson(l,r,d){
+  sAdd={l,r,d,w:null};
+  const loc=SCHED_LOCS.find(x=>x.id===l);
+  $('#mTitle').textContent='Add a shift';
+  $('#mCap').textContent=`${loc.name} · ${r} · ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][d]} — step 1 of 2: who`;
+  $('#mOpts').innerHTML=`<button class="opt" data-sperson="">⬚ Leave open — unfilled</button>`+
+    STAFF.map(s=>`<button class="opt" data-sperson="${esc(s)}">${esc(s)}</button>`).join('');
+  $('#modal').classList.add('open');
+}
+function openShiftTime(){
+  $('#mTitle').textContent='Shift time';
+  $('#mCap').textContent=`${sAdd.w||'Open shift'} — step 2 of 2: pick the hours`;
+  $('#mOpts').innerHTML=SHIFT_TIMES.map(t=>`<button class="opt" data-stime="${t}">${t}${t==='On call'?'':` · ${shiftHrs(t)} h`}</button>`).join('');
+}
+
+/* ============================ MESSAGING ============================ */
+let TO=new Set(), CH={wa:true,em:false};
+function chanLabel(c){return c==='wa'?'WhatsApp':c==='em'?'email':'WhatsApp + email';}
+function renderCompose(){
+  $('#toRow').innerHTML=
+    `<button class="tog" data-to="all" aria-pressed="${TO.size===PEOPLE.length}">All team (${PEOPLE.length})</button>`+
+    PEOPLE.map(p=>`<button class="tog" data-to="${p.id}" aria-pressed="${TO.has(p.id)}" title="${esc(p.wa)} · ${esc(p.em)}">${esc(p.name.split(' ')[0])} ${esc(p.name.split(' ')[1])}</button>`).join('');
+  $('#tplRow').innerHTML=Object.keys(TEMPLATES).map(t=>`<button class="tog" data-tpl="${esc(t)}">${esc(t)}</button>`).join('');
+  $('#cWA').setAttribute('aria-pressed',String(CH.wa));
+  $('#cEM').setAttribute('aria-pressed',String(CH.em));
+  $('#msgCnt').textContent=`${$('#msgBody').value.length} characters`;
+}
+function openCompose(){
+  if(!TO.size) PEOPLE.forEach(p=>TO.add(p.id));
+  CH.wa = CHANNEL==='wa'||CHANNEL==='both';
+  CH.em = CHANNEL==='em'||CHANNEL==='both';
+  renderCompose(); $('#composeModal').classList.add('open');
+  setTimeout(()=>$('#msgBody').focus(),40);
+}
+function closeCompose(){$('#composeModal').classList.remove('open');}
+
+
+/* ============================ FACILITY SWITCHER ============================ */
+PEOPLE.forEach(p=>{p.fac=FACBYNAME[p.base]||'';});
+function renderFacBar(){
+  const opts=[
+    '<optgroup label="Combined views">'+VIEWS.map(v=>`<option value="${v.id}"${activeFac===v.id?' selected':''}>${esc(v.name)}</option>`).join('')+'</optgroup>',
+    '<optgroup label="Single facility">'+FACS.map(f=>`<option value="${f.id}"${activeFac===f.id?' selected':''}>${esc(f.name)} — ${esc(f.kind)}</option>`).join('')+'</optgroup>',
+  ].join('');
+  $('#facSel').innerHTML=opts;
+  const ids=facIds();
+  $('#facPills').innerHTML=FACS.map(f=>`<span class="facpill ${ids.includes(f.id)?'on':''}">${esc(f.name.replace('EVSLA ','').replace('CVEC ','').replace('CICVI ',''))}</span>`).join('');
+  const rooms=FACS.filter(f=>ids.includes(f.id)).reduce((a,f)=>a+f.rooms.length,0);
+  const staff=PEOPLE.filter(p=>!p.fac||ids.includes(p.fac)).length;
+  $('#facMeta').textContent=`${ids.length} facilit${ids.length===1?'y':'ies'} · ${rooms} rooms · ${staff} staff in view`;
+}
+function openFacManage(){
+  $('#mTitle').textContent='Manage facilities';
+  $('#mCap').textContent='Rename, add, or combine facilities. A combined view lets one owner run several sites as a single dashboard.';
+  $('#mOpts').innerHTML=
+    '<span class="fieldlab">Your facilities</span>'+
+    FACS.map(f=>`<div class="facrow">
+        <input type="text" value="${esc(f.name)}" data-facname="${f.id}">
+        <input type="text" value="${esc(f.rooms.join(', '))}" data-facrooms="${f.id}" placeholder="rooms" style="max-width:180px">
+        <button class="btn sm" data-facdel="${f.id}">×</button></div>`).join('')+
+    `<div class="facrow"><input type="text" id="facNew" placeholder="New facility name…">
+       <input type="text" id="facNewRooms" placeholder="OR 1, OR 2" style="max-width:180px">
+       <button class="btn sm" id="facAdd">Add</button></div>
+     <span class="fieldlab" style="margin-top:14px">Combined view</span>
+     <p class="cap" style="margin:0 0 8px">Tick the facilities to run together, name it, and it appears in the switcher.</p>
+     <div class="facrow" style="flex-wrap:wrap">${FACS.map(f=>`<label class="ck"><input type="checkbox" data-faccomb="${f.id}"> ${esc(f.name)}</label>`).join('')}</div>
+     <div class="facrow"><input type="text" id="viewName" placeholder="View name, e.g. West Valley group">
+       <button class="btn primary sm" id="viewAdd">Create view</button></div>
+     <span class="fieldlab" style="margin-top:14px">Existing views</span>
+     ${VIEWS.filter(v=>v.ids).map(v=>`<div class="facrow"><span style="flex:1;font-size:13px">${esc(v.name)}</span>
+        <button class="btn sm" data-viewdel="${v.id}">×</button></div>`).join('')||'<p class="cap" style="margin:0">No custom views yet.</p>'}`;
+  $('#modal').classList.add('open');
+}
+function saveFacNames(){
+  document.querySelectorAll('[data-facname]').forEach(i=>{
+    const f=FACS.find(x=>x.id===i.dataset.facname); if(f&&i.value.trim()) f.name=i.value.trim();
+  });
+  document.querySelectorAll('[data-facrooms]').forEach(i=>{
+    const f=FACS.find(x=>x.id===i.dataset.facrooms);
+    if(f) f.rooms=i.value.split(',').map(x=>x.trim()).filter(Boolean);
+  });
+}
+
+/* ============================ OR CASE LOG (for reports) ============================ */
+const PHYS=['Dr. Behnia','Dr. Haddad','Dr. Nguyen','Dr. Tran'];
+const PROCS=[
+  {n:'Genicular artery embolization (GAE)',min:78,rev:9400},
+  {n:'Angiogram — lower extremity',min:62,rev:5200},
+  {n:'Venogram',min:48,rev:3800},
+  {n:'Other embolization',min:85,rev:8600},
+  {n:'RFA — vein ablation',min:42,rev:2900},
+  {n:'Varithena',min:35,rev:2400},
+  {n:'VenaSeal',min:38,rev:3100},
+  {n:'Sclerotherapy',min:25,rev:900},
+];
+let _seed=20260819;
+const rnd=()=>{_seed=(_seed*1103515245+12345)&0x7fffffff;return _seed/0x7fffffff;};
+/* Surgical case log.
+   The prototype filled this with randomly generated cases — volume, physician,
+   duration, turnaround and REVENUE. None of it was real. On a compliance
+   dashboard those numbers can end up in a board report, so this is wired to a
+   real source instead and stays empty until one exists. The Reports tab shows
+   an explicit "not connected" state rather than inventing a month of cases. */
+let CASES=[];
+
+let repScopeVal='scope', repMonthVal=7;
+function repCases(){
+  const ids=facIds();
+  return CASES.filter(c=>{
+    if(repScopeVal==='scope') return ids.includes(c.f);
+    if(repScopeVal.startsWith('f:')) return c.f===repScopeVal.slice(2);
+    if(repScopeVal.startsWith('r:')){const [fid,rm]=repScopeVal.slice(2).split('~');return c.f===fid&&c.room===rm;}
+    return true;
+  });
+}
+
+/* ============================ MONTHLY REPORT ============================ */
+function renderReports(){
+  if(!CASES.length){
+    const host=$('#view-reports');
+    if(host && !host.dataset.emptied){
+      host.dataset.emptied='1';
+      host.innerHTML=
+        '<div class="panel">'+
+        '<h2>Monthly OR report</h2>'+
+        '<p class="cap">No case-log source is connected, so there is nothing to report on yet. '+
+        'Case volume, room utilisation, turnaround and revenue need a feed from the surgical '+
+        'scheduling or billing system — this dashboard will not estimate them.</p>'+
+        '<p class="cap">Task completion, escalations and credentialing are live on the other tabs.</p>'+
+        '</div>';
+    }
+    return;
+  }
+  $('#repScope').innerHTML=
+    `<option value="scope">Current view — ${esc(facLabel())}</option>`+
+    '<optgroup label="Single facility">'+FACS.map(f=>`<option value="f:${f.id}"${repScopeVal==='f:'+f.id?' selected':''}>${esc(f.name)}</option>`).join('')+'</optgroup>'+
+    '<optgroup label="Single room / OR">'+FACS.flatMap(f=>f.rooms.map(r=>`<option value="r:${f.id}~${r}"${repScopeVal==='r:'+f.id+'~'+r?' selected':''}>${esc(f.name)} · ${esc(r)}</option>`)).join('')+'</optgroup>';
+  $('#repMonth').innerHTML='<option selected>August 2026</option><option>July 2026</option><option>June 2026</option>';
+
+  const cs=repCases();
+  const cases=cs.length;
+  const caseMin=cs.reduce((a,c)=>a+c.dur,0);
+  const turnMin=cs.reduce((a,c)=>a+c.turn,0);
+  const avgCase=cases?Math.round(caseMin/cases):0;
+  const avgTurn=cases?Math.round(turnMin/cases):0;
+  const firsts=cs.filter(c=>c.first), onTime=firsts.filter(c=>c.onTime).length;
+  const rev=cs.reduce((a,c)=>a+c.rev,0);
+  const roomHrs=(caseMin+turnMin)/60;
+  const labor=Math.round(roomHrs*4.5*48);        // ~4.5 staff in the room at a blended $48/h
+  const supplies=Math.round(rev*0.34);           // sheaths, wires, coils, implants, contrast
+  const money=v=>v>=1000000?`$${(v/1000000).toFixed(2)}M`:`$${Math.round(v/1000)}k`;
+  const recover=Math.max(0,turnMin-cases*20)/60*(rev/Math.max(1,roomHrs));
+  const scopeName=repScopeVal==='scope'?facLabel():
+                  repScopeVal.startsWith('f:')?facName(repScopeVal.slice(2)):
+                  facName(repScopeVal.slice(2).split('~')[0])+' · '+repScopeVal.slice(2).split('~')[1];
+  $('#repTitle').textContent=`Monthly activity report — ${scopeName}`;
+  $('#repSub').textContent=`August 2026 · ${cases} cases across ${new Set(cs.map(c=>c.f+c.room)).size} rooms · generated ${nowStamp()}`;
+
+  $('#repTiles').innerHTML=[
+    ['Cases',cases,`${(cases/22).toFixed(1)} per operating day`,''],
+    ['Room hours',roomHrs.toFixed(1),`${(caseMin/60).toFixed(1)} h in case`,''],
+    ['Avg case time',`${avgCase} min`,'wheels in to wheels out',''],
+    ['Avg turnover',`${avgTurn} min`, avgTurn>20?'above the 20 min target':'at or under target', avgTurn>20?'bad':'good'],
+    ['Turnover lost',`${(turnMin/60).toFixed(1)} h`,`${Math.round(turnMin/Math.max(1,caseMin)*100)}% of case time`,'bad'],
+    ['First case on time',`${firsts.length?Math.round(onTime/firsts.length*100):0}%`,`${onTime} of ${firsts.length} first starts`,onTime/Math.max(1,firsts.length)>0.8?'good':'bad'],
+    ['Est. facility revenue',money(rev),`$${Math.round(rev/Math.max(1,cases)).toLocaleString()} per case`,''],
+    ['Staffing cost',money(labor),`$${Math.round(labor/Math.max(1,cases))} per case · 4.5 staff/room`,''],
+    ['Supplies & implants',money(supplies),'34% of collections',''],
+    ['Contribution',money(rev-labor-supplies),`${Math.round((rev-labor-supplies)/Math.max(1,rev)*100)}% margin after staff + supplies`,'good'],
+    ['Recoverable at 20 min', recover>1000?money(recover):'—',
+      recover>1000?'room time freed for more cases':'turnover already at target — nothing on the table', recover>1000?'bad':'good'],
+  ].map(([l,v,d,c])=>`<div class="repcell"><div class="l">${l}</div><div class="v">${v}</div><div class="d ${c}">${d}</div></div>`).join('');
+
+  /* room utilization */
+  const byRoom={};
+  cs.forEach(c=>{const k=facName(c.f)+' · '+c.room;(byRoom[k]=byRoom[k]||{case:0,turn:0,n:0});byRoom[k].case+=c.dur;byRoom[k].turn+=c.turn;byRoom[k].n++;});
+  const rd=Object.entries(byRoom).map(([k,v])=>({k,...v})).sort((a,b)=>(b.case+b.turn)-(a.case+a.turn));
+  stackChart('#roomChart','#roomTable',rd.map(r=>({label:r.k,a:r.case/60,b:r.turn/60,n:r.n})),
+             'In case','Turnover','h');
+
+  /* turnover by week */
+  const wk=[[],[],[],[],[]];
+  cs.forEach(c=>{const w=Math.min(4,Math.floor((c.d-1)/7));wk[w].push(c.turn);});
+  const td=wk.map((a,i)=>({d:`Week ${i+1}`,v:a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):0})).filter(x=>x.v);
+  lineChartInto('#turnChart','#turnTable',td,'min',20);
+
+  /* physicians */
+  const byDoc={};
+  cs.forEach(c=>{const k=c.phys;(byDoc[k]=byDoc[k]||{n:0,min:0,turn:0,rev:0,f:0,ot:0});
+    const o=byDoc[k];o.n++;o.min+=c.dur;o.turn+=c.turn;o.rev+=c.rev;if(c.first){o.f++;if(c.onTime)o.ot++;}});
+  $('#docRows').innerHTML=Object.entries(byDoc).sort((a,b)=>b[1].n-a[1].n).map(([k,v])=>{
+    const otp=v.f?Math.round(v.ot/v.f*100):0;
+    return `<tr><td><strong>${esc(k)}</strong></td><td class="num">${v.n}</td>
+      <td class="num">${v.min.toLocaleString()}</td><td class="num">${Math.round(v.min/v.n)} min</td>
+      <td class="num">${Math.round(v.turn/v.n)} min</td>
+      <td class="num" style="color:${otp>=80?'var(--good-text)':'var(--critical)'}">${otp}% <span class="freq">(${v.ot}/${v.f})</span></td>
+      <td class="num">$${v.rev.toLocaleString()}</td></tr>`;
+  }).join('');
+
+  /* case mix */
+  const byProc={};
+  cs.forEach(c=>{byProc[c.proc]=(byProc[c.proc]||0)+1;});
+  barChartInto('#mixChart','#mixTable',Object.entries(byProc).map(([k,v])=>({label:k,v})).sort((a,b)=>b.v-a.v),'cases');
+
+  /* compliance */
+  const planAll=PEOPLE.flatMap(p=>PLAN[p.id].flatMap((c,d)=>c.map(it=>({it,d}))));
+  const pDone=planAll.filter(x=>x.it.done).length;
+  const photoReq=planAll.filter(x=>x.it.photo).length, photoHave=planAll.filter(x=>x.it.img||(x.it.done&&x.it.by==='photo')).length;
+  const ca=credAlerts(), da=dutyAlerts();
+  $('#compRows').innerHTML=[
+    ['Planner duties closed',`${pDone} of ${planAll.length}`,`${Math.round(pDone/Math.max(1,planAll.length)*100)}%`,pDone/Math.max(1,planAll.length)>0.7],
+    ['Photo proof on file',`${photoHave} of ${photoReq}`,'duties requiring a picture',photoHave>=photoReq*0.6],
+    ['Credentials in alert',ca.length,`${ca.filter(x=>x.s==='overdue').length} expired`,!ca.filter(x=>x.s==='overdue').length],
+    ['Recurring duties running',da.length,`${da.filter(x=>x.s==='overdue').length} overdue`,!da.filter(x=>x.s==='overdue').length],
+    ['Task board on-time rate','79%','replied done on the first cycle',true],
+    ['Reminders sent this month','1,284','WhatsApp + email',true],
+  ].map(([l,v,d,ok])=>`<tr><td><strong>${esc(l)}</strong><br><span class="freq">${esc(d)}</span></td>
+     <td class="num" style="text-align:right;font-size:16px;color:${ok?'var(--good-text)':'var(--critical)'}">${v}</td></tr>`).join('');
+}
+
+/* shared small charts for the report */
+function stackChart(svgSel,tblSel,data,la,lb,unit){
+  const W=520,rowH=30,PAD_L=176,PAD_R=42,H=Math.max(60,data.length*rowH+34);
+  const max=Math.max(1,...data.map(d=>d.a+d.b));
+  const sx=v=>v/max*(W-PAD_L-PAD_R);
+  let g='';
+  for(let i=0;i<=max;i+=Math.max(1,Math.ceil(max/4))){
+    const x=PAD_L+sx(i);
+    g+=`<line x1="${x}" y1="0" x2="${x}" y2="${H-32}" stroke="var(--grid)" stroke-width="1"/>
+        <text x="${x}" y="${H-18}" fill="var(--muted)" font-size="10" text-anchor="middle">${i}${unit}</text>`;
+  }
+  const bars=data.map((d,i)=>{
+    const y=i*rowH+6,h=17,wa=sx(d.a),wb=sx(d.b);
+    return `<text x="${PAD_L-10}" y="${y+12}" fill="var(--ink2)" font-size="10.5" text-anchor="end">${esc(d.label)}</text>
+    <g class="shit" data-tt="${esc(d.label)}|${d.a.toFixed(1)}|${d.b.toFixed(1)}|${d.n}">
+      <rect x="${PAD_L}" y="${y-3}" width="${W-PAD_L-PAD_R}" height="${h+6}" fill="transparent"/>
+      <path d="M${PAD_L},${y} h${Math.max(0,wa-4)} a4,4 0 0 1 4,4 v${h-8} a4,4 0 0 1 -4,4 h-${Math.max(0,wa-4)} z" fill="var(--series-1)"/>
+      <path d="M${PAD_L+wa+2},${y} h${Math.max(0,wb-6)} a4,4 0 0 1 4,4 v${h-8} a4,4 0 0 1 -4,4 h-${Math.max(0,wb-6)} z" fill="var(--series-2)"/>
+      <text x="${PAD_L+wa+wb+7}" y="${y+12}" fill="var(--ink2)" font-size="10.5" class="num">${(d.a+d.b).toFixed(0)}${unit}</text>
+    </g>`;
+  }).join('');
+  const svg=$(svgSel); svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.innerHTML=g+bars+
+    `<line x1="${PAD_L}" y1="0" x2="${PAD_L}" y2="${H-32}" stroke="var(--axis)" stroke-width="1"/>
+     <g transform="translate(${PAD_L},${H-4})"><rect x="0" y="-8" width="9" height="9" rx="2" fill="var(--series-1)"/>
+     <text x="13" y="0" font-size="10" fill="var(--ink2)">${la}</text>
+     <rect x="70" y="-8" width="9" height="9" rx="2" fill="var(--series-2)"/>
+     <text x="83" y="0" font-size="10" fill="var(--ink2)">${lb}</text></g>`;
+  svg.querySelectorAll('.shit').forEach(el=>{
+    el.addEventListener('mousemove',e=>{const [n,a,b,c]=el.dataset.tt.split('|');
+      showTT(e,`<b>${esc(n)}</b>${a}${unit} in case · ${b}${unit} turnover<br>${c} cases`);});
+    el.addEventListener('mouseleave',hideTT);
+  });
+  $(tblSel).innerHTML=`<table><thead><tr><th>Room</th><th>${la}</th><th>${lb}</th><th>Cases</th></tr></thead><tbody>`+
+    data.map(d=>`<tr><td>${esc(d.label)}</td><td class="num">${d.a.toFixed(1)}${unit}</td><td class="num">${d.b.toFixed(1)}${unit}</td><td class="num">${d.n}</td></tr>`).join('')+'</tbody></table>';
+}
+function lineChartInto(svgSel,tblSel,data,unit,target){
+  const W=500,H=200,L=42,R=16,T=14,B=28;
+  if(!data.length){$(svgSel).innerHTML='';return;}
+  const max=Math.max(target||0,...data.map(d=>d.v))*1.25, min=0;
+  const xs=i=>L+i*(W-L-R)/Math.max(1,data.length-1), ys=v=>T+(1-v/max)*(H-T-B);
+  let g='';
+  for(let i=0;i<=4;i++){const v=Math.round(max/4*i);
+    g+=`<line x1="${L}" y1="${ys(v)}" x2="${W-R}" y2="${ys(v)}" stroke="var(--grid)" stroke-width="1"/>
+        <text x="${L-8}" y="${ys(v)+3.5}" fill="var(--muted)" font-size="10" text-anchor="end">${v}</text>`;}
+  if(target) g+=`<line x1="${L}" y1="${ys(target)}" x2="${W-R}" y2="${ys(target)}" stroke="var(--good)" stroke-width="1.5" stroke-dasharray="4 3"/>
+                 <text x="${W-R}" y="${ys(target)-5}" fill="var(--good-text)" font-size="10" text-anchor="end">target ${target} ${unit}</text>`;
+  const path=data.map((d,i)=>`${i?'L':'M'}${xs(i)},${ys(d.v)}`).join(' ');
+  const svg=$(svgSel); svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.innerHTML=g+`<path d="${path}" fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linecap="round"/>`+
+    data.map((d,i)=>`<circle cx="${xs(i)}" cy="${ys(d.v)}" r="4.5" fill="var(--series-1)" stroke="var(--surface)" stroke-width="2"/>
+      <text x="${xs(i)}" y="${ys(d.v)-11}" fill="var(--ink2)" font-size="10" text-anchor="middle" class="num">${d.v}</text>
+      <text x="${xs(i)}" y="${H-8}" fill="var(--muted)" font-size="10" text-anchor="middle">${esc(d.d)}</text>`).join('');
+  $(tblSel).innerHTML='<table><thead><tr><th>Period</th><th>Avg turnover</th></tr></thead><tbody>'+
+    data.map(d=>`<tr><td>${esc(d.d)}</td><td class="num">${d.v} ${unit}</td></tr>`).join('')+'</tbody></table>';
+}
+function barChartInto(svgSel,tblSel,data,unit){
+  const W=520,rowH=26,PAD_L=210,PAD_R=44,H=Math.max(60,data.length*rowH+22);
+  const max=Math.max(1,...data.map(d=>d.v)), sx=v=>v/max*(W-PAD_L-PAD_R);
+  let g='';
+  for(let i=0;i<=max;i+=Math.max(1,Math.ceil(max/4))){const x=PAD_L+sx(i);
+    g+=`<line x1="${x}" y1="0" x2="${x}" y2="${H-20}" stroke="var(--grid)" stroke-width="1"/>
+        <text x="${x}" y="${H-6}" fill="var(--muted)" font-size="10" text-anchor="middle">${i}</text>`;}
+  const svg=$(svgSel); svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.innerHTML=g+data.map((d,i)=>{
+    const y=i*rowH+5,h=15,w=sx(d.v);
+    return `<text x="${PAD_L-10}" y="${y+11}" fill="var(--ink2)" font-size="10.5" text-anchor="end">${esc(d.label)}</text>
+    <path d="M${PAD_L},${y} h${Math.max(0,w-4)} a4,4 0 0 1 4,4 v${h-8} a4,4 0 0 1 -4,4 h-${Math.max(0,w-4)} z" fill="var(--series-1)"/>
+    <text x="${PAD_L+w+7}" y="${y+11}" fill="var(--ink2)" font-size="10.5" class="num">${d.v}</text>`;
+  }).join('')+`<line x1="${PAD_L}" y1="0" x2="${PAD_L}" y2="${H-20}" stroke="var(--axis)" stroke-width="1"/>`;
+  $(tblSel).innerHTML=`<table><thead><tr><th>Procedure</th><th>${unit}</th></tr></thead><tbody>`+
+    data.map(d=>`<tr><td>${esc(d.label)}</td><td class="num">${d.v}</td></tr>`).join('')+'</tbody></table>';
+}
+
+/* ============================ TIME CLOCK ============================ */
+const CLOCK_RULES=[
+  ['Clock-in nudge','10 min before shift start'],
+  ['Late flag','5 min after start, escalates to the administration'],
+  ['Lunch out','4 h into the shift'],
+  ['Lunch in','30 min after lunch out'],
+  ['Clock-out nudge','at shift end, repeating every 15 min'],
+  ['Daily digest','5:30 PM to Fredshon — attendance, late punches, missed breaks'],
+];
+const mm=v=>`${String(Math.floor(v/60)).padStart(2,'0')}:${String(v%60).padStart(2,'0')}`;
+/**
+ * Time-clock rows. Attendance state is computed server-side (services/
+ * schedule.js) against the configured rules, so the dashboard and the
+ * end-of-day digest can never disagree about who was late.
+ */
+function clockRows(){
+  const ids=facIds();
+  const toMin=t=>{ if(!t) return null; const [h,m]=t.split(':').map(Number); return h*60+m; };
+  return CLOCK_ROWS
+    .filter(r=>{
+      const code=r.facility_code||'';
+      return ids.includes(code) && (clockLocVal==='all'||code===clockLocVal) && !r.on_call;
+    })
+    .map(r=>{
+      const a=toMin(r.starts_at), b=toMin(r.ends_at);
+      const p=r.punch||{};
+      const st={in:toMin(p.clock_in), lo:toMin(p.lunch_out), li:toMin(p.lunch_in), out:toMin(p.clock_out)};
+      const x={l:r.facility_code, r:r.role, d:TODAY_IDX, w:r.person_name||r.staff_name||'', id:r.id,
+               t:`${r.starts_at||''}-${r.ends_at||''}`};
+      return {x,a,b,st,status:r.status,tone:r.tone,k:String(r.id),worked:r.worked,shiftId:r.id};
+    });
+}
+let clockLocVal='all', clockFilterVal='all';
+function renderClock(){
+  $('#clockLoc').innerHTML='<option value="all">All facilities in view</option>'+
+    FACS.filter(f=>facIds().includes(f.id)).map(f=>`<option value="${f.id}"${clockLocVal===f.id?' selected':''}>${esc(f.name)}</option>`).join('');
+  const rows=clockRows();
+  const due=rows.filter(r=>r.tone==='warn').length, late=rows.filter(r=>r.tone==='bad').length;
+  const inNow=rows.filter(r=>r.st.in&&!r.st.out).length, done=rows.filter(r=>r.st.out).length;
+  $('#clockTiles').innerHTML=[
+    ['Scheduled today',rows.length,''],['Needs a nudge',due,'warn'],['Late / no show',late,'bad'],
+    ['Clocked in now',inNow,'ok'],['Finished',done,'ok'],
+    ['Hours so far',hhmm(rows.reduce((a,r)=>a+r.worked,0)/60),''],
+  ].map(([l,v,c])=>`<div class="clockcell ${c}"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+  const show=rows.filter(r=>clockFilterVal==='all'||
+    (clockFilterVal==='due'&&r.tone==='warn')||(clockFilterVal==='late'&&r.tone==='bad')||
+    (clockFilterVal==='in'&&r.st.in&&!r.st.out));
+  $('#clockCount').textContent=`${show.length} of ${rows.length} shown`;
+  $('#clockRows').innerHTML=show.length?show.map(r=>{
+    const f=FACS.find(x=>x.id===r.x.l);
+    return `<tr>
+      <td><strong>${esc(r.x.w)}</strong><br><span class="freq">${esc(r.x.r)}</span></td>
+      <td>${esc(f?f.name:r.x.l)}<br><span class="freq">${esc((f&&f.rooms[0])||'')}</span></td>
+      <td class="num">${esc(r.x.t)}</td>
+      <td class="num">${r.st.in?mm(r.st.in):'—'}</td>
+      <td class="num">${r.st.lo?mm(r.st.lo)+(r.st.li?' → '+mm(r.st.li):' → …'):'—'}</td>
+      <td class="num">${r.st.out?mm(r.st.out):'—'}</td>
+      <td class="num">${r.worked?hhmm(r.worked/60):'—'}</td>
+      <td><span class="chip ${r.tone==='bad'?'overdue':r.tone==='warn'?'reminded':r.tone==='ok'?'done':'pending'}">
+        <span class="dot"></span><span class="ico">${r.tone==='bad'?'▲':r.tone==='warn'?'!':r.tone==='ok'?'✓':'•'}</span>${esc(r.status)}</span></td>
+      <td>${r.tone==='warn'||r.tone==='bad'?`<button class="btn sm" data-clocknudge="${esc(r.k)}|${esc(r.status)}">Nudge</button>`:''}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="9" style="color:var(--muted);padding:20px 10px">Nothing matches this filter.</td></tr>';
+  $('#clockRules').innerHTML=CLOCK_RULES.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
+}
+
+/* ============================ MESSAGES TAB ============================ */
+let msgScope='all', msgPick=new Set(), msgRole='', msgFac='';
+let MCH={wa:true,em:false};
+let MSGLOG=[
+  {ts:'Aug 18, 8:02 AM',to:'Everyone (6)',ch:'WhatsApp + email',txt:'Good morning team — August QUAD A sampling starts today. First case per proceduralist gets pulled for the safety upload.'},
+  {ts:'Aug 17, 4:15 PM',to:'Clinical staff (4)',ch:'WhatsApp',txt:'Reminder: BLS renewal class is booked for Sept 3, 8 AM at Tarzana. Reply CONFIRM to hold your seat.'},
+];
+function msgTargets(){
+  if(msgScope==='all') return PEOPLE.map(p=>p.id);
+  if(msgScope==='role') return PEOPLE.filter(p=>!msgRole||p.role===msgRole).map(p=>p.id);
+  if(msgScope==='fac')  return PEOPLE.filter(p=>!msgFac||p.fac===msgFac).map(p=>p.id);
+  return [...msgPick];
+}
+function renderMsg(){
+  $$('#msgScope .tog').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mscope===msgScope)));
+  const body=$('#msgScopeBody');
+  if(msgScope==='all') body.innerHTML=`<p class="cap" style="margin:0">Goes to all ${PEOPLE.length} team members.</p>`;
+  else if(msgScope==='role') body.innerHTML='<div class="pickrow">'+
+    [...new Set(PEOPLE.map(p=>p.role))].map(r=>`<button class="tog" data-mrole="${esc(r)}" aria-pressed="${msgRole===r}">${esc(r)} (${PEOPLE.filter(p=>p.role===r).length})</button>`).join('')+'</div>';
+  else if(msgScope==='fac') body.innerHTML='<div class="pickrow">'+
+    FACS.filter(f=>facIds().includes(f.id)).map(f=>`<button class="tog" data-mfac="${f.id}" aria-pressed="${msgFac===f.id}">${esc(f.name)} (${PEOPLE.filter(p=>p.fac===f.id).length})</button>`).join('')+
+    `<button class="tog" data-mfac="" aria-pressed="${msgFac===''}">Remote / no site (${PEOPLE.filter(p=>!p.fac).length})</button></div>`;
+  else body.innerHTML='<div class="pickrow">'+PEOPLE.map(p=>`<button class="tog" data-mpick="${p.id}" aria-pressed="${msgPick.has(p.id)}">${esc(p.name)}</button>`).join('')+'</div>';
+  $('#mcWA').setAttribute('aria-pressed',String(MCH.wa));
+  $('#mcEM').setAttribute('aria-pressed',String(MCH.em));
+  $('#msgTpl').innerHTML=Object.keys(TEMPLATES).map(t=>`<button class="tog" data-mtpl="${esc(t)}">${esc(t)}</button>`).join('');
+  const n=msgTargets().length, ch=MCH.wa&&MCH.em?2:1;
+  $('#msgMeta').textContent=`${$('#msgText').value.length} characters · ${n} recipient${n===1?'':'s'} · ${n*ch} message${n*ch===1?'':'s'} will go out`;
+  $('#msgHistory').innerHTML=MSGLOG.map(m=>`<div class="esc" style="display:block">
+      <div class="who">${esc(m.to)} <span class="rolechip">${esc(m.ch)}</span></div>
+      <div class="why" style="margin:4px 0">${esc(m.txt)}</div>
+      <div class="freq">${esc(m.ts)}</div></div>`).join('');
+}
+
+/* ============================ DAILY LIFT ============================ */
+let liftCats=new Set(['Joke','Medical fact','Word of the day']);
+let liftOn=true, liftIdx=0;
+function liftPool(){ return [...liftCats].flatMap(c=>LIFTS[c].map(t=>({c,t}))); }
+function renderLift(){
+  const pool=liftPool();
+  const item=pool.length?pool[liftIdx%pool.length]:{c:'—',t:'Pick at least one category.'};
+  $('#liftCat').textContent=item.c;
+  $('#liftBody').innerHTML=item.t;
+  const who=$('#liftWho').value, whoN=who==='all'?PEOPLE.length:who==='clin'?PEOPLE.filter(p=>/Assistant|Supervisor|Manager/.test(p.role)&&!/Virtual/.test(p.role)).length:PEOPLE.filter(p=>/Virtual/.test(p.role)).length;
+  $('#liftMeta').textContent=`Queued for ${$('#liftTime').value.split(' —')[0]} · ${whoN} recipients · ${chanLabel(CHANNEL)}`;
+  $('#liftCats').innerHTML=Object.keys(LIFTS).map(c=>`<button class="tog" data-liftcat="${esc(c)}" aria-pressed="${liftCats.has(c)}">${esc(c)}</button>`).join('');
+  $('#liftOn').setAttribute('aria-pressed',String(liftOn));
+  $('#liftOff').setAttribute('aria-pressed',String(!liftOn));
+  const days=$('#liftDays').value;
+  $('#liftSummary').innerHTML=liftOn
+    ? `<strong>On.</strong> One message from ${liftCats.size} categor${liftCats.size===1?'y':'ies'} (${pool.length} items in rotation), ${days==='wd'?'weekdays':days==='mon'?'Mondays':'every day'} at ${esc($('#liftTime').value.split(' —')[0])}, to ${whoN} people over ${chanLabel(CHANNEL)}. Nothing repeats until the rotation is exhausted.`
+    : '<strong>Off.</strong> No daily lift messages are being sent.';
+}
+
+/* ============================ EVENTS ============================ */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+
+  /* Writes go to the API first; the board repaints from the server response,
+     so what is on screen is always what was actually recorded. */
+  if(b.dataset.done){
+    const t=TASKS.find(x=>x.id==b.dataset.done);
+    busy(b, async()=>{
+      await apiMarkRun(t.id,'done');
+      logFeed(`“${t.t}” marked done — timestamped against ${t.f}.`);
+      await refresh();
+    });
+    return;
+  }
+  if(b.dataset.undo){
+    const t=TASKS.find(x=>x.id==b.dataset.undo);
+    busy(b, async()=>{
+      await apiMarkRun(t.id,'pending');
+      logFeed(`“${t.t}” reopened — reminder cycle restarted for ${P[t.p].name}.`);
+      await refresh();
+    });
+    return;
+  }
+  if(b.dataset.remind){
+    const t=TASKS.find(x=>x.id==b.dataset.remind);
+    busy(b, async()=>{
+      await API.post('/run/nudges');
+      logFeed(`Nudge cycle sent via ${chanLabel(CHANNEL)} — includes “${t.t}”.`);
+      await refresh();
+    });
+    return;
+  }
+  if(b.dataset.alt){
+    const el=$('#'+b.dataset.alt); const svg=el.previousElementSibling;
+    const showing=el.classList.toggle('hide');
+    svg.classList.toggle('hide',!showing);
+    b.textContent=showing?'Table view':'Chart view'; return;
+  }
+  if(b.dataset.add){const [pid,di]=b.dataset.add.split('|');openModal(pid,+di);return;}
+  /* ---- planner duty completion ---- */
+  if(b.dataset.ptick){
+    const r=refItem(b.dataset.ptick); if(!r.item) return;
+    if(r.item.done){ r.item.done=''; r.item.by=''; logFeed(`“${r.item.t}” reopened — daily reminders restarted for ${P[r.pid].name}.`); }
+    else if(!completeItem(r.item,'checkbox',r.pid)){
+      chatPush(r.pid,'out',`“${r.item.t}” can’t be checked off yet — this duty needs a picture. Take the photo and upload it, then it closes automatically.`);
+      logFeed(`“${r.item.t}” blocked — photo required before ${P[r.pid].name} can close it. Reminder sent.`);
+    }
+    renderPlan(); renderMonth(); renderTiles(); return;
+  }
+  if(b.dataset.pnag){
+    const r=refItem(b.dataset.pnag); if(!r.item) return;
+    const st=dutyStatus(r.item,r.days);
+    chatPush(r.pid,'out',planNagText(r.item,st));
+    logFeed(`Duty reminder sent to ${P[r.pid].name} via ${chanLabel(P[r.pid].chan)} — “${r.item.t}” — copied to the administration.`);
+    return;
+  }
+  if(b.dataset.pdel){
+    const r=refItem(b.dataset.pdel); if(!r.list) return;
+    r.list.splice(r.idx,1);
+    if(b.dataset.pdel.startsWith('m|')){const k=b.dataset.pdel.split('|')[1]; if(!MONTHPLAN[k].length) delete MONTHPLAN[k];}
+    renderPlan(); renderMonth(); renderTiles(); return;
+  }
+  if(b.dataset.rm){
+    const [pid,di,ti]=b.dataset.rm.split('|');
+    PLAN[pid][+di].splice(+ti,1); renderPlan(); return;
+  }
+  if(b.dataset.pick && pendingCell){
+    PLAN[pendingCell[0]][pendingCell[1]].push(PD(b.dataset.pick));
+    closeModal(); renderPlan(); renderTiles(); return;
+  }
+  if(b.id==='mCancel'){closeModal();mAdd=null;sAdd=null;return;}
+
+  /* ---- facilities ---- */
+  if(b.id==='facManage'){openFacManage();return;}
+  if(b.dataset.facdel){
+    if(FACS.length<2) return;
+    saveFacNames();
+    FACS=FACS.filter(f=>f.id!==b.dataset.facdel);
+    VIEWS.forEach(v=>{if(v.ids)v.ids=v.ids.filter(i=>i!==b.dataset.facdel);});
+    if(activeFac===b.dataset.facdel) activeFac='ALL';
+    openFacManage(); refreshAll(); return;
+  }
+  if(b.id==='facAdd'){
+    saveFacNames();
+    const n=$('#facNew').value.trim(); if(!n) return;
+    const rooms=$('#facNewRooms').value.split(',').map(x=>x.trim()).filter(Boolean);
+    const id='f'+(FACS.length+1)+Date.now().toString(36).slice(-3);
+    FACS.push({id,name:n,kind:'Facility',group:'',rooms:rooms.length?rooms:['Room 1']});
+    logFeed(`Facility added — ${n} (${(rooms.length?rooms:['Room 1']).join(', ')}).`);
+    openFacManage(); refreshAll(); return;
+  }
+  if(b.id==='viewAdd'){
+    saveFacNames();
+    const ids=[...document.querySelectorAll('[data-faccomb]')].filter(c=>c.checked).map(c=>c.dataset.faccomb);
+    const n=$('#viewName').value.trim();
+    if(ids.length<2||!n) return;
+    const id='V'+Date.now().toString(36).slice(-4);
+    VIEWS.push({id,name:n+` — ${ids.length} sites`,ids});
+    activeFac=id;
+    logFeed(`Combined view created — “${n}” covering ${ids.map(facName).join(', ')}.`);
+    closeModal(); refreshAll(); return;
+  }
+  if(b.dataset.viewdel){
+    saveFacNames();
+    VIEWS=VIEWS.filter(v=>v.id!==b.dataset.viewdel);
+    if(activeFac===b.dataset.viewdel) activeFac='ALL';
+    openFacManage(); refreshAll(); return;
+  }
+
+  /* ---- per-person reminder frequency ---- */
+  if(b.dataset.pfreq){
+    const [id,k]=b.dataset.pfreq.split('|');
+    P[id].freq=k;
+    logFeed(`${P[id].name}’s reminder frequency set to ${freqLabel(k).toLowerCase()} (${freqWhen(k)}).`);
+    renderProfile(id); return;
+  }
+
+  /* ---- add / edit a routine in a cadence box ---- */
+  if(b.dataset.addroutine){
+    const [id,cad]=b.dataset.addroutine.split('|');
+    $('#mTitle').textContent=`Add a ${CAD[cad].label.toLowerCase()} responsibility`;
+    $('#mCap').textContent=`${P[id].name} — reminders start ${CAD[cad].lead} days before the due date, then run until it is done.`;
+    $('#mOpts').innerHTML=`
+      <div class="frow"><label>Duty</label><input type="text" id="nrT" placeholder="e.g. Ultrasound probe disinfection audit"></div>
+      <div class="frow"><label>What to do / how</label><textarea id="nrH" placeholder="Short instruction that rides along with every reminder..."></textarea></div>
+      <div class="frow"><label>First due date</label><input type="date" id="nrD" value="2026-09-15"></div>
+      <div class="frow"><label>Reminder frequency</label><select id="nrF">${FREQS.map(f=>`<option value="${f.k}"${f.k===(P[id].freq||'2x')?' selected':''}>${f.label} — ${f.when}</option>`).join('')}</select></div>
+      <button class="btn primary" style="width:100%" data-saveroutine="${id}|${cad}">Add responsibility</button>`;
+    $('#modal').classList.add('open'); return;
+  }
+  if(b.dataset.saveroutine){
+    const [id,cad]=b.dataset.saveroutine.split('|');
+    const t=$('#nrT').value.trim(); if(!t){$('#nrT').focus();return;}
+    const due=$('#nrD').value||'2026-09-15';
+    DUTIES[id].push({c:cad,t,due,how:$('#nrH').value.trim()||'—',last:'',fq:$('#nrF').value});
+    logFeed(`New ${CAD[cad].label.toLowerCase()} responsibility added for ${P[id].name} — “${t}”, first due ${fmtExp(due)}.`);
+    closeModal(); renderProfile(id); renderTiles(); return;
+  }
+  if(b.dataset.delroutine){
+    const [id,i]=b.dataset.delroutine.split('|');
+    DUTIES[id].splice(+i,1); renderProfile(id); renderTiles(); return;
+  }
+  if(b.dataset.dutyfreq){
+    const [id,i]=b.dataset.dutyfreq.split('|');
+    const du=DUTIES[id][+i];
+    $('#mTitle').textContent='Reminder frequency';
+    $('#mCap').textContent=`“${du.t}” — how often should the agent text ${P[id].name} once this duty opens?`;
+    $('#mOpts').innerHTML=FREQS.map(f=>`<button class="opt" data-setdfreq="${id}|${i}|${f.k}">${f.label}<br><span class="freq">${f.when}</span></button>`).join('');
+    $('#modal').classList.add('open'); return;
+  }
+  if(b.dataset.setdfreq){
+    const [id,i,k]=b.dataset.setdfreq.split('|');
+    DUTIES[id][+i].fq=k;
+    logFeed(`“${DUTIES[id][+i].t}” reminder frequency set to ${freqLabel(k).toLowerCase()} for ${P[id].name}.`);
+    closeModal(); renderProfile(id); return;
+  }
+
+  /* ---- planner duty frequency ---- */
+  if(b.dataset.pfq){
+    const r=refItem(b.dataset.pfq); if(!r.item) return;
+    $('#mTitle').textContent='Reminder frequency';
+    $('#mCap').textContent=`“${r.item.t}” — how often should this be texted until it is closed?`;
+    $('#mOpts').innerHTML=FREQS.map(f=>`<button class="opt" data-setpfq="${b.dataset.pfq}|${f.k}">${f.label}<br><span class="freq">${f.when}</span></button>`).join('')
+      +`<button class="opt" data-setpfq="${b.dataset.pfq}|def">Use ${esc(P[r.pid].name.split(' ')[0])}’s default — ${esc(freqLabel(P[r.pid].freq))}</button>`;
+    $('#modal').classList.add('open'); return;
+  }
+  if(b.dataset.setpfq){
+    const a=b.dataset.setpfq.split('|'), k=a.pop();
+    const r=refItem(a.join('|'));
+    if(r.item){
+      r.item.fq = k==='def' ? '' : k;
+      logFeed(`“${r.item.t}” now reminds ${r.item.fq?freqLabel(r.item.fq).toLowerCase():'on '+P[r.pid].name.split(' ')[0]+'’s default schedule'}.`);
+    }
+    closeModal(); renderPlan(); renderMonth(); return;
+  }
+
+  /* ---- time clock ---- */
+  if(b.dataset.clocknudge){
+    const parts=b.dataset.clocknudge.split('|');
+    const w=parts[0], status=parts[parts.length-1];
+    const pid=(PEOPLE.find(p=>p.name===w)||{}).id;
+    const msg=/Late|No show/.test(status)?'You are not clocked in and your shift has started. Punch in now, and reply if something is wrong. Copy: Fredshon (Owner).'
+      :/Lunch due/.test(status)?'You have been on for 4 hours — take your lunch and clock out for the break.'
+      :/On lunch/.test(status)?'Lunch is up in 5 minutes — remember to clock back in.'
+      :/Clock out/.test(status)?'Your shift has ended. Clock out so the hours land correctly on payroll.'
+      :'Your shift starts in 10 minutes — remember to clock in.';
+    if(pid) chatPush(pid,'out',msg);
+    logFeed(`Clock nudge sent to ${w} via ${chanLabel(CHANNEL)} — ${status}.`);
+    return;
+  }
+  if(b.id==='clockRun'){
+    const rows=clockRows().filter(r=>r.tone==='warn'||r.tone==='bad');
+    logFeed(rows.length
+      ? `Clock reminders sent via ${chanLabel(CHANNEL)} — ${rows.length} nudge${rows.length===1?'':'s'} (${rows.filter(r=>r.tone==='bad').length} late, copied to Fredshon).`
+      : 'Clock sweep — everyone is punched correctly. Nothing sent.');
+    b.textContent='Sent'; setTimeout(()=>b.textContent='Send due clock reminders',1600); return;
+  }
+
+  /* ---- reports ---- */
+  if(b.id==='repPrint'){window.print();return;}
+  if(b.id==='repSend'){
+    logFeed(`Monthly report — ${$('#repTitle').textContent.replace('Monthly activity report — ','')} — sent to Fredshon (Owner) via ${chanLabel(CHANNEL)}.`);
+    b.textContent='Sent'; setTimeout(()=>b.textContent='Send to owner',1600); return;
+  }
+
+  /* ---- messages tab ---- */
+  if(b.dataset.mscope){msgScope=b.dataset.mscope;renderMsg();return;}
+  if(b.dataset.mrole){msgRole=msgRole===b.dataset.mrole?'':b.dataset.mrole;renderMsg();return;}
+  if(b.hasAttribute('data-mfac')){msgFac=msgFac===b.dataset.mfac?'':b.dataset.mfac;if(msgFac==='')msgFac='';renderMsg();return;}
+  if(b.dataset.mpick){msgPick.has(b.dataset.mpick)?msgPick.delete(b.dataset.mpick):msgPick.add(b.dataset.mpick);renderMsg();return;}
+  if(b.id==='mcWA'||b.id==='mcEM'){const k=b.id==='mcWA'?'wa':'em';MCH[k]=!MCH[k];if(!MCH.wa&&!MCH.em)MCH[k]=true;renderMsg();return;}
+  if(b.dataset.mtpl){$('#msgText').value=TEMPLATES[b.dataset.mtpl].replace('{task}','Weekly facility checklist').replace('{facility}',facName(facIds()[0]));renderMsg();return;}
+  if(b.id==='msgClear'){$('#msgText').value='';renderMsg();return;}
+  if(b.id==='msgSend'){
+    const txt=$('#msgText').value.trim(); if(!txt){$('#msgText').focus();return;}
+    const ids=msgTargets(); if(!ids.length) return;
+    const ch=MCH.wa&&MCH.em?'WhatsApp + email':MCH.wa?'WhatsApp':'Email';
+    const label=msgScope==='all'?`Everyone (${ids.length})`
+      :msgScope==='role'?`${msgRole||'All roles'} (${ids.length})`
+      :msgScope==='fac'?`${msgFac?facName(msgFac):'Remote / no site'} (${ids.length})`
+      :`${ids.length} selected`;
+    ids.forEach(id=>chatPush(id,'out',txt));
+    MSGLOG.unshift({ts:nowStamp(),to:label,ch,txt});
+    logFeed(`Mass message sent — ${label} via ${ch}, ${ids.length*(MCH.wa&&MCH.em?2:1)} messages out.`);
+    $('#msgText').value=''; renderMsg(); return;
+  }
+
+  /* ---- daily lift ---- */
+  if(b.dataset.liftcat){
+    const c=b.dataset.liftcat;
+    liftCats.has(c)?liftCats.delete(c):liftCats.add(c);
+    if(!liftCats.size) liftCats.add(c);
+    renderLift(); return;
+  }
+  if(b.id==='liftOn'||b.id==='liftOff'){
+    liftOn=b.id==='liftOn';
+    logFeed(`Daily lift turned ${liftOn?'on':'off'}.`);
+    renderLift(); return;
+  }
+  if(b.id==='liftNext'){liftIdx++;renderLift();return;}
+  if(b.id==='liftSend'){
+    const pool=liftPool(); if(!pool.length) return;
+    const item=pool[liftIdx%pool.length];
+    const who=$('#liftWho').value;
+    const ids=(who==='all'?PEOPLE:who==='clin'?PEOPLE.filter(p=>!/Virtual/.test(p.role)):PEOPLE.filter(p=>/Virtual/.test(p.role))).map(p=>p.id);
+    ids.forEach(id=>chatPush(id,'out',`${item.c} — ${item.t.replace(/<[^>]+>/g,'')}`));
+    logFeed(`Daily lift sent — ${item.c} to ${ids.length} people via ${chanLabel(CHANNEL)}.`);
+    b.textContent='Sent'; setTimeout(()=>b.textContent='Send now',1600);
+    liftIdx++; renderLift(); return;
+  }
+
+  /* ---- team profiles ---- */
+  if(b.dataset.prof){renderProfile(b.dataset.prof);return;}
+  if(b.dataset.backteam){
+    openProf=null;
+    $('#teamDetail').classList.add('hide'); $('#teamList').classList.remove('hide');
+    renderTeam(); return;
+  }
+  if(b.dataset.pchan){
+    const [id,k]=b.dataset.pchan.split('|'); const p=P[id];
+    const on={wa:p.chan==='wa'||p.chan==='both', em:p.chan==='em'||p.chan==='both'};
+    on[k]=!on[k]; if(!on.wa&&!on.em) on[k]=true;
+    p.chan = on.wa&&on.em ? 'both' : on.wa ? 'wa' : 'em';
+    logFeed(`${p.name}’s reminder channel set to ${chanLabel(p.chan)}.`);
+    renderProfile(id); return;
+  }
+  if(b.dataset.nagnow){
+    const [id,cred]=b.dataset.nagnow.split('|');
+    const row=(CREDS[id]||[]).find(c=>c[0]===cred); if(!row) return;
+    sendNag(id,cred,row[2]);
+    renderCredAlerts(); return;
+  }
+  if(b.dataset.renew){
+    const [id,cred]=b.dataset.renew.split('|');
+    markRenewed(id,cred);
+    renderTiles(); renderCredAlerts();
+    if(openProf===id) renderProfile(id); else renderTeam();
+    return;
+  }
+  if(b.id==='credSweep'){runCredCycle(); runDutyCycle(); runPlanCycle(); renderTiles(); renderPlan(); renderMonth(); renderCredAlerts(); if(openProf) renderProfile(openProf); return;}
+  if(b.dataset.dnag){
+    const [id,i]=b.dataset.dnag.split('|');
+    sendDutyNag(id,DUTIES[id][+i]); return;
+  }
+  if(b.dataset.ddone){
+    const [id,i]=b.dataset.ddone.split('|');
+    completeDuty(id,+i); renderTiles(); renderProfile(id); return;
+  }
+  if(b.dataset.chatsend){
+    const id=b.dataset.chatsend, v=$('#chatIn').value.trim();
+    if(!v){$('#chatIn').focus();return;}
+    chatPush(id,'out',v);
+    logFeed(`Message sent to ${P[id].name} via ${chanLabel(P[id].chan)}: “${v.slice(0,80)}${v.length>80?'…':''}”`);
+    return;
+  }
+  if(b.dataset.msgone){
+    TO=new Set([b.dataset.msgone]); openCompose(); return;
+  }
+  if(b.dataset.remindall){
+    const id=b.dataset.remindall;
+    const open=TASKS.filter(t=>t.p===id&&t.s!=='done');
+    if(!open.length){chatPush(id,'out','Nothing open on your board right now — nice work.');return;}
+    open.forEach(t=>{t.r++; if(t.s==='pending')t.s='reminded'; if(t.r>=4)t.s='overdue';});
+    chatPush(id,'out',`Reminder — ${open.length} open ${open.length===1?'task':'tasks'}:\n`+
+      open.map((t,i)=>`${i+1}. ${t.t} (${t.f}) — due ${t.due}`).join('\n')+`\nReply DONE with the number.`);
+    logFeed(`Reminder sent to ${P[id].name} via ${chanLabel(P[id].chan)} — ${open.length} open task${open.length===1?'':'s'}.`);
+    renderAll(); renderProfile(id); return;
+  }
+
+  /* ---- monthly planner ---- */
+  if(b.dataset.madd){openMonthPick(b.dataset.madd);return;}
+  if(b.dataset.mrm){
+    const [k,ix]=b.dataset.mrm.split('|');
+    MONTHPLAN[k].splice(+ix,1); if(!MONTHPLAN[k].length) delete MONTHPLAN[k];
+    renderMonth(); return;
+  }
+  if(b.dataset.mtask && mAdd){mAdd.t=b.dataset.mtask;openMonthPerson();return;}
+  if(b.dataset.mperson && mAdd && mAdd.t){
+    (MONTHPLAN[mAdd.k]=MONTHPLAN[mAdd.k]||[]).push(MD(mAdd.t,b.dataset.mperson,LIB[mAdd.t]));
+    const d=mAdd.k.split('-')[2];
+    logFeed(`“${mAdd.t}” scheduled for ${P[b.dataset.mperson].name} on ${MONTHS[calM]} ${d} — reminders queued via ${chanLabel(CHANNEL)}.`);
+    mAdd=null; closeModal(); renderMonth(); return;
+  }
+  if(b.id==='mPrev'||b.id==='mNext'){
+    calM+=(b.id==='mNext'?1:-1);
+    if(calM>11){calM=0;calY++} if(calM<0){calM=11;calY--}
+    renderMonth(); return;
+  }
+  if(b.id==='mPublish'){
+    const n=Object.keys(MONTHPLAN).filter(k=>k.startsWith(`${calY}-${calM}-`)).reduce((a,k)=>a+MONTHPLAN[k].length,0);
+    logFeed(`${MONTHS[calM]} ${calY} published — ${n} monthly duties, ${n*2} reminders queued via ${chanLabel(CHANNEL)}.`);
+    b.textContent='Published ✓'; setTimeout(()=>b.textContent='Publish month',1800); return;
+  }
+
+  /* ---- scheduling ---- */
+  if(b.dataset.gtog){
+    const loc=SCHED_LOCS.find(x=>x.id===b.dataset.gtog); loc.open=!loc.open; renderSched(); return;
+  }
+  if(b.dataset.sadd){
+    const [l,r,d]=b.dataset.sadd.split('|'); openShiftPerson(l,r,+d); return;
+  }
+  if(b.dataset.sperson!==undefined && sAdd){ sAdd.w=b.dataset.sperson; openShiftTime(); return; }
+  if(b.dataset.stime && sAdd){
+    curShifts().push(S(sAdd.l,sAdd.r,sAdd.d,b.dataset.stime,sAdd.w));
+    const day=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][sAdd.d];
+    logFeed(sAdd.w
+      ? `Shift added — ${sAdd.w}, ${sAdd.r} at ${SCHED_LOCS.find(x=>x.id===sAdd.l).name}, ${day} ${b.dataset.stime}. Not yet published.`
+      : `Open shift created — ${sAdd.r} at ${SCHED_LOCS.find(x=>x.id===sAdd.l).name}, ${day} ${b.dataset.stime}.`);
+    sAdd=null; closeModal(); renderSched(); return;
+  }
+  if(b.dataset.srm){
+    curShifts().splice(+b.dataset.srm,1); renderSched(); return;
+  }
+  if(b.id==='sPrev'||b.id==='sNext'){ wkOff+=(b.id==='sNext'?1:-1); renderSched(); return; }
+  if(b.id==='sCopy'){
+    const prev=SCHED[wkOff-1]||[];
+    if(!prev.length){logFeed('Nothing to copy — the previous week has no shifts.');return;}
+    SCHED[wkOff]=prev.filter(x=>x.l!=='ab').map(x=>({...x}));
+    logFeed(`${SCHED[wkOff].length} shifts copied from ${weekLabel(wkOff-1)} into ${weekLabel(wkOff)}. Not yet published.`);
+    renderSched(); return;
+  }
+  if(b.id==='sPublish'){
+    const all=curShifts(), filled=all.filter(x=>x.w&&x.l!=='ab'), open=all.filter(x=>!x.w&&x.l!=='ab');
+    const staff=new Set(filled.map(x=>x.w)).size;
+    logFeed(`Schedule published for ${weekLabel(wkOff)} — ${filled.length} shifts to ${staff} staff via ${chanLabel(CHANNEL)}.${open.length?` ${open.length} shift${open.length===1?'':'s'} still open — offered to everyone qualified.`:''}`);
+    b.textContent='Published ✓'; setTimeout(()=>b.textContent='Publish schedule',1800); return;
+  }
+
+  /* ---- messaging ---- */
+  if(b.id==='composeBtn'){openCompose();return;}
+  if(b.dataset.to){
+    if(b.dataset.to==='all'){ TO.size===PEOPLE.length ? TO.clear() : PEOPLE.forEach(p=>TO.add(p.id)); }
+    else { TO.has(b.dataset.to) ? TO.delete(b.dataset.to) : TO.add(b.dataset.to); }
+    renderCompose(); return;
+  }
+  if(b.id==='cWA'||b.id==='cEM'){
+    const k=b.id==='cWA'?'wa':'em'; CH[k]=!CH[k];
+    if(!CH.wa&&!CH.em) CH[k]=true;      // at least one channel stays on
+    renderCompose(); return;
+  }
+  if(b.dataset.tpl){
+    $('#msgBody').value=TEMPLATES[b.dataset.tpl]
+      .replace('{task}','Weekly facility checklist').replace('{facility}','EVSLA Glendale');
+    renderCompose(); return;
+  }
+  if(b.id==='cCancel'){closeCompose();return;}
+  if(b.id==='cSend'){
+    const body=$('#msgBody').value.trim();
+    if(!TO.size){$('#toRow').firstElementChild.focus();return;}
+    if(!body){$('#msgBody').focus();return;}
+    const names=[...TO].map(id=>P[id].name.split(' ')[0]);
+    const via=CH.wa&&CH.em?'WhatsApp + email':CH.wa?'WhatsApp':'email';
+    const who=names.length===PEOPLE.length?'the whole team':names.join(', ');
+    logFeed(`Message sent to ${who} via ${via} (${TO.size*(CH.wa&&CH.em?2:1)} message${TO.size*(CH.wa&&CH.em?2:1)===1?'':'s'}): “${body.slice(0,90)}${body.length>90?'…':''}”`);
+    $('#msgBody').value=''; closeCompose(); return;
+  }
+
+  if(b.id==='orgBtn'){openFacModal();return;}
+  if(b.dataset.org){$('#facInput').value=b.dataset.org;return;}
+  if(b.id==='facCancel'){closeFacModal();return;}
+  if(b.id==='facSave'){
+    const prev=ORG; setOrg($('#facInput').value); closeFacModal();
+    if(ORG!==prev) logFeed(`Facility name changed from “${prev}” to “${ORG}” — outgoing WhatsApp reminders now sign as ${ORG}.`);
+    return;
+  }
+  if(b.classList.contains('tab')){
+    $$('.tab').forEach(t=>t.setAttribute('aria-selected',String(t===b)));
+    ['board','team','planner','monthly','sched','clock','reports','msg','lift','rules']
+      .forEach(v=>$('#view-'+v).classList.toggle('hide',v!==b.dataset.view));
+    const V=b.dataset.view;
+    if(V==='monthly') renderMonChart();
+    if(V==='team')    renderTeam();
+    if(V==='sched')   renderSched();
+    if(V==='clock')   renderClock();
+    if(V==='reports') renderReports();
+    if(V==='msg')     renderMsg();
+    if(V==='lift')    renderLift();
+    return;
+  }
+  if(b.id==='themeBtn'){
+    const dark=document.documentElement.dataset.theme==='dark';
+    document.documentElement.dataset.theme=dark?'light':'dark';
+    b.textContent=dark?'Dark mode':'Light mode';
+    renderBar(); renderLine(); renderMonChart(); renderSched(); return;
+  }
+  if(b.id==='runBtn'){
+    busy(b, async()=>{
+      const r=await API.post('/run/reminders');
+      logFeed(`Reminder cycle run — ${r.result} team member${r.result===1?'':'s'} messaged via ${chanLabel(CHANNEL)}.`);
+      await refresh();
+    });
+    return;
+  }
+  if(b.id==='publish'){
+    const n=PEOPLE.reduce((a,p)=>a+PLAN[p.id].reduce((c,x)=>c+x.length,0),0);
+    logFeed(`Week of Aug 17–23 published — ${n} assignments, ${n*2} reminders queued via ${chanLabel(CHANNEL)} (8:00 AM / 2:00 PM daily).`);
+    b.textContent='Published ✓'; setTimeout(()=>b.textContent='Publish week to WhatsApp',1800); return;
+  }
+  if(b.id==='copyLast'){
+    logFeed('Last week’s recurring assignments copied into the Aug 17–23 planner.');
+    b.textContent='Copied ✓'; setTimeout(()=>b.textContent='Copy last week',1500); return;
+  }
+});
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal'){closeModal();mAdd=null;}});
+$('#composeModal').addEventListener('click',e=>{if(e.target.id==='composeModal')closeCompose();});
+$('#msgBody').addEventListener('input',()=>{$('#msgCnt').textContent=`${$('#msgBody').value.length} characters`;});
+/* Photo proof — uploaded to storage and attached to the planner item, which is
+   what closes it out. The image is the compliance record, so it must leave the
+   browser; an in-memory preview would vanish on reload. */
+document.addEventListener('change',async e=>{
+  const inp=e.target.closest('[data-pcam]'); if(!inp||!inp.files||!inp.files[0]) return;
+  const r=refItem(inp.dataset.pcam); if(!r.item||!r.item.id) return;
+  const file=inp.files[0];
+  try{
+    const res=await fetch(`/api/planner/${r.item.id}/photo?by=${encodeURIComponent(P[r.pid]?.name||'dashboard')}`,
+      {method:'POST', headers:{'content-type':file.type}, body:file});
+    if(!res.ok) throw new Error(`upload failed (${res.status})`);
+    const j=await res.json();
+    if(j.error) throw new Error(j.error);
+    logFeed(`Proof photo uploaded for “${r.item.t}”.`);
+    await refresh();
+  }catch(err){ banner(`Photo upload failed — ${err.message}`); }
+});
+document.addEventListener('click',async e=>{
+  const img=e.target.closest('[data-pview]'); if(!img) return;
+  const r=refItem(img.dataset.pview); if(!r.item||!r.item.img) return;
+  $('#mTitle').textContent=r.item.t;
+  $('#mCap').textContent=`Photo uploaded by ${P[r.pid]?.name||'—'} · ${r.item.done||'not yet closed'}`;
+  $('#mOpts').innerHTML='<p class="cap">Loading photo…</p>';
+  $('#modal').classList.add('open');
+  try{
+    const {url}=await API.get(`/photo?path=${encodeURIComponent(r.item.img)}`);
+    $('#mOpts').innerHTML=url
+      ? `<img class="imgview" src="${url}" alt="Proof photo">`
+      : '<p class="cap">This photo could not be retrieved from storage.</p>';
+  }catch(err){ $('#mOpts').innerHTML=`<p class="cap">Could not load photo — ${esc(err.message)}</p>`; }
+});
+$('#sLoc').addEventListener('change',e=>{locFilter=e.target.value;renderSched();});
+$('#facSel').addEventListener('change',e=>{
+  activeFac=e.target.value; locFilter='all'; clockLocVal='all'; repScopeVal='scope';
+  logFeed(`Switched to ${facLabel()}.`);
+  refreshAll();
+});
+$('#clockLoc').addEventListener('change',e=>{clockLocVal=e.target.value;renderClock();});
+$('#clockFilter').addEventListener('change',e=>{clockFilterVal=e.target.value;renderClock();});
+$('#repScope').addEventListener('change',e=>{repScopeVal=e.target.value;renderReports();});
+$('#msgText').addEventListener('input',renderMsg);
+['#liftTime','#liftWho','#liftDays'].forEach(x=>$(x).addEventListener('change',renderLift));
+$('#chanSel').addEventListener('change',e=>{
+  CHANNEL=e.target.value;
+  logFeed(`Default delivery channel set to ${chanLabel(CHANNEL)}.`);
+  renderTiles();
+});
+$('#facModal').addEventListener('click',e=>{if(e.target.id==='facModal')closeFacModal();});
+$('#facInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('#facSave').click();if(e.key==='Escape')closeFacModal();});
+['#fPerson','#fFacility','#fStatus','#fFreq'].forEach(s=>$(s).addEventListener('change',renderRows));
+$('#fSearch').addEventListener('input',renderRows);
+document.addEventListener('mousemove',e=>{if(tt.style.opacity==='1')moveTT(e);});
+
+/* ============================ BOOT ============================ */
+function refreshAll(){
+  renderFacBar(); renderAll(); renderPlan(); renderMonth(); renderSched();
+  renderClock(); renderReports(); renderMsg(); renderLift();
+}
+function renderAll(){
+  renderTiles();renderRows();renderEsc();renderBar();renderLine();
+  renderCredAlerts();
+  if(openProf) renderProfile(openProf); else renderTeam();
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target.id==='chatIn'){
+    const btn=document.querySelector('[data-chatsend]'); if(btn) btn.click();
+  }
+});
+/* Boot: nothing renders until real data is in hand. */
+async function boot(){
+  try{
+    await loadAll();
+  }catch(err){
+    banner(`Could not load live data — ${err.message}. The dashboard is showing nothing rather than stale numbers.`);
+    console.error(err);
+  }
+  calY = Number(SERVER_TODAY.slice(0,4));
+  calM = Number(SERVER_TODAY.slice(5,7))-1;
+  setOrg(ORG||'QCMS');
+  paintDates();
+  fillFilters(); renderFacBar(); renderAll(); renderFeed();
+  renderPlan(); renderMonth(); renderSched(); renderClock(); renderReports(); renderMsg(); renderLift();
+}
+
+/** Re-fetch everything and repaint — used after any write. */
+async function refresh(){
+  try{ await loadAll(); }catch(err){ banner(`Refresh failed — ${err.message}`); return; }
+  paintDates();
+  fillFilters(); renderFacBar(); renderAll(); renderFeed();
+  renderPlan(); renderMonth(); renderSched(); renderClock(); renderReports(); renderMsg(); renderLift();
+}
+
+boot();
 </script>
 </body>
 </html>

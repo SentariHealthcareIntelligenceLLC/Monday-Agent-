@@ -132,9 +132,21 @@ GET    /api/gaps?days=30              completion rates + findings
 GET    /api/messages                  last 100 WhatsApp messages
 POST   /api/run/reminders|nudges|escalations    trigger a job now
 
+GET    /api/facilities                 POST /api/facilities  PATCH/DELETE /api/facilities/:id
+GET    /api/credentials?within=60     POST /api/credentials PATCH/DELETE /api/credentials/:id
+GET    /api/shifts?date=&facility=    POST /api/shifts      PATCH/DELETE /api/shifts/:id
+GET    /api/clock?date=&now=HH:MM     POST /api/clock/:shiftId/:field
+GET    /api/planner/week|month        POST /api/planner     POST /api/planner/:id/done
+POST   /api/planner/:id/photo         raw image body; closes a photo-proof item
+GET    /api/photo?path=               signed URL for a stored photo
+GET    /api/lift                      POST /api/lift        DELETE /api/lift/:id
+GET    /api/settings                  PATCH /api/settings/:key
+GET    /api/trend?days=7              daily completion rate
+
 GET    /api/cron/:job                 Vercel Cron entrypoint (Bearer CRON_SECRET,
                                       not Basic auth). :job is one of
-                                      materialize|reminders|nudges|escalations.
+                                      materialize|reminders|nudges|escalations|
+                                      credentials|digest.
                                       No-ops unless the local hour matches the
                                       job's schedule; ?force=1 overrides.
 ```
@@ -146,7 +158,9 @@ src/
   lib/        env loader, tz-aware dates, cron engine, mini HTTP router
   db/         schema.sql (SQLite) + schema.pg.sql (Postgres),
               index.js facade, sqlite.js / postgres.js backends, migrate, seed
-  services/   whatsapp.js, tasks.js, replies.js
+  services/   tasks.js, whatsapp.js, email.js, notify.js (channel routing),
+              facilities.js, credentials.js, schedule.js (shifts + time clock),
+              planner.js, lift.js, settings.js, storage.js, replies.js
   jobs/       reminders.js (reminders/nudges/escalation), scheduler.js
   routes/     webhook.js (Meta), api.js (admin), cron.js (Vercel Cron)
   app.js      builds the request handler (shared by both entrypoints)
@@ -156,6 +170,7 @@ api/
 vercel.json   rewrites + cron schedules
 public/       dashboard (single self-contained HTML file)
 docs/         WHATSAPP_SETUP.md, DEPLOY.md, VERCEL_SUPABASE.md
+tools/        gen-sqlite-schema.js, import-prototype.js
 tests/        node:test suites
 ```
 

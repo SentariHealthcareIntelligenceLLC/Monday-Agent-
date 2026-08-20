@@ -1,0 +1,2638 @@
+{
+  "people": [
+    {
+      "id": "km",
+      "name": "Karina Molina",
+      "role": "Manager",
+      "init": "KM",
+      "wa": "+1 818 ••• 4471",
+      "em": "karina@example.com",
+      "emp": "QC-0102",
+      "hired": "Mar 2021",
+      "base": "EVSLA Glendale",
+      "window": "8:00 AM / 2:00 PM",
+      "chan": "both",
+      "lang": "English / Tagalog",
+      "freq": "2x"
+    },
+    {
+      "id": "jr",
+      "name": "Johnny Reyes",
+      "role": "Medical Assistant",
+      "init": "JR",
+      "wa": "+1 818 ••• 2093",
+      "em": "johnny@example.com",
+      "emp": "QC-0247",
+      "hired": "Jul 2023",
+      "base": "EVSLA La Cañada",
+      "window": "7:30 AM / 2:00 PM",
+      "chan": "wa",
+      "lang": "English / Spanish",
+      "freq": "2x"
+    },
+    {
+      "id": "ec",
+      "name": "Esmeralda Cruz",
+      "role": "Medical Assistant",
+      "init": "EC",
+      "wa": "+1 626 ••• 7715",
+      "em": "esmeralda@example.com",
+      "emp": "QC-0198",
+      "hired": "Jan 2023",
+      "base": "EVSLA Glendale",
+      "window": "7:30 AM / 2:00 PM",
+      "chan": "wa",
+      "lang": "English / Spanish",
+      "freq": "2x"
+    },
+    {
+      "id": "mb",
+      "name": "Marites Bautista",
+      "role": "Virtual Assistant",
+      "init": "MB",
+      "wa": "+63 917 ••• 3308",
+      "em": "marites@example.com",
+      "emp": "QC-0311",
+      "hired": "Sep 2024",
+      "base": "Remote — Manila",
+      "window": "8:00 AM / 2:00 PM PT",
+      "chan": "both",
+      "lang": "English / Tagalog",
+      "freq": "1x"
+    },
+    {
+      "id": "gv",
+      "name": "Grace Villanueva",
+      "role": "Virtual Assistant",
+      "init": "GV",
+      "wa": "+63 918 ••• 1265",
+      "em": "grace@example.com",
+      "emp": "QC-0328",
+      "hired": "Feb 2025",
+      "base": "Remote — Cebu",
+      "window": "8:00 AM / 2:00 PM PT",
+      "chan": "both",
+      "lang": "English / Cebuano",
+      "freq": "2x"
+    },
+    {
+      "id": "rs",
+      "name": "Rey Santos",
+      "role": "OR Supervisor",
+      "init": "RS",
+      "wa": "+1 310 ••• 5580",
+      "em": "rey@example.com",
+      "emp": "QC-0074",
+      "hired": "Nov 2019",
+      "base": "CVEC Alden",
+      "window": "6:45 AM / 3:00 PM",
+      "chan": "em",
+      "lang": "English / Tagalog",
+      "freq": "1x"
+    }
+  ],
+  "creds": {
+    "km": [
+      [
+        "BLS / CPR",
+        "American Heart Association",
+        "2026-10-04"
+      ],
+      [
+        "HIPAA annual training",
+        "QCMS compliance",
+        "2027-01-15"
+      ],
+      [
+        "Sexual harassment prevention (AB 1825)",
+        "State-mandated, 2 hr",
+        "2026-09-30"
+      ],
+      [
+        "TB screening",
+        "Annual",
+        "2027-03-02"
+      ],
+      [
+        "Manager competency review",
+        "QCMS internal",
+        "2027-02-28"
+      ]
+    ],
+    "jr": [
+      [
+        "BLS / CPR",
+        "American Heart Association",
+        "2026-09-05"
+      ],
+      [
+        "Medical Assistant certification (CCMA)",
+        "NHA",
+        "2027-06-30"
+      ],
+      [
+        "HIPAA annual training",
+        "QCMS compliance",
+        "2026-08-31"
+      ],
+      [
+        "Sexual harassment prevention",
+        "State-mandated, 1 hr",
+        "2026-11-12"
+      ],
+      [
+        "TB screening",
+        "Annual",
+        "2026-12-19"
+      ],
+      [
+        "Fit test — N95",
+        "Annual",
+        "2026-08-10"
+      ]
+    ],
+    "ec": [
+      [
+        "BLS / CPR",
+        "American Heart Association",
+        "2026-10-22"
+      ],
+      [
+        "Medical Assistant certification (CCMA)",
+        "NHA",
+        "2028-04-18"
+      ],
+      [
+        "HIPAA annual training",
+        "QCMS compliance",
+        "2027-01-15"
+      ],
+      [
+        "Sexual harassment prevention",
+        "State-mandated, 1 hr",
+        "2026-10-01"
+      ],
+      [
+        "TB screening",
+        "Annual",
+        "2027-05-07"
+      ],
+      [
+        "Fit test — N95",
+        "Annual",
+        "2027-02-14"
+      ]
+    ],
+    "mb": [
+      [
+        "HIPAA annual training",
+        "QCMS compliance",
+        "2026-09-28"
+      ],
+      [
+        "Sexual harassment prevention",
+        "State-mandated, 1 hr",
+        "2027-02-20"
+      ],
+      [
+        "Payer portal access review",
+        "QCMS internal, 6 mo",
+        "2026-10-30"
+      ],
+      [
+        "Confidentiality / BAA on file",
+        "QCMS legal",
+        "2027-09-01"
+      ]
+    ],
+    "gv": [
+      [
+        "HIPAA annual training",
+        "QCMS compliance",
+        "2026-08-25"
+      ],
+      [
+        "Sexual harassment prevention",
+        "State-mandated, 1 hr",
+        "2027-02-20"
+      ],
+      [
+        "Payer portal access review",
+        "QCMS internal, 6 mo",
+        "2026-11-30"
+      ],
+      [
+        "Confidentiality / BAA on file",
+        "QCMS legal",
+        "2028-02-01"
+      ]
+    ],
+    "rs": [
+      [
+        "BLS / CPR",
+        "American Heart Association",
+        "2026-09-01"
+      ],
+      [
+        "ACLS",
+        "American Heart Association",
+        "2026-08-14"
+      ],
+      [
+        "Radiologic Technologist license (CRT)",
+        "CDPH-RHB",
+        "2027-07-31"
+      ],
+      [
+        "Fluoroscopy permit",
+        "CDPH-RHB",
+        "2027-07-31"
+      ],
+      [
+        "Radiation safety / badge program",
+        "CDPH-RHB",
+        "2026-10-15"
+      ],
+      [
+        "HIPAA annual training",
+        "QCMS compliance",
+        "2027-01-15"
+      ],
+      [
+        "Moderate sedation competency",
+        "QCMS internal",
+        "2026-09-20"
+      ]
+    ]
+  },
+  "duties": {
+    "km": [
+      {
+        "c": "Weekly",
+        "t": "Publish next week’s staff schedule",
+        "due": "2026-08-21",
+        "how": "Build and publish the schedule for all locations before Friday close so nobody starts the week guessing.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Weekly",
+        "t": "Timecard exception review",
+        "due": "2026-08-23",
+        "how": "Review missed punches, unapproved overtime and open shift swaps; resolve before payroll cutoff.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Monthly",
+        "t": "Payroll close & PTO reconciliation",
+        "due": "2026-08-24",
+        "how": "Approve all timecards, reconcile PTO balances, submit to the payroll processor.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Monthly",
+        "t": "Physician credentialing packet review",
+        "due": "2026-08-25",
+        "how": "Chase missing license, DEA, board cert, malpractice face sheet and CV gaps for every provider in process.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Quarterly",
+        "t": "Safety committee meeting & minutes",
+        "due": "2026-08-28",
+        "how": "Convene the committee, review incidents and drills, file signed minutes in the safety binder.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Quarterly",
+        "t": "Employee performance check-ins",
+        "due": "2026-09-30",
+        "how": "One documented check-in per direct report; file the summary in the personnel record.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Semi",
+        "t": "Policy & procedure manual review",
+        "due": "2026-09-10",
+        "how": "Review the P&P manual against current practice and QUAD A standards; log revisions and re-sign.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Semi",
+        "t": "Payer contract & rate review",
+        "due": "2026-12-01",
+        "how": "Compare contracted rates to actual payments; flag underpayments and renegotiation candidates.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Yearly",
+        "t": "QUAD A accreditation renewal packet",
+        "due": "2026-09-20",
+        "how": "Assemble the full renewal packet — personnel files, QA data, safety logs, policy manual.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Yearly",
+        "t": "Employee handbook acknowledgment drive",
+        "due": "2026-11-12",
+        "how": "Collect a signed handbook acknowledgment from every employee; file in personnel records.",
+        "last": "",
+        "fq": ""
+      }
+    ],
+    "jr": [
+      {
+        "c": "Weekly",
+        "t": "Supply inventory count & par levels",
+        "due": "2026-08-21",
+        "how": "Count sheaths, wires, catheters, coils, Varithena, VenaSeal. Flag anything under par and send to ordering.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Weekly",
+        "t": "Exam room deep clean log",
+        "due": "2026-08-17",
+        "how": "Terminal clean every room, initial the log, note anything needing biomed.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Monthly",
+        "t": "Expired medication & supply sweep",
+        "due": "2026-08-24",
+        "how": "Pull anything expiring within 30 days, document the removal, replace stock.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Monthly",
+        "t": "Emergency equipment inspection",
+        "due": "2026-08-31",
+        "how": "Defibrillator, O2 tanks, suction, ambu bags — function check and log.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Quarterly",
+        "t": "Crash cart full inventory & seal replacement",
+        "due": "2026-08-28",
+        "how": "Open the cart, inventory every drug and item against the list, replace the seal, document.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Quarterly",
+        "t": "Refrigerator temperature log audit",
+        "due": "2026-10-15",
+        "how": "Review 90 days of temp logs for gaps and excursions; document corrective action.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Semi",
+        "t": "N95 respirator fit test",
+        "due": "2026-09-10",
+        "how": "Complete fit testing with the approved provider and file the certificate.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Yearly",
+        "t": "BLS recertification",
+        "due": "2026-09-20",
+        "how": "Complete the AHA BLS course and submit the new card to credentialing.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Yearly",
+        "t": "HIPAA & bloodborne pathogen training",
+        "due": "2027-01-15",
+        "how": "Complete both annual modules and submit certificates.",
+        "last": "",
+        "fq": ""
+      }
+    ],
+    "ec": [
+      {
+        "c": "Weekly",
+        "t": "Autoclave spore test log review",
+        "due": "2026-08-21",
+        "how": "Verify every cycle logged and every spore test result recorded and initialed.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Weekly",
+        "t": "Front desk cash & copay reconciliation",
+        "due": "2026-08-23",
+        "how": "Reconcile collected copays to the day sheets for the week; scan to billing.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Monthly",
+        "t": "Fire / emergency drill & log",
+        "due": "2026-08-27",
+        "how": "Run the drill, record attendance and time, file with the safety binder.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Monthly",
+        "t": "Eyewash station & safety signage check",
+        "due": "2026-08-31",
+        "how": "Flush and test eyewash stations, verify signage and exit lighting; log it.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Quarterly",
+        "t": "Sterilization competency validation",
+        "due": "2026-08-28",
+        "how": "Observed competency check on the full sterilization workflow; documented and signed.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Quarterly",
+        "t": "Infection control audit",
+        "due": "2026-10-15",
+        "how": "Hand hygiene, PPE use, sharps handling, surface disinfection — audit and report findings.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Semi",
+        "t": "Biomedical equipment preventive maintenance",
+        "due": "2026-09-10",
+        "how": "Schedule biomed for all clinical equipment; file the service reports.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Semi",
+        "t": "Hazardous waste manifest reconciliation",
+        "due": "2026-12-01",
+        "how": "Reconcile pickup manifests against the log; confirm the disposal vendor’s certificates.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Yearly",
+        "t": "Annual competency skills checklist",
+        "due": "2026-09-20",
+        "how": "Complete the full skills checklist with the manager and file in the personnel record.",
+        "last": "",
+        "fq": ""
+      }
+    ],
+    "mb": [
+      {
+        "c": "Weekly",
+        "t": "Claims submission batch & holds report",
+        "due": "2026-08-21",
+        "how": "Submit the week’s clean claims; list every claim held and the reason.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Weekly",
+        "t": "Prior authorization pipeline review",
+        "due": "2026-08-23",
+        "how": "Every pending auth chased; nothing scheduled without an approved auth on file.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Monthly",
+        "t": "Monthly billing close",
+        "due": "2026-08-21",
+        "how": "Close the month — claims out, holds documented, charge lag reported.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Monthly",
+        "t": "Payer portal access review",
+        "due": "2026-08-24",
+        "how": "Confirm every payer portal login works and permissions are still correct.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Quarterly",
+        "t": "Fee schedule vs. payment variance audit",
+        "due": "2026-08-28",
+        "how": "Sample paid claims against contracted rates; report every underpayment.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Quarterly",
+        "t": "Credentialing roster reconciliation",
+        "due": "2026-10-15",
+        "how": "Confirm every provider is active with every payer; flag anything lapsed.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Semi",
+        "t": "Payer portal password rotation",
+        "due": "2026-09-10",
+        "how": "Rotate all shared portal credentials and update the secure record.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Yearly",
+        "t": "Coding update training (CPT / ICD)",
+        "due": "2026-11-12",
+        "how": "Complete the annual coding update course and submit the certificate.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Yearly",
+        "t": "BAA & confidentiality agreement renewal",
+        "due": "2027-01-15",
+        "how": "Re-sign the BAA and confidentiality agreement; return to compliance.",
+        "last": "",
+        "fq": ""
+      }
+    ],
+    "gv": [
+      {
+        "c": "Weekly",
+        "t": "Aging A/R worklist (90+ days)",
+        "due": "2026-08-21",
+        "how": "Work every denial and balance older than 90 days; document the appeal or the write-off.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Weekly",
+        "t": "No-show & reschedule report",
+        "due": "2026-08-19",
+        "how": "Compile no-shows by location with who called and the outcome; send to the manager.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Monthly",
+        "t": "Patient statement cycle",
+        "due": "2026-08-24",
+        "how": "Run and release the statement cycle; handle returned mail and bad addresses.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Monthly",
+        "t": "Refund & credit balance review",
+        "due": "2026-08-31",
+        "how": "Identify credit balances, process refunds, document payer overpayment returns.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Quarterly",
+        "t": "Bad debt write-off submission",
+        "due": "2026-08-28",
+        "how": "Prepare the write-off schedule with justification for owner approval.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Quarterly",
+        "t": "Patient satisfaction survey summary",
+        "due": "2026-09-30",
+        "how": "Summarize survey results by location; flag themes for the quality meeting.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Semi",
+        "t": "Collections agency reconciliation",
+        "due": "2026-09-10",
+        "how": "Reconcile placed accounts and recoveries against the agency’s report.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Yearly",
+        "t": "HIPAA annual training",
+        "due": "2026-08-25",
+        "how": "Complete the annual HIPAA module and submit the certificate.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Yearly",
+        "t": "Sexual harassment prevention training",
+        "due": "2027-02-20",
+        "how": "Complete the state-mandated course and file the certificate.",
+        "last": "",
+        "fq": ""
+      }
+    ],
+    "rs": [
+      {
+        "c": "Weekly",
+        "t": "Angiosuite deep check & log book sign-off",
+        "due": "2026-08-21",
+        "how": "Full suite check — crash cart, O2, suction, contrast, lead aprons — and sign the log book.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Weekly",
+        "t": "Sedation chart audit (5 charts)",
+        "due": "2026-08-22",
+        "how": "Pull 5 charts: Caprini score signed, consent, discharge criteria met, times complete.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Monthly",
+        "t": "OR utilization & turnaround summary",
+        "due": "2026-08-31",
+        "how": "Case volume, room hours, average turnaround by site — for the quarterly meeting.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Monthly",
+        "t": "QUAD A patient safety data upload",
+        "due": "2026-08-31",
+        "how": "Upload random cases (first case per proceduralist per month) plus all adverse events.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Quarterly",
+        "t": "Radiation badge exchange & dosimetry review",
+        "due": "2026-08-28",
+        "how": "Collect and ship badges, review dose reports, follow up on any reading over threshold.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Quarterly",
+        "t": "Malignant hyperthermia cart check",
+        "due": "2026-09-30",
+        "how": "Full MH cart inventory, dantrolene expiry, cold saline stock; document.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Quarterly",
+        "t": "Moderate sedation competency drill",
+        "due": "2026-10-15",
+        "how": "Run the sedation emergency drill with the team; document attendance and findings.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Semi",
+        "t": "Lead apron fluoroscopic inspection",
+        "due": "2026-09-10",
+        "how": "Fluoro-inspect every apron and thyroid shield; tag and remove anything cracked.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Semi",
+        "t": "Anesthesia machine preventive maintenance",
+        "due": "2026-12-01",
+        "how": "Schedule and document PM on every anesthesia machine and vaporizer.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Yearly",
+        "t": "ACLS recertification",
+        "due": "2026-09-20",
+        "how": "Complete the AHA ACLS course and submit the new card to credentialing.",
+        "last": "",
+        "fq": ""
+      },
+      {
+        "c": "Yearly",
+        "t": "Fluoroscopy permit renewal",
+        "due": "2027-07-31",
+        "how": "Submit the CDPH-RHB renewal with continuing education documentation.",
+        "last": "",
+        "fq": ""
+      }
+    ]
+  },
+  "cadences": [
+    {
+      "k": "Weekly",
+      "label": "Weekly",
+      "lead": 2,
+      "step": {
+        "d": 7
+      }
+    },
+    {
+      "k": "Monthly",
+      "label": "Monthly",
+      "lead": 5,
+      "step": {
+        "m": 1
+      }
+    },
+    {
+      "k": "Quarterly",
+      "label": "Quarterly",
+      "lead": 14,
+      "step": {
+        "m": 3
+      }
+    },
+    {
+      "k": "Semi",
+      "label": "Every 6 months",
+      "lead": 30,
+      "step": {
+        "m": 6
+      }
+    },
+    {
+      "k": "Yearly",
+      "label": "Yearly",
+      "lead": 45,
+      "step": {
+        "m": 12
+      }
+    }
+  ],
+  "facilities": [
+    {
+      "id": "tz",
+      "name": "CVEC Tarzana",
+      "kind": "Surgery center",
+      "group": "CVEC",
+      "rooms": [
+        "OR 1",
+        "OR 2"
+      ]
+    },
+    {
+      "id": "al",
+      "name": "CVEC Alden",
+      "kind": "Surgery center",
+      "group": "CVEC",
+      "rooms": [
+        "Angio Suite"
+      ]
+    },
+    {
+      "id": "gl",
+      "name": "EVSLA Glendale",
+      "kind": "Vein clinic",
+      "group": "EVSLA",
+      "rooms": [
+        "Procedure Room",
+        "Ultrasound Room"
+      ]
+    },
+    {
+      "id": "lc",
+      "name": "EVSLA La Cañada",
+      "kind": "Vein clinic",
+      "group": "EVSLA",
+      "rooms": [
+        "Procedure Room"
+      ]
+    },
+    {
+      "id": "sv",
+      "name": "EVSLA Simi Valley",
+      "kind": "Vein clinic",
+      "group": "EVSLA",
+      "rooms": [
+        "Procedure Room"
+      ]
+    },
+    {
+      "id": "cl",
+      "name": "CICVI Los Angeles",
+      "kind": "Surgery center — opening",
+      "group": "CICVI",
+      "rooms": [
+        "OR 1",
+        "OR 2",
+        "OR 3"
+      ]
+    }
+  ],
+  "views": [
+    {
+      "id": "ALL",
+      "name": "All facilities — combined",
+      "ids": null
+    },
+    {
+      "id": "CVEC",
+      "name": "CVEC group — Tarzana + Alden",
+      "ids": [
+        "tz",
+        "al"
+      ]
+    },
+    {
+      "id": "EVSLA",
+      "name": "EVSLA group — 3 clinics",
+      "ids": [
+        "gl",
+        "lc",
+        "sv"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": 1,
+      "t": "Confirm tomorrow’s patients",
+      "how": "Call every patient on tomorrow’s schedule; log confirmed / no answer in the sheet.",
+      "p": "mb",
+      "f": "EVSLA Glendale",
+      "fr": "Daily",
+      "due": "Aug 18, 2:00 PM",
+      "s": "done",
+      "r": 1,
+      "done": "Aug 18, 11:42 AM"
+    },
+    {
+      "id": 2,
+      "t": "Confirm tomorrow’s patients",
+      "how": "Call every patient on tomorrow’s schedule; log confirmed / no answer in the sheet.",
+      "p": "gv",
+      "f": "EVSLA Simi Valley",
+      "fr": "Daily",
+      "due": "Aug 18, 2:00 PM",
+      "s": "reminded",
+      "r": 2,
+      "done": ""
+    },
+    {
+      "id": 3,
+      "t": "Insurance eligibility check",
+      "how": "Verify benefits + auth for every patient booked in the next 5 business days.",
+      "p": "mb",
+      "f": "CVEC Tarzana",
+      "fr": "Daily",
+      "due": "Aug 18, 5:00 PM",
+      "s": "pending",
+      "r": 1,
+      "done": ""
+    },
+    {
+      "id": 4,
+      "t": "No-show follow-up calls",
+      "how": "Call each no-show, ask why, reschedule, and write who made the call on the checklist.",
+      "p": "gv",
+      "f": "EVSLA Glendale",
+      "fr": "Daily",
+      "due": "Aug 18, 4:00 PM",
+      "s": "overdue",
+      "r": 5,
+      "done": ""
+    },
+    {
+      "id": 5,
+      "t": "Angiosuite supervisor checklist",
+      "how": "Walk the suite: crash cart, O2, suction, contrast, lead aprons, log book signed.",
+      "p": "rs",
+      "f": "CVEC Alden",
+      "fr": "Daily",
+      "due": "Aug 18, 7:30 AM",
+      "s": "done",
+      "r": 1,
+      "done": "Aug 18, 7:18 AM"
+    },
+    {
+      "id": 6,
+      "t": "OR turnover log",
+      "how": "Record in/out time per case and turnover minutes between cases.",
+      "p": "rs",
+      "f": "CVEC Tarzana",
+      "fr": "Daily",
+      "due": "Aug 18, 6:00 PM",
+      "s": "pending",
+      "r": 0,
+      "done": ""
+    },
+    {
+      "id": 7,
+      "t": "Autoclave / sterilizer log",
+      "how": "Run the spore test, record cycle numbers, initial the log.",
+      "p": "ec",
+      "f": "CVEC Alden",
+      "fr": "Daily",
+      "due": "Aug 18, 8:00 AM",
+      "s": "done",
+      "r": 2,
+      "done": "Aug 18, 9:05 AM"
+    },
+    {
+      "id": 8,
+      "t": "Crash cart + emergency drug check",
+      "how": "Check seal, expirations, defibrillator battery. Replace and document anything short.",
+      "p": "jr",
+      "f": "EVSLA La Cañada",
+      "fr": "Daily",
+      "due": "Aug 18, 8:00 AM",
+      "s": "overdue",
+      "r": 7,
+      "done": ""
+    },
+    {
+      "id": 9,
+      "t": "Front-desk cash / copay reconcile",
+      "how": "Match collected copays to the day sheet; scan to billing.",
+      "p": "ec",
+      "f": "EVSLA Glendale",
+      "fr": "Daily",
+      "due": "Aug 18, 5:30 PM",
+      "s": "pending",
+      "r": 0,
+      "done": ""
+    },
+    {
+      "id": 10,
+      "t": "Arrange coverage for Johnny (2 PM out)",
+      "how": "Johnny leaves 2 PM Tue. Confirm who covers the afternoon clinic and tell the team.",
+      "p": "km",
+      "f": "EVSLA Glendale",
+      "fr": "Weekly",
+      "due": "Aug 18, 10:00 AM",
+      "s": "reminded",
+      "r": 3,
+      "done": ""
+    },
+    {
+      "id": 11,
+      "t": "Supply inventory count",
+      "how": "Count sheaths, wires, catheters, coils, Varithena, VenaSeal. Flag anything under par.",
+      "p": "jr",
+      "f": "CVEC Tarzana",
+      "fr": "Weekly",
+      "due": "Aug 19, 3:00 PM",
+      "s": "pending",
+      "r": 1,
+      "done": ""
+    },
+    {
+      "id": 12,
+      "t": "Reorder below-par supplies",
+      "how": "Submit PO for every item flagged in the count; note expected delivery date.",
+      "p": "mb",
+      "f": "CVEC Tarzana",
+      "fr": "Weekly",
+      "due": "Aug 20, 12:00 PM",
+      "s": "pending",
+      "r": 0,
+      "done": ""
+    },
+    {
+      "id": 13,
+      "t": "Weekly facility checklist",
+      "how": "Fill patients seen / no-show / rescheduled per modality and OR cases; submit the PDF.",
+      "p": "ec",
+      "f": "EVSLA Simi Valley",
+      "fr": "Weekly",
+      "due": "Aug 21, 5:00 PM",
+      "s": "pending",
+      "r": 0,
+      "done": ""
+    },
+    {
+      "id": 14,
+      "t": "Weekly facility checklist",
+      "how": "Fill patients seen / no-show / rescheduled per modality and OR cases; submit the PDF.",
+      "p": "jr",
+      "f": "EVSLA La Cañada",
+      "fr": "Weekly",
+      "due": "Aug 21, 5:00 PM",
+      "s": "overdue",
+      "r": 4,
+      "done": ""
+    },
+    {
+      "id": 15,
+      "t": "Claims submission batch",
+      "how": "Submit the week’s clean claims; list every claim held and the reason.",
+      "p": "mb",
+      "f": "CVEC Alden",
+      "fr": "Weekly",
+      "due": "Aug 21, 4:00 PM",
+      "s": "reminded",
+      "r": 2,
+      "done": ""
+    },
+    {
+      "id": 16,
+      "t": "Denied / rejected claim worklist",
+      "how": "Work every denial older than 7 days; document the appeal or the write-off.",
+      "p": "gv",
+      "f": "CVEC Alden",
+      "fr": "Weekly",
+      "due": "Aug 21, 4:00 PM",
+      "s": "pending",
+      "r": 1,
+      "done": ""
+    },
+    {
+      "id": 17,
+      "t": "Sedation chart audit (5 charts)",
+      "how": "Pull 5 charts: Caprini score signed, consent, discharge criteria met, times complete.",
+      "p": "rs",
+      "f": "CVEC Alden",
+      "fr": "Weekly",
+      "due": "Aug 22, 2:00 PM",
+      "s": "pending",
+      "r": 0,
+      "done": ""
+    },
+    {
+      "id": 18,
+      "t": "BLS expiring in 60 days — follow up",
+      "how": "10 staff expire this quarter. Book the class, then check each name off individually.",
+      "p": "km",
+      "f": "CVEC Tarzana",
+      "fr": "Weekly",
+      "due": "Aug 20, 5:00 PM",
+      "s": "overdue",
+      "r": 6,
+      "done": ""
+    },
+    {
+      "id": 19,
+      "t": "Physician credentialing packet",
+      "how": "Chase missing items: license, DEA, board cert, malpractice face sheet, CV gaps.",
+      "p": "km",
+      "f": "CICVI Los Angeles",
+      "fr": "Monthly",
+      "due": "Aug 25, 5:00 PM",
+      "s": "pending",
+      "r": 0,
+      "done": ""
+    },
+    {
+      "id": 20,
+      "t": "Facility credentialing renewal",
+      "how": "Track payer re-cred dates and accreditation renewals; start 120 days out.",
+      "p": "km",
+      "f": "CVEC Alden",
+      "fr": "Monthly",
+      "due": "Aug 28, 5:00 PM",
+      "s": "pending",
+      "r": 0,
+      "done": ""
+    },
+    {
+      "id": 21,
+      "t": "QUAD A patient safety data upload",
+      "how": "Upload random cases (first case per proceduralist per month) + all adverse events.",
+      "p": "rs",
+      "f": "CVEC Alden",
+      "fr": "Monthly",
+      "due": "Aug 31, 5:00 PM",
+      "s": "reminded",
+      "r": 2,
+      "done": ""
+    },
+    {
+      "id": 22,
+      "t": "Monthly OR utilization summary",
+      "how": "Case volume, room hours, average turnaround by site — for the quarterly meeting.",
+      "p": "rs",
+      "f": "CVEC Tarzana",
+      "fr": "Monthly",
+      "due": "Aug 31, 5:00 PM",
+      "s": "pending",
+      "r": 0,
+      "done": ""
+    },
+    {
+      "id": 23,
+      "t": "Emergency drills / fire drill log",
+      "how": "Run the drill, record attendance and time, file with the safety binder.",
+      "p": "ec",
+      "f": "EVSLA Glendale",
+      "fr": "Monthly",
+      "due": "Aug 27, 3:00 PM",
+      "s": "pending",
+      "r": 0,
+      "done": ""
+    },
+    {
+      "id": 24,
+      "t": "Payroll hours review",
+      "how": "Approve timecards, flag missed punches, confirm PTO before the cutoff.",
+      "p": "km",
+      "f": "EVSLA Glendale",
+      "fr": "Monthly",
+      "due": "Aug 24, 12:00 PM",
+      "s": "done",
+      "r": 1,
+      "done": "Aug 17, 4:31 PM"
+    }
+  ],
+  "schedLocs": [
+    {
+      "id": "ab",
+      "name": "Absences",
+      "open": true,
+      "roles": [
+        "Off — call out",
+        "Call out sick"
+      ]
+    },
+    {
+      "id": "tz",
+      "name": "CVEC Tarzana",
+      "open": true,
+      "roles": [
+        "0. Team Lead",
+        "1. Scrub 1",
+        "2. Scrub 2",
+        "3. Circulator",
+        "4. Rad Tech",
+        "5. Anesthesia / CRNA",
+        "6. Recovery / PACU",
+        "7. Dictation"
+      ]
+    },
+    {
+      "id": "al",
+      "name": "CVEC Alden",
+      "open": true,
+      "roles": [
+        "0. Team Lead",
+        "1. Scrub 1",
+        "2. Circulator",
+        "3. Rad Tech",
+        "4. Anesthesia / CRNA",
+        "5. Recovery / PACU"
+      ]
+    },
+    {
+      "id": "gl",
+      "name": "EVSLA Glendale — clinic",
+      "open": false,
+      "roles": [
+        "Front desk",
+        "Ultrasound tech",
+        "Medical assistant",
+        "Vein ablation RN"
+      ]
+    },
+    {
+      "id": "cl",
+      "name": "CICVI Los Angeles — opening",
+      "open": false,
+      "roles": [
+        "0. Team Lead",
+        "1. Scrub 1",
+        "2. Circulator",
+        "3. Anesthesia / CRNA"
+      ]
+    }
+  ],
+  "staff": [
+    "John Basilio",
+    "Karina Canul",
+    "Skye Centeno",
+    "Esmeralda Terroness",
+    "Evelyn Diego",
+    "Roberto Lopez",
+    "Gillian Guzman",
+    "Alyssa Bridges",
+    "Darel Gevera",
+    "Ezhan Mirza",
+    "Hugo Hurtado",
+    "June Caparida",
+    "Gavin Mckim",
+    "Lillian Ponce",
+    "Lauren Torok",
+    "Damaris Govea",
+    "Fredshon Gevera",
+    "Matthew Baidya (CRNA)",
+    "Sunny Sircar (CRNA)",
+    "Diego Cavenaghi (CRNA)"
+  ],
+  "sched": {
+    "0": [
+      {
+        "l": "tz",
+        "r": "0. Team Lead",
+        "d": 0,
+        "t": "06:30-15:00",
+        "w": "John Basilio"
+      },
+      {
+        "l": "tz",
+        "r": "0. Team Lead",
+        "d": 1,
+        "t": "07:30-16:00",
+        "w": "Karina Canul"
+      },
+      {
+        "l": "tz",
+        "r": "0. Team Lead",
+        "d": 2,
+        "t": "08:30-17:00",
+        "w": "Skye Centeno"
+      },
+      {
+        "l": "tz",
+        "r": "0. Team Lead",
+        "d": 3,
+        "t": "06:30-15:00",
+        "w": "John Basilio"
+      },
+      {
+        "l": "tz",
+        "r": "0. Team Lead",
+        "d": 4,
+        "t": "07:30-16:00",
+        "w": "Karina Canul"
+      },
+      {
+        "l": "tz",
+        "r": "1. Scrub 1",
+        "d": 0,
+        "t": "07:00-15:30",
+        "w": "Esmeralda Terroness"
+      },
+      {
+        "l": "tz",
+        "r": "1. Scrub 1",
+        "d": 1,
+        "t": "07:00-15:30",
+        "w": "Esmeralda Terroness"
+      },
+      {
+        "l": "tz",
+        "r": "1. Scrub 1",
+        "d": 3,
+        "t": "07:00-15:30",
+        "w": "Gillian Guzman"
+      },
+      {
+        "l": "tz",
+        "r": "1. Scrub 1",
+        "d": 4,
+        "t": "07:00-15:30",
+        "w": ""
+      },
+      {
+        "l": "tz",
+        "r": "2. Scrub 2",
+        "d": 0,
+        "t": "07:00-15:30",
+        "w": "Fredshon Gevera"
+      },
+      {
+        "l": "tz",
+        "r": "2. Scrub 2",
+        "d": 1,
+        "t": "07:30-16:00",
+        "w": "Darel Gevera"
+      },
+      {
+        "l": "tz",
+        "r": "2. Scrub 2",
+        "d": 3,
+        "t": "07:30-16:00",
+        "w": "Darel Gevera"
+      },
+      {
+        "l": "tz",
+        "r": "3. Circulator",
+        "d": 0,
+        "t": "07:00-15:30",
+        "w": "Evelyn Diego"
+      },
+      {
+        "l": "tz",
+        "r": "3. Circulator",
+        "d": 1,
+        "t": "07:00-15:30",
+        "w": "Evelyn Diego"
+      },
+      {
+        "l": "tz",
+        "r": "3. Circulator",
+        "d": 2,
+        "t": "08:00-16:30",
+        "w": "Alyssa Bridges"
+      },
+      {
+        "l": "tz",
+        "r": "3. Circulator",
+        "d": 3,
+        "t": "07:00-15:30",
+        "w": "Evelyn Diego"
+      },
+      {
+        "l": "tz",
+        "r": "3. Circulator",
+        "d": 4,
+        "t": "08:00-16:30",
+        "w": ""
+      },
+      {
+        "l": "tz",
+        "r": "4. Rad Tech",
+        "d": 0,
+        "t": "06:30-15:00",
+        "w": "Ezhan Mirza"
+      },
+      {
+        "l": "tz",
+        "r": "4. Rad Tech",
+        "d": 1,
+        "t": "06:30-15:00",
+        "w": "Ezhan Mirza"
+      },
+      {
+        "l": "tz",
+        "r": "4. Rad Tech",
+        "d": 3,
+        "t": "06:30-15:00",
+        "w": "Ezhan Mirza"
+      },
+      {
+        "l": "tz",
+        "r": "4. Rad Tech",
+        "d": 4,
+        "t": "06:30-15:00",
+        "w": "Hugo Hurtado"
+      },
+      {
+        "l": "tz",
+        "r": "5. Anesthesia / CRNA",
+        "d": 0,
+        "t": "07:00-15:30",
+        "w": "Matthew Baidya (CRNA)"
+      },
+      {
+        "l": "tz",
+        "r": "5. Anesthesia / CRNA",
+        "d": 1,
+        "t": "07:00-15:30",
+        "w": "Sunny Sircar (CRNA)"
+      },
+      {
+        "l": "tz",
+        "r": "5. Anesthesia / CRNA",
+        "d": 3,
+        "t": "07:00-15:30",
+        "w": "Matthew Baidya (CRNA)"
+      },
+      {
+        "l": "tz",
+        "r": "5. Anesthesia / CRNA",
+        "d": 4,
+        "t": "07:00-15:30",
+        "w": ""
+      },
+      {
+        "l": "tz",
+        "r": "6. Recovery / PACU",
+        "d": 0,
+        "t": "08:30-17:00",
+        "w": "June Caparida"
+      },
+      {
+        "l": "tz",
+        "r": "6. Recovery / PACU",
+        "d": 1,
+        "t": "08:30-17:00",
+        "w": "June Caparida"
+      },
+      {
+        "l": "tz",
+        "r": "6. Recovery / PACU",
+        "d": 3,
+        "t": "08:30-17:00",
+        "w": "Lillian Ponce"
+      },
+      {
+        "l": "tz",
+        "r": "7. Dictation",
+        "d": 2,
+        "t": "08:30-17:00",
+        "w": "John Basilio"
+      },
+      {
+        "l": "tz",
+        "r": "7. Dictation",
+        "d": 4,
+        "t": "13:00-17:00",
+        "w": "Roberto Lopez"
+      },
+      {
+        "l": "al",
+        "r": "0. Team Lead",
+        "d": 1,
+        "t": "07:30-16:00",
+        "w": "Roberto Lopez"
+      },
+      {
+        "l": "al",
+        "r": "0. Team Lead",
+        "d": 2,
+        "t": "07:30-16:00",
+        "w": "Roberto Lopez"
+      },
+      {
+        "l": "al",
+        "r": "0. Team Lead",
+        "d": 4,
+        "t": "07:30-16:00",
+        "w": "Skye Centeno"
+      },
+      {
+        "l": "al",
+        "r": "1. Scrub 1",
+        "d": 1,
+        "t": "07:00-15:30",
+        "w": "Gavin Mckim"
+      },
+      {
+        "l": "al",
+        "r": "1. Scrub 1",
+        "d": 2,
+        "t": "07:00-15:30",
+        "w": "Gavin Mckim"
+      },
+      {
+        "l": "al",
+        "r": "2. Circulator",
+        "d": 1,
+        "t": "07:30-16:00",
+        "w": "Damaris Govea"
+      },
+      {
+        "l": "al",
+        "r": "2. Circulator",
+        "d": 2,
+        "t": "07:30-16:00",
+        "w": ""
+      },
+      {
+        "l": "al",
+        "r": "3. Rad Tech",
+        "d": 1,
+        "t": "07:00-15:30",
+        "w": "Hugo Hurtado"
+      },
+      {
+        "l": "al",
+        "r": "3. Rad Tech",
+        "d": 2,
+        "t": "07:00-15:30",
+        "w": "Hugo Hurtado"
+      },
+      {
+        "l": "al",
+        "r": "4. Anesthesia / CRNA",
+        "d": 1,
+        "t": "07:00-15:30",
+        "w": "Diego Cavenaghi (CRNA)"
+      },
+      {
+        "l": "al",
+        "r": "4. Anesthesia / CRNA",
+        "d": 2,
+        "t": "07:00-15:30",
+        "w": "Diego Cavenaghi (CRNA)"
+      },
+      {
+        "l": "al",
+        "r": "5. Recovery / PACU",
+        "d": 1,
+        "t": "08:30-17:00",
+        "w": "Lauren Torok"
+      },
+      {
+        "l": "al",
+        "r": "5. Recovery / PACU",
+        "d": 2,
+        "t": "08:30-17:00",
+        "w": "Lauren Torok"
+      },
+      {
+        "l": "gl",
+        "r": "Front desk",
+        "d": 0,
+        "t": "08:30-17:00",
+        "w": "Lillian Ponce"
+      },
+      {
+        "l": "gl",
+        "r": "Front desk",
+        "d": 1,
+        "t": "08:30-17:00",
+        "w": "Lillian Ponce"
+      },
+      {
+        "l": "gl",
+        "r": "Front desk",
+        "d": 2,
+        "t": "08:30-17:00",
+        "w": "Lillian Ponce"
+      },
+      {
+        "l": "gl",
+        "r": "Front desk",
+        "d": 3,
+        "t": "08:30-17:00",
+        "w": "Lillian Ponce"
+      },
+      {
+        "l": "gl",
+        "r": "Front desk",
+        "d": 4,
+        "t": "08:30-17:00",
+        "w": "Lillian Ponce"
+      },
+      {
+        "l": "gl",
+        "r": "Ultrasound tech",
+        "d": 0,
+        "t": "08:00-16:30",
+        "w": "Alyssa Bridges"
+      },
+      {
+        "l": "gl",
+        "r": "Ultrasound tech",
+        "d": 2,
+        "t": "08:00-16:30",
+        "w": "Alyssa Bridges"
+      },
+      {
+        "l": "gl",
+        "r": "Ultrasound tech",
+        "d": 4,
+        "t": "08:00-16:30",
+        "w": ""
+      },
+      {
+        "l": "gl",
+        "r": "Medical assistant",
+        "d": 0,
+        "t": "08:00-16:30",
+        "w": "Damaris Govea"
+      },
+      {
+        "l": "gl",
+        "r": "Medical assistant",
+        "d": 1,
+        "t": "08:00-16:30",
+        "w": "Gillian Guzman"
+      },
+      {
+        "l": "gl",
+        "r": "Medical assistant",
+        "d": 3,
+        "t": "08:00-16:30",
+        "w": "Damaris Govea"
+      },
+      {
+        "l": "gl",
+        "r": "Vein ablation RN",
+        "d": 1,
+        "t": "08:30-17:00",
+        "w": "Alyssa Bridges"
+      },
+      {
+        "l": "gl",
+        "r": "Vein ablation RN",
+        "d": 3,
+        "t": "08:30-17:00",
+        "w": "June Caparida"
+      },
+      {
+        "l": "ab",
+        "r": "Off — call out",
+        "d": 1,
+        "t": "13:00-17:00",
+        "w": "Johnny Reyes — dentist"
+      },
+      {
+        "l": "ab",
+        "r": "Call out sick",
+        "d": 2,
+        "t": "08:00-16:30",
+        "w": "Gavin Mckim"
+      }
+    ],
+    "-1": [
+      {
+        "l": "tz",
+        "r": "0. Team Lead",
+        "d": 0,
+        "t": "06:30-15:00",
+        "w": "John Basilio"
+      },
+      {
+        "l": "tz",
+        "r": "0. Team Lead",
+        "d": 1,
+        "t": "07:30-16:00",
+        "w": "Karina Canul"
+      },
+      {
+        "l": "tz",
+        "r": "0. Team Lead",
+        "d": 3,
+        "t": "06:30-15:00",
+        "w": "Skye Centeno"
+      },
+      {
+        "l": "tz",
+        "r": "1. Scrub 1",
+        "d": 0,
+        "t": "07:00-15:30",
+        "w": "Esmeralda Terroness"
+      },
+      {
+        "l": "tz",
+        "r": "1. Scrub 1",
+        "d": 1,
+        "t": "07:00-15:30",
+        "w": "Gillian Guzman"
+      },
+      {
+        "l": "tz",
+        "r": "2. Scrub 2",
+        "d": 0,
+        "t": "07:00-15:30",
+        "w": "Fredshon Gevera"
+      },
+      {
+        "l": "tz",
+        "r": "2. Scrub 2",
+        "d": 1,
+        "t": "07:30-16:00",
+        "w": "Darel Gevera"
+      },
+      {
+        "l": "tz",
+        "r": "3. Circulator",
+        "d": 0,
+        "t": "07:00-15:30",
+        "w": "Evelyn Diego"
+      },
+      {
+        "l": "tz",
+        "r": "4. Rad Tech",
+        "d": 0,
+        "t": "06:30-15:00",
+        "w": "Ezhan Mirza"
+      },
+      {
+        "l": "tz",
+        "r": "5. Anesthesia / CRNA",
+        "d": 0,
+        "t": "07:00-15:30",
+        "w": "Matthew Baidya (CRNA)"
+      },
+      {
+        "l": "al",
+        "r": "0. Team Lead",
+        "d": 1,
+        "t": "07:30-16:00",
+        "w": "Roberto Lopez"
+      },
+      {
+        "l": "al",
+        "r": "1. Scrub 1",
+        "d": 1,
+        "t": "07:00-15:30",
+        "w": "Gavin Mckim"
+      },
+      {
+        "l": "gl",
+        "r": "Front desk",
+        "d": 0,
+        "t": "08:30-17:00",
+        "w": "Lillian Ponce"
+      },
+      {
+        "l": "gl",
+        "r": "Front desk",
+        "d": 1,
+        "t": "08:30-17:00",
+        "w": "Lillian Ponce"
+      },
+      {
+        "l": "gl",
+        "r": "Ultrasound tech",
+        "d": 0,
+        "t": "08:00-16:30",
+        "w": "Alyssa Bridges"
+      }
+    ]
+  },
+  "days": [
+    "Mon 17",
+    "Tue 18",
+    "Wed 19",
+    "Thu 20",
+    "Fri 21",
+    "Sat 22",
+    "Sun 23"
+  ],
+  "recurring": [
+    [
+      "Payroll hours review",
+      "km",
+      "24th of each month, 12:00 PM"
+    ],
+    [
+      "Physician credentialing packet",
+      "km",
+      "25th — start 120 days before expiry"
+    ],
+    [
+      "Facility credentialing renewal",
+      "km",
+      "28th — payer re-cred + accreditation"
+    ],
+    [
+      "Fire / emergency drill + log",
+      "ec",
+      "27th — attendance and time recorded"
+    ],
+    [
+      "QUAD A patient safety data upload",
+      "rs",
+      "Last day — random cases + all adverse events"
+    ],
+    [
+      "Monthly OR utilization summary",
+      "rs",
+      "Last day — volume, room hours, turnaround"
+    ],
+    [
+      "Monthly billing close",
+      "mb",
+      "21st — claims out, holds documented"
+    ],
+    [
+      "Aging A/R review (90+ days)",
+      "gv",
+      "26th — appeal or write-off documented"
+    ],
+    [
+      "Supply par-level review",
+      "jr",
+      "19th — adjust par levels from usage"
+    ],
+    [
+      "Radiation badge exchange",
+      "rs",
+      "2nd — collect, ship, log replacements"
+    ]
+  ],
+  "plan": {
+    "km": [
+      [],
+      [
+        {
+          "t": "Arrange coverage for Johnny",
+          "photo": false,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "gl",
+          "fq": "",
+          "room": ""
+        }
+      ],
+      [],
+      [
+        {
+          "t": "BLS expiration follow-up",
+          "photo": false,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "tz",
+          "fq": "wk",
+          "room": ""
+        }
+      ],
+      [
+        {
+          "t": "Credentialing packet chase",
+          "photo": false,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "al",
+          "fq": "wk",
+          "room": ""
+        }
+      ],
+      [],
+      []
+    ],
+    "jr": [
+      [
+        {
+          "t": "Crash cart check",
+          "photo": true,
+          "done": "Aug 17, 8:12 AM",
+          "by": "photo",
+          "img": "",
+          "f": "lc",
+          "fq": "",
+          "room": ""
+        }
+      ],
+      [
+        {
+          "t": "Crash cart check",
+          "photo": true,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "lc",
+          "fq": "",
+          "room": ""
+        }
+      ],
+      [
+        {
+          "t": "Supply inventory count",
+          "photo": true,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "tz",
+          "fq": "1x",
+          "room": ""
+        }
+      ],
+      [
+        {
+          "t": "Crash cart check",
+          "photo": true,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "lc",
+          "fq": "",
+          "room": ""
+        }
+      ],
+      [
+        {
+          "t": "Weekly facility checklist",
+          "photo": true,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "lc",
+          "fq": "1x",
+          "room": ""
+        }
+      ],
+      [],
+      []
+    ],
+    "ec": [
+      [
+        {
+          "t": "Autoclave / sterilizer log",
+          "photo": true,
+          "done": "Aug 17, 8:04 AM",
+          "by": "photo",
+          "img": "",
+          "f": "al",
+          "fq": "",
+          "room": ""
+        }
+      ],
+      [
+        {
+          "t": "Autoclave / sterilizer log",
+          "photo": true,
+          "done": "Aug 18, 9:05 AM",
+          "by": "text reply",
+          "img": "",
+          "f": "al",
+          "fq": "",
+          "room": ""
+        }
+      ],
+      [
+        {
+          "t": "Cash / copay reconcile",
+          "photo": true,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "gl",
+          "fq": "",
+          "room": ""
+        }
+      ],
+      [
+        {
+          "t": "Autoclave / sterilizer log",
+          "photo": true,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "al",
+          "fq": "",
+          "room": ""
+        }
+      ],
+      [
+        {
+          "t": "Weekly facility checklist",
+          "photo": true,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "lc",
+          "fq": "1x",
+          "room": ""
+        }
+      ],
+      [],
+      []
+    ],
+    "mb": [
+      [
+        {
+          "t": "Confirm tomorrow’s patients",
+          "photo": false,
+          "done": "Aug 17, 1:30 PM",
+          "by": "text reply",
+          "img": "",
+          "f": "gl",
+          "fq": "",
+          "room": ""
+        }
+      ],
+      [
+        {
+          "t": "Confirm tomorrow’s patients",
+          "photo": false,
+          "done": "Aug 18, 11:42 AM",
+          "by": "text reply",
+          "img": "",
+          "f": "gl",
+          "fq": "",
+          "room": ""
+        },
+        {
+          "t": "Insurance eligibility check",
+          "photo": false,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "tz",
+          "fq": "",
+          "room": ""
+        }
+      ],
+      [
+        {
+          "t": "Reorder below-par supplies",
+          "photo": false,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "tz",
+          "fq": "1x",
+          "room": ""
+        }
+      ],
+      [
+        {
+          "t": "Confirm tomorrow’s patients",
+          "photo": false,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "gl",
+          "fq": "",
+          "room": ""
+        }
+      ],
+      [
+        {
+          "t": "Claims submission batch",
+          "photo": false,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "al",
+          "fq": "1x",
+          "room": ""
+        }
+      ],
+      [],
+      []
+    ],
+    "gv": [
+      [
+        {
+          "t": "No-show follow-up calls",
+          "photo": false,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "gl",
+          "fq": "",
+          "room": ""
+        }
+      ],
+      [
+        {
+          "t": "No-show follow-up calls",
+          "photo": false,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "gl",
+          "fq": "",
+          "room": ""
+        }
+      ],
+      [
+        {
+          "t": "Denied claim worklist",
+          "photo": false,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "al",
+          "fq": "1x",
+          "room": ""
+        }
+      ],
+      [
+        {
+          "t": "No-show follow-up calls",
+          "photo": false,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "gl",
+          "fq": "",
+          "room": ""
+        }
+      ],
+      [
+        {
+          "t": "Denied claim worklist",
+          "photo": false,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "al",
+          "fq": "1x",
+          "room": ""
+        }
+      ],
+      [],
+      []
+    ],
+    "rs": [
+      [
+        {
+          "t": "Angiosuite supervisor checklist",
+          "photo": true,
+          "done": "Aug 17, 7:05 AM",
+          "by": "photo",
+          "img": "",
+          "f": "al",
+          "fq": "",
+          "room": "Angio Suite"
+        },
+        {
+          "t": "OR turnover log",
+          "photo": true,
+          "done": "Aug 17, 6:20 PM",
+          "by": "checkbox",
+          "img": "",
+          "f": "tz",
+          "fq": "",
+          "room": "OR 1"
+        }
+      ],
+      [
+        {
+          "t": "Angiosuite supervisor checklist",
+          "photo": true,
+          "done": "Aug 18, 7:18 AM",
+          "by": "photo",
+          "img": "",
+          "f": "al",
+          "fq": "",
+          "room": "Angio Suite"
+        },
+        {
+          "t": "OR turnover log",
+          "photo": true,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "tz",
+          "fq": "",
+          "room": "OR 1"
+        }
+      ],
+      [],
+      [
+        {
+          "t": "Angiosuite supervisor checklist",
+          "photo": true,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "al",
+          "fq": "",
+          "room": "Angio Suite"
+        }
+      ],
+      [
+        {
+          "t": "Sedation chart audit",
+          "photo": true,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "al",
+          "fq": "wk",
+          "room": ""
+        }
+      ],
+      [
+        {
+          "t": "QUAD A data upload",
+          "photo": true,
+          "done": "",
+          "by": "",
+          "img": "",
+          "f": "al",
+          "fq": "mo",
+          "room": ""
+        }
+      ],
+      []
+    ]
+  },
+  "monthplan": {
+    "2026-7-10": [
+      {
+        "t": "Eyewash station check",
+        "p": "ec",
+        "photo": true,
+        "done": "Aug 10, 10:22 AM",
+        "by": "photo",
+        "img": "",
+        "f": "gl",
+        "fq": "",
+        "room": ""
+      }
+    ],
+    "2026-7-14": [
+      {
+        "t": "Expired medication & supply sweep",
+        "p": "jr",
+        "photo": true,
+        "done": "Aug 14, 3:40 PM",
+        "by": "photo",
+        "img": "",
+        "f": "lc",
+        "fq": "",
+        "room": ""
+      }
+    ],
+    "2026-7-17": [
+      {
+        "t": "Emergency equipment inspection",
+        "p": "jr",
+        "photo": true,
+        "done": "Aug 17, 9:15 AM",
+        "by": "photo",
+        "img": "",
+        "f": "lc",
+        "fq": "",
+        "room": ""
+      }
+    ],
+    "2026-7-18": [
+      {
+        "t": "Exam room deep clean",
+        "p": "ec",
+        "photo": true,
+        "done": "",
+        "by": "",
+        "img": "",
+        "f": "gl",
+        "fq": "",
+        "room": ""
+      }
+    ],
+    "2026-7-19": [
+      {
+        "t": "Supply par-level review",
+        "p": "jr",
+        "photo": true,
+        "done": "",
+        "by": "",
+        "img": "",
+        "f": "tz",
+        "fq": "",
+        "room": ""
+      }
+    ],
+    "2026-7-20": [
+      {
+        "t": "Book BLS renewal class (10 staff)",
+        "p": "km",
+        "photo": false,
+        "done": "",
+        "by": "",
+        "img": "",
+        "f": "tz",
+        "fq": "",
+        "room": ""
+      }
+    ],
+    "2026-7-21": [
+      {
+        "t": "Monthly billing close",
+        "p": "mb",
+        "photo": false,
+        "done": "",
+        "by": "",
+        "img": "",
+        "f": "al",
+        "fq": "",
+        "room": ""
+      }
+    ],
+    "2026-7-24": [
+      {
+        "t": "Payroll hours review",
+        "p": "km",
+        "photo": false,
+        "done": "",
+        "by": "",
+        "img": "",
+        "f": "gl",
+        "fq": "",
+        "room": ""
+      }
+    ],
+    "2026-7-25": [
+      {
+        "t": "Physician credentialing packet",
+        "p": "km",
+        "photo": false,
+        "done": "",
+        "by": "",
+        "img": "",
+        "f": "cl",
+        "fq": "",
+        "room": ""
+      }
+    ],
+    "2026-7-26": [
+      {
+        "t": "Aging A/R review (90+ days)",
+        "p": "gv",
+        "photo": false,
+        "done": "",
+        "by": "",
+        "img": "",
+        "f": "al",
+        "fq": "",
+        "room": ""
+      }
+    ],
+    "2026-7-27": [
+      {
+        "t": "Fire / emergency drill + log",
+        "p": "ec",
+        "photo": true,
+        "done": "",
+        "by": "",
+        "img": "",
+        "f": "gl",
+        "fq": "",
+        "room": ""
+      }
+    ],
+    "2026-7-28": [
+      {
+        "t": "Facility credentialing renewal",
+        "p": "km",
+        "photo": false,
+        "done": "",
+        "by": "",
+        "img": "",
+        "f": "al",
+        "fq": "",
+        "room": ""
+      }
+    ],
+    "2026-7-31": [
+      {
+        "t": "QUAD A patient safety data upload",
+        "p": "rs",
+        "photo": true,
+        "done": "",
+        "by": "",
+        "img": "",
+        "f": "al",
+        "fq": "",
+        "room": "Angio Suite"
+      },
+      {
+        "t": "Monthly OR utilization summary",
+        "p": "rs",
+        "photo": false,
+        "done": "",
+        "by": "",
+        "img": "",
+        "f": "tz",
+        "fq": "",
+        "room": "OR 1"
+      }
+    ],
+    "2026-8-2": [
+      {
+        "t": "Radiation badge exchange",
+        "p": "rs",
+        "photo": true,
+        "done": "",
+        "by": "",
+        "img": "",
+        "f": "al",
+        "fq": "",
+        "room": ""
+      }
+    ],
+    "2026-8-15": [
+      {
+        "t": "Quarterly meeting deck — turnaround data",
+        "p": "rs",
+        "photo": false,
+        "done": "",
+        "by": "",
+        "img": "",
+        "f": "tz",
+        "fq": "",
+        "room": ""
+      }
+    ],
+    "2026-8-24": [
+      {
+        "t": "Payroll hours review",
+        "p": "km",
+        "photo": false,
+        "done": "",
+        "by": "",
+        "img": "",
+        "f": "gl",
+        "fq": "",
+        "room": ""
+      }
+    ],
+    "2026-8-30": [
+      {
+        "t": "QUAD A patient safety data upload",
+        "p": "rs",
+        "photo": true,
+        "done": "",
+        "by": "",
+        "img": "",
+        "f": "al",
+        "fq": "",
+        "room": "Angio Suite"
+      }
+    ]
+  },
+  "clockRules": [
+    [
+      "Clock-in nudge",
+      "10 min before shift start"
+    ],
+    [
+      "Late flag",
+      "5 min after start, escalates to the administration"
+    ],
+    [
+      "Lunch out",
+      "4 h into the shift"
+    ],
+    [
+      "Lunch in",
+      "30 min after lunch out"
+    ],
+    [
+      "Clock-out nudge",
+      "at shift end, repeating every 15 min"
+    ],
+    [
+      "Daily digest",
+      "5:30 PM to Fredshon — attendance, late punches, missed breaks"
+    ]
+  ],
+  "lifts": {
+    "Joke": [
+      "Why did the radiologist keep calm during the code? He had a lot of exposure to stress.",
+      "Our autoclave has better attendance than half the internet. It shows up, it runs hot, it never calls out.",
+      "A patient asked if the procedure was minimally invasive. I said yes — the paperwork is the invasive part.",
+      "Turnover time is the only thing in this building that grows without anyone feeding it."
+    ],
+    "Medical fact": [
+      "The genicular arteries were mapped in the 1800s, but embolizing them for knee OA only became routine in the last decade — GAE is younger than most of our equipment.",
+      "The saphenous vein is the longest vein in the body — roughly the length of your leg plus your thigh, which is why ablation planning matters so much.",
+      "Contrast-induced nephropathy risk drops meaningfully with simple pre-procedure hydration. The cheapest intervention in the suite is a glass of water.",
+      "A lead apron blocks about 90–95% of scatter at typical fluoro energies — but only where it actually covers you. Cracks are not cosmetic."
+    ],
+    "Science fact": [
+      "Your blood vessels laid end to end would circle the Earth roughly 2.5 times.",
+      "Water is one of the very few substances that is less dense as a solid — which is why ice floats and why lakes freeze top-down.",
+      "The human body replaces about 330 billion cells every day. You are, functionally, a slow-motion rebuild.",
+      "Sound travels about 4 times faster in water than in air — which is the whole reason ultrasound gel exists."
+    ],
+    "Word of the day": [
+      "<b>Ischemia</b> — reduced blood supply to tissue. From Greek <i>ischein</i> (to hold back) + <i>haima</i> (blood). Literally: held-back blood.",
+      "<b>Tortuous</b> — full of twists and turns. Not to be confused with <i>torturous</i>, which is what a tortuous vessel feels like at 4 PM.",
+      "<b>Patent</b> — open, unobstructed. In vascular work the best possible thing to say about a vessel.",
+      "<b>Meticulous</b> — showing great attention to detail. From Latin <i>metus</i>, fear. The original sense was \"fearful\" — which is honestly the right instinct in an OR."
+    ],
+    "Motivation": [
+      "Nobody notices a smooth day. That is what a smooth day is — the absence of everything going wrong, because someone checked the cart.",
+      "The turnover you save is not paperwork. It is one more patient who gets treated this month.",
+      "Do the boring thing correctly and the exciting thing never has to happen."
+    ]
+  },
+  "shiftTimes": [
+    "06:30-15:00",
+    "07:00-15:30",
+    "07:30-16:00",
+    "08:00-16:30",
+    "08:30-17:00",
+    "10:00-18:30",
+    "13:00-17:00",
+    "On call"
+  ],
+  "library": [
+    {
+      "t": "Confirm tomorrow’s patients",
+      "photo": false
+    },
+    {
+      "t": "Insurance eligibility check",
+      "photo": false
+    },
+    {
+      "t": "No-show follow-up calls",
+      "photo": false
+    },
+    {
+      "t": "Angiosuite supervisor checklist",
+      "photo": true
+    },
+    {
+      "t": "OR turnover log",
+      "photo": true
+    },
+    {
+      "t": "Autoclave / sterilizer log",
+      "photo": true
+    },
+    {
+      "t": "Crash cart check",
+      "photo": true
+    },
+    {
+      "t": "Supply inventory count",
+      "photo": true
+    },
+    {
+      "t": "Reorder below-par supplies",
+      "photo": false
+    },
+    {
+      "t": "Weekly facility checklist",
+      "photo": true
+    },
+    {
+      "t": "Claims submission batch",
+      "photo": false
+    },
+    {
+      "t": "Denied claim worklist",
+      "photo": false
+    },
+    {
+      "t": "Sedation chart audit",
+      "photo": true
+    },
+    {
+      "t": "BLS expiration follow-up",
+      "photo": false
+    },
+    {
+      "t": "Credentialing packet chase",
+      "photo": false
+    },
+    {
+      "t": "Payroll hours review",
+      "photo": false
+    },
+    {
+      "t": "Cash / copay reconcile",
+      "photo": true
+    },
+    {
+      "t": "Exam room deep clean",
+      "photo": true
+    },
+    {
+      "t": "Fire / emergency drill + log",
+      "photo": true
+    },
+    {
+      "t": "Eyewash station check",
+      "photo": true
+    },
+    {
+      "t": "Arrange coverage for Johnny",
+      "photo": false
+    },
+    {
+      "t": "QUAD A data upload",
+      "photo": true
+    }
+  ],
+  "freqs": [
+    {
+      "k": "2x",
+      "label": "Twice a day",
+      "when": "8:00 AM & 2:00 PM",
+      "perDay": 2
+    },
+    {
+      "k": "1x",
+      "label": "Once a day",
+      "when": "8:00 AM",
+      "perDay": 1
+    },
+    {
+      "k": "alt",
+      "label": "Every other day",
+      "when": "8:00 AM, alternate days",
+      "perDay": 0.5
+    },
+    {
+      "k": "wk",
+      "label": "Once a week",
+      "when": "Monday 8:00 AM",
+      "perDay": 0.14285714285714285
+    },
+    {
+      "k": "2wk",
+      "label": "Every other week",
+      "when": "Every 2nd Monday, 8:00 AM",
+      "perDay": 0.07142857142857142
+    },
+    {
+      "k": "mo",
+      "label": "Once a month",
+      "when": "1st of the month, 8:00 AM",
+      "perDay": 0.03333333333333333
+    }
+  ]
+}

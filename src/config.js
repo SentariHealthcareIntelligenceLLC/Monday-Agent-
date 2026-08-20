@@ -9,6 +9,8 @@ const config = {
   port: Number(process.env.PORT || 3000),
   tz: process.env.TZ || 'America/Los_Angeles',
   adminPassword: process.env.ADMIN_PASSWORD || 'change-me',
+  // Dev only; ignored when NODE_ENV=production (see middleware/auth.js).
+  disableAuth: bool(process.env.DISABLE_AUTH, false),
   databaseFile: process.env.DATABASE_FILE || './data/qcms.sqlite',
   // Set -> Postgres/Supabase backend; unset -> SQLite file backend.
   databaseUrl: process.env.DATABASE_URL || process.env.POSTGRES_URL || '',
@@ -16,6 +18,20 @@ const config = {
   // Shared secret Vercel Cron sends as `Authorization: Bearer ...`.
   cronSecret: process.env.CRON_SECRET || '',
   dryRun: bool(process.env.DRY_RUN, true),
+  // Fallback when a person has no channel of their own.
+  defaultChannel: process.env.DEFAULT_CHANNEL || 'wa',
+  supabase: {
+    url: (process.env.SUPABASE_URL || '').replace(/\/$/, ''),
+    serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+  },
+  storage: {
+    bucket: process.env.STORAGE_BUCKET || 'qcms-proof',
+    localDir: process.env.STORAGE_DIR || './data/uploads',
+  },
+  email: {
+    apiKey: process.env.RESEND_API_KEY || '',
+    from: process.env.EMAIL_FROM || '',
+  },
   whatsapp: {
     phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID || '',
     businessAccountId: process.env.WHATSAPP_BUSINESS_ACCOUNT_ID || '',
@@ -33,6 +49,8 @@ const config = {
     daily: process.env.DAILY_REMINDER_CRON || '0 8 * * *',
     midday: process.env.MIDDAY_NUDGE_CRON || '0 13 * * *',
     escalation: process.env.ESCALATION_CRON || '0 17 * * *',
+    credentials: process.env.CREDENTIAL_CRON || '0 9 * * *',
+    digest: process.env.DIGEST_CRON || '30 17 * * *',
   },
 };
 

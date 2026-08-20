@@ -18,7 +18,9 @@ const config = require('../config');
 const logger = require('../logger');
 const { partsIn } = require('../lib/dates');
 const T = require('../services/tasks');
-const { sendDailyReminders, sendNudges, runEscalations } = require('../jobs/reminders');
+const {
+  sendDailyReminders, sendNudges, runEscalations, credentialAlerts, clockDigest,
+} = require('../jobs/reminders');
 
 /** Hour/minute out of a 5-field cron expression's first two fields. */
 function hourMinuteOf(expr) {
@@ -29,9 +31,11 @@ function hourMinuteOf(expr) {
 
 const JOBS = {
   materialize: { expr: '5 0 * * *', run: () => T.materializeRuns() },
-  reminders:   { expr: config.cron.daily,      run: sendDailyReminders },
-  nudges:      { expr: config.cron.midday,     run: sendNudges },
-  escalations: { expr: config.cron.escalation, run: runEscalations },
+  reminders:   { expr: config.cron.daily,       run: sendDailyReminders },
+  nudges:      { expr: config.cron.midday,      run: sendNudges },
+  escalations: { expr: config.cron.escalation,  run: runEscalations },
+  credentials: { expr: config.cron.credentials, run: credentialAlerts },
+  digest:      { expr: config.cron.digest,      run: clockDigest },
 };
 
 function authorized(req) {

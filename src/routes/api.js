@@ -2,6 +2,7 @@
 /** Admin REST API. Registered onto the tiny router in src/lib/http.js. */
 const { db } = require('../db');
 const T = require('../services/tasks');
+const { addDays } = require('../lib/dates');
 const jobs = require('../jobs/reminders');
 
 function register(app, prefix = '/api') {
@@ -66,6 +67,24 @@ function register(app, prefix = '/api') {
   app.get(p('/board'), async (req, res) => {
     const date = req.query.date || T.today();
     await T.materializeRuns(date);
+    // `window=1` returns everything inside its reminder lead window plus
+    // anything still open from earlier — what the dashboard's board shows.
+    // Without it the response is strictly that one day's runs.
+    if (req.query.window === '1') {
+      // Recent history is included so completed work stays visible — a board
+      // that drops items the moment they are done can never show a completion
+      // rate, and hides the timestamp that is the compliance record.
+      const back = Number(req.query.back) || 7;
+      const [open, overdue, recent] = await Promise.all([
+        T.dueRunsFor(date), T.overdueRuns(date),
+        T.runsBetween(addDays(date, -back), date),
+      ]);
+      const byId = new Map();
+      for (const r of [...recent, ...open, ...overdue]) byId.set(r.id, r);
+      const runs = [...byId.values()].sort((a, b) =>
+        a.due_date.localeCompare(b.due_date) || String(a.due_time).localeCompare(b.due_time));
+      return res.json({ date, runs });
+    }
     res.json({ date, runs: await T.runsFor(date) });
   });
 
@@ -79,6 +98,9 @@ function register(app, prefix = '/api') {
   });
 
   // ---- Analysis & manual triggers ----
+  app.get(p('/trend'), async (req, res) =>
+    res.json(await T.completionTrend(Number(req.query.days) || 7)));
+
   app.get(p('/gaps'), async (req, res) =>
     res.json(await T.analyzeGaps(Number(req.query.days) || 30)));
 

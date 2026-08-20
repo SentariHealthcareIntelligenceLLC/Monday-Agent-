@@ -1,93 +1,261 @@
 'use strict';
 /**
- * Seeds the QCMS org chart and a starter routine-task library.
- * Safe to re-run: it clears and rebuilds the people/tasks tables.
- * Replace the phone numbers with real E.164 numbers (no '+').
+ * Seeds the QCMS org chart, facilities, routine duties, credentialing records,
+ * the staff schedule and the daily-lift library.
+ *
+ * Data comes from seed-data.json, extracted from the design prototype by
+ * tools/import-prototype.js. Safe to re-run: it clears and rebuilds every
+ * table. Replace the placeholder phone numbers with real E.164 numbers
+ * (no '+') before going live.
  */
+const fs = require('fs');
+const path = require('path');
 const { db, migrate, backend } = require('./index');
+const { addDays, weekdayOf } = require('../lib/dates');
+const config = require('../config');
+const { todayIn } = require('../lib/dates');
+
+const DATA = JSON.parse(fs.readFileSync(path.join(__dirname, 'seed-data.json'), 'utf8'));
+
+const ROLE = {
+  'Manager': 'manager',
+  'Medical Assistant': 'medical_assistant',
+  'Virtual Assistant': 'virtual_assistant',
+  'OR Supervisor': 'or_supervisor',
+  'Owner': 'owner',
+};
+
+// Prototype cadence keys -> schema cadence values, with a sensible lead window.
+const CADENCE = {
+  Weekly:    { cadence: 'weekly',     lead: 2 },
+  Monthly:   { cadence: 'monthly',    lead: 5 },
+  Quarterly: { cadence: 'quarterly',  lead: 14 },
+  Semi:      { cadence: 'semiannual', lead: 30 },
+  Yearly:    { cadence: 'yearly',     lead: 45 },
+};
+
+/** Prototype numbers are masked ("+1 818 ••• 4471"); make them dialable-looking. */
+const fakeNumber = (i) => `1555000${String(i + 1).padStart(4, '0')}`;
+
+// Duties needing visual proof of completion.
+const PHOTO_HINTS = [/deep clean/i, /crash cart/i, /inventory/i, /eyewash/i,
+  /drill/i, /expired/i, /equipment/i, /seal/i];
+const needsPhoto = (title) => PHOTO_HINTS.some((rx) => rx.test(title)) ? 1 : 0;
 
 async function seed() {
   await migrate();
+  const today = todayIn(config.tz);
 
   return db.tx(async (t) => {
-    await t.exec('DELETE FROM messages; DELETE FROM task_runs; DELETE FROM tasks; DELETE FROM people;');
+    await t.exec(`
+      DELETE FROM punches; DELETE FROM shifts; DELETE FROM planner_items;
+      DELETE FROM messages; DELETE FROM task_runs; DELETE FROM tasks;
+      DELETE FROM credentials; DELETE FROM people; DELETE FROM facility_views;
+      DELETE FROM facilities; DELETE FROM lift_items; DELETE FROM settings;`);
 
-    const addPerson = async (r) => (await t.query(
-      `INSERT INTO people (name, role, whatsapp_number, email, site, reports_to_id)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-      [r.name, r.role, r.whatsapp_number, r.email, r.site, r.reports_to_id]
+    // ---------------------------------------------------------- facilities
+    const facId = {};
+    for (const f of DATA.facilities) {
+      if (facId[f.id]) continue; // the prototype list has duplicate rows
+      const row = await t.query(
+        `INSERT INTO facilities (code, name, kind, group_name, rooms)
+         VALUES ($1,$2,$3,$4,$5) RETURNING id`,
+        [f.id, f.name, f.kind || null, f.group || null, JSON.stringify(f.rooms || [])]
+      );
+      facId[f.id] = row.rows[0].id;
+    }
+    const facByName = {};
+    for (const f of DATA.facilities) facByName[f.name] = facId[f.id];
+
+    for (const [i, v] of (DATA.views || []).entries()) {
+      await t.query(
+        `INSERT INTO facility_views (code, name, facility_ids, sort_order)
+         VALUES ($1,$2,$3,$4)`,
+        [v.id, v.name, JSON.stringify((v.ids || []).map((c) => facId[c]).filter(Boolean)), i]
+      );
+    }
+
+    // -------------------------------------------------------------- people
+    // The prototype has no owner row, but the escalation ladder needs a top of
+    // the chain, so one is created and everyone senior reports to it.
+    const owner = (await t.query(
+      `INSERT INTO people (name, role, whatsapp_number, email, channel, reminder_freq, timezone)
+       VALUES ('Fredshon Gevera','owner',$1,'owner@example.com','both','1x',$2) RETURNING id`,
+      ['15550000001', config.tz]
     )).rows[0].id;
 
-  const owner = await addPerson({
-    name: 'Owner', role: 'owner', whatsapp_number: '15550000001',
-    email: 'owner@example.com', site: 'QCMS', reports_to_id: null,
-  });
-
-  const manager = await addPerson({
-    name: 'Clinic Manager', role: 'manager', whatsapp_number: '15550000002',
-    email: 'manager@example.com', site: 'QCMS', reports_to_id: owner,
-  });
-
-  const orSup = await addPerson({
-    name: 'OR / Angiosuite Supervisor', role: 'or_supervisor', whatsapp_number: '15550000003',
-    email: 'or@example.com', site: 'Surgery Center', reports_to_id: manager,
-  });
-
-  const ma = await addPerson({
-    name: 'Medical Assistant', role: 'medical_assistant', whatsapp_number: '15550000004',
-    email: 'ma@example.com', site: 'Clinic', reports_to_id: manager,
-  });
-
-  const va = await addPerson({
-    name: 'Virtual Assistant', role: 'virtual_assistant', whatsapp_number: '15550000005',
-    email: 'va@example.com', site: 'Remote', reports_to_id: ma,
-  });
-
-    const T = async (row) => {
-      const r = { details: null, category: null, weekday: null, day_of_month: null,
-                  due_time: '17:00', critical: 0, ...row };
-      await t.query(
-        `INSERT INTO tasks (title, details, category, cadence, weekday, day_of_month, due_time, assignee_id, critical)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-        [r.title, r.details, r.category, r.cadence, r.weekday, r.day_of_month, r.due_time, r.assignee_id, r.critical]
+    const pid = {};
+    for (const [i, p] of DATA.people.entries()) {
+      const role = ROLE[p.role];
+      if (!role) throw new Error(`unmapped role: ${p.role}`);
+      const row = await t.query(
+        `INSERT INTO people (name, role, whatsapp_number, email, site, facility_id,
+                             employee_no, hired_on, languages, channel, reminder_freq,
+                             reports_to_id, timezone)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`,
+        [p.name, role, fakeNumber(i + 1), p.em, p.base || null,
+         facByName[p.base] || null, p.emp || null, null, p.lang || null,
+         p.chan || 'wa', p.freq || '2x',
+         role === 'manager' ? owner : null, config.tz]
       );
-    };
+      pid[p.id] = row.rows[0].id;
+    }
 
-    // --- Daily ---
-    await T({ title: 'Confirm tomorrow’s patient schedule', category: 'scheduling', cadence: 'daily', due_time: '15:00', assignee_id: va, critical: 1,
-        details: 'Call/text every patient on tomorrow’s list; log confirmations and no-shows.' });
-    await T({ title: 'Verify insurance eligibility for tomorrow’s patients', category: 'insurance', cadence: 'daily', due_time: '16:00', assignee_id: va, critical: 1,
-        details: 'Run eligibility, flag auth-required procedures to the manager.' });
-    await T({ title: 'Room turnover and clinic open checklist', category: 'or_readiness', cadence: 'daily', due_time: '08:30', assignee_id: ma,
-        details: 'Vitals equipment, sharps, PPE, front-desk open.' });
-    await T({ title: 'Angiosuite pre-procedure checklist', category: 'or_readiness', cadence: 'daily', due_time: '07:30', assignee_id: orSup, critical: 1,
-        details: 'Supervisor checklist: crash cart, sedation chart, contrast, implants/consignment counted.' });
-    await T({ title: 'Post charges for today’s cases', category: 'billing', cadence: 'daily', due_time: '18:00', assignee_id: va,
-        details: 'Superbill capture; unposted charges must be zero by end of day.' });
+    // Everyone below manager reports to the manager.
+    const manager = DATA.people.find((p) => p.role === 'Manager');
+    if (manager) {
+      for (const p of DATA.people) {
+        if (p.role === 'Manager') continue;
+        await t.query('UPDATE people SET reports_to_id = $1 WHERE id = $2',
+          [pid[manager.id], pid[p.id]]);
+      }
+    }
 
-    // --- Weekly ---
-    await T({ title: 'Supply inventory count and reorder', category: 'inventory', cadence: 'weekly', weekday: 1, due_time: '12:00', assignee_id: ma,
-        details: 'Par-level count, reorder short items, record usage against product order summary.' });
-    await T({ title: 'Facility weekly checklist', category: 'or_readiness', cadence: 'weekly', weekday: 5, due_time: '15:00', assignee_id: orSup,
-        details: 'Equipment logs, temperatures, expirations, emergency equipment.' });
-    await T({ title: 'A/R follow-up on claims over 30 days', category: 'billing', cadence: 'weekly', weekday: 3, due_time: '16:00', assignee_id: va });
-    await T({ title: 'Prior-authorization backlog review', category: 'insurance', cadence: 'weekly', weekday: 2, due_time: '14:00', assignee_id: manager });
+    // ------------------------------------------------------- credentialing
+    let credCount = 0;
+    for (const [proto, list] of Object.entries(DATA.creds || {})) {
+      if (!pid[proto]) continue;
+      for (const [name, issuer, expires] of list) {
+        await t.query(
+          `INSERT INTO credentials (person_id, name, issuer, expires_on)
+           VALUES ($1,$2,$3,$4)`,
+          [pid[proto], name, issuer, expires]
+        );
+        credCount += 1;
+      }
+    }
 
-    // --- Monthly ---
-    await T({ title: 'Physician credentialing expirations review', category: 'credentialing', cadence: 'monthly', day_of_month: 1, due_time: '12:00', assignee_id: manager, critical: 1,
-        details: 'Licenses, DEA, board certs, payer re-credentialing dates within 120 days.' });
-    await T({ title: 'Facility credentialing / accreditation documents', category: 'credentialing', cadence: 'monthly', day_of_month: 5, due_time: '12:00', assignee_id: manager });
-    await T({ title: 'Monthly revenue and productivity report to owner', category: 'billing', cadence: 'monthly', day_of_month: 3, due_time: '17:00', assignee_id: manager });
-    await T({ title: 'Staff competency / training log update', category: 'or_readiness', cadence: 'monthly', day_of_month: 10, due_time: '15:00', assignee_id: orSup });
+    // -------------------------------------------------------------- duties
+    let taskCount = 0;
+    for (const [proto, list] of Object.entries(DATA.duties || {})) {
+      if (!pid[proto]) continue;
+      const person = DATA.people.find((p) => p.id === proto);
+      for (const d of list) {
+        const map = CADENCE[d.c];
+        if (!map) throw new Error(`unmapped cadence: ${d.c}`);
+        const [y, m, dd] = d.due.split('-').map(Number);
+        await t.query(
+          `INSERT INTO tasks (title, details, cadence, weekday, day_of_month, month_of_year,
+                              lead_days, due_time, assignee_id, facility_id, requires_photo)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+          [d.t, d.how || null, map.cadence,
+           map.cadence === 'weekly' ? weekdayOf(d.due) : null,
+           map.cadence === 'weekly' ? null : dd,
+           map.cadence === 'weekly' || map.cadence === 'monthly' ? null : m,
+           map.lead, '17:00', pid[proto],
+           facByName[person && person.base] || null, needsPhoto(d.t)]
+        );
+        taskCount += 1;
+      }
+    }
+
+    // ------------------------------------------------------------ schedule
+    // The prototype's week grid is day-indexed (0 = Monday); anchor it to the
+    // current week so the schedule and time clock have live data on first run.
+    const monday = addDays(today, -(weekdayOf(today) - 1));
+    const staffPersonId = {};
+    for (const p of DATA.people) staffPersonId[p.name] = pid[p.id];
+
+    let shiftCount = 0;
+    for (const [weekOffset, rows] of Object.entries(DATA.sched || {})) {
+      const base = addDays(monday, Number(weekOffset) * 7);
+      for (const s of rows) {
+        if (!s.w) continue; // unfilled slot
+        const onCall = s.t === 'On call';
+        const [starts, ends] = onCall ? [null, null] : s.t.split('-');
+        const absence = s.l === 'ab';
+        await t.query(
+          `INSERT INTO shifts (facility_id, role, work_date, starts_at, ends_at, on_call,
+                               person_id, staff_name, absence_kind)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+          [absence ? null : (facId[s.l] || null), s.r, addDays(base, s.d),
+           starts, ends, onCall ? 1 : 0,
+           staffPersonId[s.w] || null, s.w, absence ? s.r : null]
+        );
+        shiftCount += 1;
+      }
+    }
+
+    // ---------------------------------------------------------- daily lift
+    let liftCount = 0;
+    for (const [category, items] of Object.entries(DATA.lifts || {})) {
+      for (const body of items) {
+        await t.query('INSERT INTO lift_items (category, body) VALUES ($1,$2)',
+          [category, body]);
+        liftCount += 1;
+      }
+    }
+
+    // ------------------------------------------------------------- planner
+    // Weekly planner cells come from each person's weekly duties, laid across
+    // the current week; monthly cells from their monthly-and-longer duties.
+    let planCount = 0;
+    for (const [proto, list] of Object.entries(DATA.duties || {})) {
+      if (!pid[proto]) continue;
+      const person = DATA.people.find((p) => p.id === proto);
+      const facility = facByName[person && person.base] || null;
+
+      const weekly = list.filter((d) => d.c === 'Weekly');
+      for (const [i, d] of weekly.entries()) {
+        await t.query(
+          `INSERT INTO planner_items (kind, person_id, facility_id, plan_date, title,
+                                      frequency, requires_photo)
+           VALUES ('weekly',$1,$2,$3,$4,$5,$6)`,
+          [pid[proto], facility, addDays(monday, i % 5), d.t, 'Weekly', needsPhoto(d.t)]
+        );
+        planCount += 1;
+      }
+
+      const longer = list.filter((d) => d.c !== 'Weekly');
+      for (const d of longer) {
+        const day = Number(d.due.split('-')[2]) || 1;
+        const planDate = `${today.slice(0, 7)}-${String(Math.min(day, 28)).padStart(2, '0')}`;
+        await t.query(
+          `INSERT INTO planner_items (kind, person_id, facility_id, plan_date, title,
+                                      frequency, requires_photo)
+           VALUES ('monthly',$1,$2,$3,$4,$5,$6)`,
+          [pid[proto], facility, planDate, d.t, d.c, needsPhoto(d.t)]
+        );
+        planCount += 1;
+      }
+    }
+
+    // ------------------------------------------------------------- history
+    // Backfill two weeks of completed/missed runs so the trend line, gap
+    // analysis and completion rates have something to show on a fresh
+    // install. This is SAMPLE history, like everything else in this seeder --
+    // it is not derived from real activity. Drop this block for a production
+    // install that should start from a genuinely empty record.
+    const allTasks = (await t.query('SELECT id, assignee_id FROM tasks')).rows;
+    let runCount = 0;
+    for (let back = 14; back >= 1; back -= 1) {
+      const date = addDays(today, -back);
+      if (weekdayOf(date) > 5) continue; // weekdays only
+      for (const task of allTasks) {
+        // Deterministic spread: ~78% done, ~12% missed, ~10% still pending.
+        const roll = (Number(task.id) * 7 + back * 13) % 100;
+        const status = roll < 78 ? 'done' : (roll < 90 ? 'missed' : 'pending');
+        const reminders = status === 'done' ? 1 : (status === 'missed' ? 5 : 2);
+        await t.query(
+          `INSERT INTO task_runs (task_id, due_date, status, reminder_count, responded_at)
+           VALUES ($1,$2,$3,$4,$5) ON CONFLICT (task_id, due_date) DO NOTHING`,
+          [task.id, date, status, reminders, status === 'done' ? `${date} 16:00:00` : null]
+        );
+        runCount += 1;
+      }
+    }
+
+    return { facilities: Object.keys(facId).length, people: DATA.people.length + 1,
+             credentials: credCount, tasks: taskCount, shifts: shiftCount,
+             lift: liftCount, planner: planCount, sample_history: runCount };
   });
 }
 
 seed()
-  .then(async () => {
-    const people = (await db.one('SELECT COUNT(*) AS c FROM people')).c;
-    const tasks = (await db.one('SELECT COUNT(*) AS c FROM tasks')).c;
-    console.log(`Seeded ${people} people and ${tasks} routine tasks into ${backend.kind}.`);
-    console.log('Update phone numbers in the dashboard or directly in the people table before going live.');
+  .then(async (counts) => {
+    console.log(`Seeded into ${backend.kind}:`);
+    for (const [k, v] of Object.entries(counts)) console.log(`  ${k.padEnd(12)} ${v}`);
+    console.log('\nReplace the placeholder phone numbers before going live.');
     await backend.close();
   })
   .catch(async (err) => {

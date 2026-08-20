@@ -34,4 +34,24 @@ function addDays(isoDate, n) {
   return dt.toISOString().slice(0, 10);
 }
 
-module.exports = { partsIn, todayIn, weekdayOf, dayOf, addDays };
+/** Month (1-12) of a YYYY-MM-DD string. */
+const monthOf = (isoDate) => Number(isoDate.split('-')[1]);
+
+/** Last calendar day of the month containing isoDate. */
+function lastDayOfMonth(isoDate) {
+  const [y, m] = isoDate.split('-').map(Number);
+  return new Date(Date.UTC(y, m, 0)).getUTCDate();
+}
+
+/** Whole days from a to b (both YYYY-MM-DD); negative if b is earlier. */
+function daysBetween(a, b) {
+  const t = (iso) => {
+    const [y, m, d] = iso.split('-').map(Number);
+    return Date.UTC(y, m - 1, d);
+  };
+  return Math.round((t(b) - t(a)) / 86400000);
+}
+
+module.exports = {
+  partsIn, todayIn, weekdayOf, dayOf, addDays, monthOf, lastDayOfMonth, daysBetween,
+};
