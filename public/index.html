@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>QCMS Task Board</title>
+<style>
+  :root {
+    --bg:#0f1418; --panel:#161d23; --line:#26313a; --ink:#e8eef2; --muted:#93a4b1;
+    --accent:#4aa3df; --ok:#3fb27f; --warn:#e0a33e; --bad:#d9534f;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#f5f7f9; --panel:#fff; --line:#dde4ea; --ink:#16212b; --muted:#5d6f7d; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+         background:var(--bg); color:var(--ink); }
+  header { padding:18px 24px; border-bottom:1px solid var(--line); display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+  h1 { font-size:18px; margin:0; font-weight:650; }
+  main { padding:24px; display:grid; gap:20px; max-width:1200px; margin:0 auto; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:18px; }
+  .card h2 { font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 14px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th { text-align:left; color:var(--muted); font-weight:600; padding:8px 10px; border-bottom:1px solid var(--line); }
+  td { padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  tr:last-child td { border-bottom:0; }
+  .pill { display:inline-block; padding:2px 9px; border-radius:99px; font-size:12px; font-weight:600; }
+  .pending{background:rgba(74,163,223,.15); color:var(--accent);}
+  .done{background:rgba(63,178,127,.15); color:var(--ok);}
+  .blocked,.snoozed{background:rgba(224,163,62,.15); color:var(--warn);}
+  .missed{background:rgba(217,83,79,.15); color:var(--bad);}
+  button { background:var(--accent); color:#fff; border:0; border-radius:7px; padding:7px 13px;
+           font:inherit; font-size:13px; cursor:pointer; }
+  button.ghost { background:transparent; color:var(--muted); border:1px solid var(--line); }
+  button:hover { filter:brightness(1.08); }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; }
+  .stat { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
+  .stat b { display:block; font-size:26px; font-weight:650; line-height:1.2; }
+  .stat span { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.05em; }
+  .bar { height:7px; background:var(--line); border-radius:99px; overflow:hidden; min-width:80px; }
+  .bar i { display:block; height:100%; background:var(--ok); }
+  .muted { color:var(--muted); }
+  ul.findings { margin:0; padding-left:18px; } ul.findings li { margin-bottom:6px; }
+  input[type=date] { background:var(--panel); color:var(--ink); border:1px solid var(--line);
+                     border-radius:7px; padding:6px 9px; font:inherit; }
+</style>
+</head>
+<body>
+<header>
+  <h1>QCMS Task Board</h1>
+  <div class="row" style="margin-left:auto">
+    <input type="date" id="date" />
+    <button class="ghost" onclick="run('reminders')">Send reminders</button>
+    <button class="ghost" onclick="run('nudges')">Send nudges</button>
+    <button class="ghost" onclick="run('escalations')">Run escalations</button>
+    <button onclick="loadAll()">Refresh</button>
+  </div>
+</header>
+
+<main>
+  <div class="stats" id="stats"></div>
+
+  <section class="card">
+    <h2>Today’s tasks</h2>
+    <table><thead><tr>
+      <th>Task</th><th>Assignee</th><th>Cadence</th><th>Due</th><th>Status</th><th>Note</th><th></th>
+    </tr></thead><tbody id="board"></tbody></table>
+  </section>
+
+  <section class="card">
+    <h2>Gap analysis — last 30 days</h2>
+    <div id="findings"></div>
+    <table style="margin-top:14px"><thead><tr>
+      <th>Person</th><th>Role</th><th>Completion</th><th>Done</th><th>Missed</th><th>Blocked</th>
+    </tr></thead><tbody id="gaps"></tbody></table>
+  </section>
+
+  <section class="card">
+    <h2>Recent WhatsApp activity</h2>
+    <table><thead><tr><th>When</th><th>Dir</th><th>Number</th><th>Kind</th><th>Status</th><th>Body</th></tr></thead>
+    <tbody id="messages"></tbody></table>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const api = (p, o) => fetch('/api' + p, o).then(r => r.json());
+const esc = (s) => String(s ?? '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+$('date').value = new Date().toISOString().slice(0,10);
+$('date').onchange = loadAll;
+
+async function loadAll() { await Promise.all([loadBoard(), loadGaps(), loadMessages()]); }
+
+async function loadBoard() {
+  const { runs } = await api('/board?date=' + $('date').value);
+  const count = (s) => runs.filter(r => r.status === s).length;
+  $('stats').innerHTML = [
+    ['Due today', runs.length], ['Done', count('done')],
+    ['Open', count('pending') + count('snoozed')],
+    ['Blocked', count('blocked')], ['Missed', count('missed')],
+  ].map(([l,v]) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`).join('');
+
+  $('board').innerHTML = runs.length ? runs.map(r => `
+    <tr>
+      <td><strong>${esc(r.title)}</strong>${r.critical ? ' <span class="pill missed">critical</span>' : ''}
+          ${r.details ? `<div class="muted">${esc(r.details)}</div>` : ''}</td>
+      <td>${esc(r.person_name)}<div class="muted">${esc(r.role)}</div></td>
+      <td>${esc(r.cadence)}</td>
+      <td>${esc(r.due_time)}</td>
+      <td><span class="pill ${r.status}">${r.status}</span></td>
+      <td class="muted">${esc(r.note || '')}</td>
+      <td class="row">
+        <button onclick="setStatus(${r.id},'done')">Done</button>
+        <button class="ghost" onclick="setStatus(${r.id},'blocked')">Block</button>
+      </td>
+    </tr>`).join('') : `<tr><td colspan="7" class="muted">Nothing scheduled for this date.</td></tr>`;
+}
+
+async function loadGaps() {
+  const g = await api('/gaps?days=30');
+  $('findings').innerHTML = g.findings.length
+    ? `<ul class="findings">${g.findings.map(f => `<li>${esc(f)}</li>`).join('')}</ul>`
+    : `<p class="muted">No gaps detected above threshold yet — needs a few weeks of history.</p>`;
+  $('gaps').innerHTML = g.people.map(p => `
+    <tr><td>${esc(p.name)}</td><td class="muted">${esc(p.role)}</td>
+      <td><div class="row"><div class="bar" style="flex:1"><i style="width:${p.rate ?? 0}%"></i></div>
+      <span class="muted">${p.rate ?? '–'}%</span></div></td>
+      <td>${p.done}</td><td>${p.missed}</td><td>${p.blocked}</td></tr>`).join('');
+}
+
+async function loadMessages() {
+  const m = await api('/messages');
+  $('messages').innerHTML = m.slice(0, 25).map(x => `
+    <tr><td class="muted">${esc(x.created_at)}</td><td>${esc(x.direction)}</td>
+      <td>${esc(x.wa_number || '')}</td><td>${esc(x.kind || '')}</td><td>${esc(x.status || '')}</td>
+      <td class="muted">${esc((x.body || '').slice(0, 120))}</td></tr>`).join('')
+    || `<tr><td colspan="6" class="muted">No messages yet.</td></tr>`;
+}
+
+async function setStatus(id, status) {
+  const note = status === 'blocked' ? prompt('Reason for the blocker?') : null;
+  await fetch('/api/runs/' + id + '/status', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status, note }),
+  });
+  loadBoard();
+}
+
+async function run(job) {
+  const r = await fetch('/api/run/' + job, { method: 'POST' }).then(r => r.json());
+  alert(job + ': ' + JSON.stringify(r));
+  loadAll();
+}
+
+loadAll();
+</script>
+</body>
+</html>
