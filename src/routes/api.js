@@ -3,6 +3,8 @@
 const { db } = require('../db');
 const T = require('../services/tasks');
 const { addDays } = require('../lib/dates');
+const phone = require('../lib/phone');
+const storage = require('../services/storage');
 const jobs = require('../jobs/reminders');
 
 function register(app, prefix = '/api') {
@@ -15,6 +17,12 @@ function register(app, prefix = '/api') {
   app.post(p('/people'), async (req, res) => {
     const b = { whatsapp_number: null, email: null, site: null, reports_to_id: null, ...req.body };
     if (!b.name || !b.role) return res.json({ error: 'name and role are required' }, 400);
+    // Stored in the form Meta sends, so inbound replies match this person.
+    if (b.whatsapp_number) {
+      const n = phone.normalize(b.whatsapp_number);
+      if (!n) return res.json({ error: `not a usable phone number: ${b.whatsapp_number}` }, 400);
+      b.whatsapp_number = n;
+    }
     const row = await db.one(
       `INSERT INTO people (name, role, whatsapp_number, email, site, reports_to_id)
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
@@ -27,11 +35,17 @@ function register(app, prefix = '/api') {
     const allowed = ['name', 'role', 'whatsapp_number', 'email', 'site', 'reports_to_id', 'active', 'timezone'];
     const keys = Object.keys(req.body).filter((k) => allowed.includes(k));
     if (!keys.length) return res.json({ error: 'no updatable fields' }, 400);
+    const body = { ...req.body };
+    if (keys.includes('whatsapp_number') && body.whatsapp_number) {
+      const n = phone.normalize(body.whatsapp_number);
+      if (!n) return res.json({ error: `not a usable phone number: ${body.whatsapp_number}` }, 400);
+      body.whatsapp_number = n;
+    }
     // Column names come from the allow-list above; values stay parameterized.
     const sets = keys.map((k, i) => `${k} = $${i + 1}`).join(', ');
     await db.run(
       `UPDATE people SET ${sets} WHERE id = $${keys.length + 1}`,
-      [...keys.map((k) => req.body[k]), Number(req.params.id)]
+      [...keys.map((k) => body[k]), Number(req.params.id)]
     );
     res.json({ ok: true });
   });
@@ -130,8 +144,24 @@ function register(app, prefix = '/api') {
   app.get(p('/gaps'), async (req, res) =>
     res.json(await T.analyzeGaps(Number(req.query.days) || 30)));
 
-  app.get(p('/messages'), async (req, res) =>
-    res.json(await db.all('SELECT * FROM messages ORDER BY id DESC LIMIT 100')));
+  /**
+   * The activity thread. Photo proofs are returned as short-lived signed URLs
+   * rather than object paths, so the dashboard can render them inline while
+   * the bucket stays private.
+   */
+  app.get(p('/messages'), async (req, res) => {
+    const limit = Math.min(Number(req.query.limit) || 100, 500);
+    const rows = req.query.person
+      ? await db.all(
+        'SELECT * FROM messages WHERE person_id = $1 ORDER BY id DESC LIMIT $2',
+        [Number(req.query.person), limit])
+      : await db.all('SELECT * FROM messages ORDER BY id DESC LIMIT $1', [limit]);
+
+    for (const row of rows) {
+      if (row.media_path) row.media_url = await storage.signedUrl(row.media_path);
+    }
+    res.json(rows);
+  });
 
   app.post(p('/run/:job'), async (req, res) => {
     const map = { reminders: jobs.sendDailyReminders, nudges: jobs.sendNudges, escalations: jobs.runEscalations };

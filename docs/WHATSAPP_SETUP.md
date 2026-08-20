@@ -92,9 +92,25 @@ Sample values: `Manager` / `Maria` / `2` / `Confirm tomorrow's schedule (2026-08
 Approval usually lands within minutes to a few hours. If you rename them, update
 `TEMPLATE_TASK_REMINDER` and `TEMPLATE_ESCALATION` in `.env`.
 
-## 7. Add your team's numbers
+## 7. Subscribe to `messages` **and** `message_status`
+
+Under WhatsApp → Configuration → Webhook → **Manage**, subscribe to:
+
+- **`messages`** — replies and photos coming back from staff. Required.
+- **`message_status`** — delivery receipts (sent → delivered → read, or failed).
+  Optional, but without it the dashboard can only say a reminder *left*, not
+  that it *landed*, and a silently failed send looks identical to one nobody
+  answered.
+
+## 8. Add your team's numbers
 
 Numbers are stored in **E.164 without the `+`** — e.g. `+1 (555) 867-5309` → `15558675309`.
+
+You no longer have to type them that way: the API normalizes whatever a human
+enters (`+1 (555) 867-5309`, `555-867-5309`, `001 555 867 5309`) to the exact
+form Meta sends, because a reply is matched to a person by that number alone.
+A ten-digit number is assumed to be US/Canada; anyone abroad must be entered
+with their own country code.
 
 Either edit them in the dashboard, or:
 
@@ -107,11 +123,53 @@ curl -u admin:YOUR_ADMIN_PASSWORD -X PATCH localhost:3000/api/people/4 \
 While using the free **test number**, each recipient must first be added under
 WhatsApp → API Setup → "To" → **Manage phone number list** and verify the code.
 
-## 8. Go live
+## 9. Create the photo-proof bucket (Supabase)
+
+Tasks marked **requires photo** are not completed by the word "DONE" alone —
+the bot holds the task open and asks for the picture, and the photo the person
+sends back is what completes it. Those images are downloaded from Meta and
+written to Supabase Storage.
+
+In the Supabase dashboard → **Storage → New bucket**:
+
+| Field | Value |
+|---|---|
+| Name | `qcms-proof` (must match `STORAGE_BUCKET`) |
+| Public bucket | **off** — leave it private |
+
+Keep it private. These are photographs taken inside clinical spaces; the
+service reaches them with the service-role key and hands the dashboard
+short-lived signed URLs instead of permanent public ones.
+
+No storage policies are needed: the service role bypasses RLS, and nothing
+else is given access to the bucket.
+
+Then set in `.env` (or Vercel project settings):
+
+```
+SUPABASE_URL=https://<ref>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<service role key>
+STORAGE_BUCKET=qcms-proof
+```
+
+Without these two Supabase values the service falls back to writing photos to
+`STORAGE_DIR` on local disk — fine for Docker or development, but on Vercel the
+filesystem is ephemeral and proof would be lost, so **the bucket is required in
+production**.
+
+Run the migration so the new columns and indexes exist:
+
+```bash
+npm run migrate
+```
+
+## 10. Go live
 
 1. Set `DRY_RUN=false` in `.env` and restart.
 2. Trigger a test push from the dashboard: **Send reminders**.
 3. Reply `DONE 1` from a team phone and confirm the board updates.
+4. On a task that requires a photo, reply `DONE`, then send a picture — the
+   board should flip to complete with the photo attached to the run.
 
 ---
 
@@ -136,3 +194,8 @@ WhatsApp → API Setup → "To" → **Manage phone number list** and verify the 
 | `(#132001) Template name does not exist` | Template not approved yet, or the language code isn't `en_US` |
 | `(#131047) Re-engagement message` | You tried free-form text outside the 24-hour window — use a template |
 | Nothing sends, no errors | `DRY_RUN` is still `true`; check `/api/messages` for `dry_run` rows |
+| "This number is not registered" on a real staff reply | The stored number doesn't match what Meta sends. Re-save it through the dashboard or API — it is normalized on write — and check `people.whatsapp_number` is bare digits with a country code |
+| A reply completes two tasks | Should not happen: inbound messages are deduplicated on Meta's message id. If it does, confirm migration `002` ran and `idx_msg_wa_in` exists |
+| Photo replies do nothing | The bucket is missing or `SUPABASE_SERVICE_ROLE_KEY` is wrong — look for `Photo proof failed` in the logs; the task stays open so the person can retry |
+| Task stuck at "needs a photo" | Someone replied DONE to a `requires_photo` task and never sent one. Clear it from the board, or have them send the picture |
+| Reminders show `sent` but never `delivered` | Subscribe to the `message_status` webhook field (step 7) |

@@ -1,6 +1,7 @@
 'use strict';
 const { db } = require('../db');
 const config = require('../config');
+const phone = require('../lib/phone');
 const { todayIn, weekdayOf, dayOf, monthOf, lastDayOfMonth, addDays, daysBetween } = require('../lib/dates');
 
 const today = (tz = config.tz) => todayIn(tz);
@@ -116,8 +117,31 @@ const stamp = (runId, column) => {
   return db.run(`UPDATE task_runs SET ${column} = now() WHERE id = $1`, [runId]);
 };
 
-const personByNumber = (num) =>
-  db.one('SELECT * FROM people WHERE whatsapp_number = $1 AND active = 1', [String(num).replace(/^\+/, '')]);
+/**
+ * Resolve an inbound WhatsApp sender to a person.
+ *
+ * Both sides are normalized to E.164 digits, so a number typed into the
+ * dashboard as "+1 (818) 555-0142" still matches the "18185550142" Meta sends.
+ */
+const personByNumber = (num) => {
+  const n = phone.normalize(num);
+  if (!n) return Promise.resolve(null);
+  return db.one('SELECT * FROM people WHERE whatsapp_number = $1 AND active = 1', [n]);
+};
+
+/** A single run with its task and assignee, by run id. */
+const runById = (runId) => db.one(`${RUN_JOIN} AND r.id = $1`, [runId]);
+
+/**
+ * Photo-proof handshake. When someone completes a task that requires a photo,
+ * the run is held open and the person is marked as owing one; the next image
+ * they send is attributed to that run rather than guessed at.
+ */
+const setAwaitingPhoto = (personId, runId) =>
+  db.run('UPDATE people SET awaiting_photo_run_id = $1 WHERE id = $2', [runId, personId]);
+
+const clearAwaitingPhoto = (personId) =>
+  db.run('UPDATE people SET awaiting_photo_run_id = NULL WHERE id = $1', [personId]);
 
 const personById = (id) => db.one('SELECT * FROM people WHERE id = $1', [id]);
 
@@ -310,4 +334,5 @@ module.exports = {
   recurringTasks, adHocTasks, materializeRuns, openRunsFor, runsFor, openRunsForPerson,
   overdueRuns, dueRunsFor, runsBetween, runsForFacilities, markRun, stamp, countReminder,
   setEscalationLevel, setPhoto, personByNumber, personById, chainOfCommand, analyzeGaps,
+  runById, setAwaitingPhoto, clearAwaitingPhoto,
 };

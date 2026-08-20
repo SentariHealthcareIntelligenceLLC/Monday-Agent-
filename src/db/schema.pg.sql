@@ -41,6 +41,9 @@ CREATE TABLE IF NOT EXISTS people (
                       CHECK (reminder_freq IN ('2x','1x','alt','wk','2wk','mo')),
   reports_to_id     bigint  REFERENCES people(id) ON DELETE SET NULL,
   timezone          text    NOT NULL DEFAULT 'America/Los_Angeles',
+  -- Set when this person replies DONE to a task that requires photo proof:
+  -- the next image they send completes that run. Cleared once it arrives.
+  awaiting_photo_run_id bigint,
   active            integer NOT NULL DEFAULT 1,
   created_at        timestamptz NOT NULL DEFAULT now()
 );
@@ -105,10 +108,22 @@ CREATE TABLE IF NOT EXISTS messages (
   body          text,
   kind          text,
   task_run_id   bigint REFERENCES task_runs(id) ON DELETE SET NULL,
+  media_path    text,                        -- inbound image, as a storage key
   status        text,
   error         text,
   created_at    timestamptz NOT NULL DEFAULT now()
 );
+
+-- Meta retries a webhook until it gets a 200, so the same inbound message can
+-- arrive more than once. The unique id makes the second delivery a no-op
+-- instead of a second "task done".
+CREATE UNIQUE INDEX IF NOT EXISTS idx_msg_wa_in
+  ON messages(wa_message_id) WHERE direction = 'in' AND wa_message_id IS NOT NULL;
+-- Delivery receipts arrive keyed by the id Meta returned on send.
+CREATE INDEX IF NOT EXISTS idx_msg_wa_out
+  ON messages(wa_message_id) WHERE direction = 'out';
+-- Per-person thread, newest first, for the dashboard profile panel.
+CREATE INDEX IF NOT EXISTS idx_msg_person ON messages(person_id, created_at);
 
 -- ------------------------------------------------------------- credentialing
 CREATE TABLE IF NOT EXISTS credentials (
