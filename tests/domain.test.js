@@ -90,6 +90,55 @@ test('stamp refuses a column outside the allow-list', async () => {
   await assert.rejects(async () => T.stamp(1, 'status; DROP TABLE people'), /refusing to stamp/);
 });
 
+test('a one-off task is due exactly once and never recurs', async () => {
+  const person = (await db.one(
+    "INSERT INTO people (name, role, whatsapp_number) VALUES ('A','manager','2100') RETURNING id")).id;
+
+  const run = await T.raiseAdHoc({
+    title: 'Chase the contrast delivery', assignee_id: person,
+    due_date: '2026-08-25', origin: 'board',
+  });
+  assert.strictEqual(run.cadence, 'once');
+  assert.strictEqual(run.origin, 'board');
+  assert.strictEqual(run.status, 'pending', 'appears on the board immediately');
+
+  // Sweeping a fortnight either side must not produce a second occurrence.
+  for (let d = 20; d <= 31; d += 1) await T.materializeRuns(`2026-08-${d}`);
+  const runs = await db.all(
+    "SELECT r.id FROM task_runs r JOIN tasks t ON t.id = r.task_id WHERE t.cadence = 'once'");
+  assert.strictEqual(runs.length, 1, 'exactly one run, ever');
+
+  assert.ok(T.isDue({ cadence: 'once', due_date: '2026-08-25' }, '2026-08-25'));
+  assert.ok(!T.isDue({ cadence: 'once', due_date: '2026-08-25' }, '2026-08-26'));
+});
+
+test('raiseAdHoc rejects incomplete or mislabelled one-offs', async () => {
+  const base = { title: 'x', assignee_id: 1, due_date: '2026-08-25', origin: 'board' };
+  await assert.rejects(() => T.raiseAdHoc({ ...base, title: undefined }), /title is required/);
+  await assert.rejects(() => T.raiseAdHoc({ ...base, assignee_id: undefined }), /assignee_id is required/);
+  await assert.rejects(() => T.raiseAdHoc({ ...base, due_date: undefined }), /due_date is required/);
+  await assert.rejects(() => T.raiseAdHoc({ ...base, origin: 'library' }),
+    /must originate from the board or a message/);
+});
+
+test('the recurring library and one-off list stay separate', async () => {
+  const person = (await db.one(
+    "INSERT INTO people (name, role, whatsapp_number) VALUES ('B','manager','2200') RETURNING id")).id;
+  await db.run(
+    `INSERT INTO tasks (title, cadence, weekday, assignee_id) VALUES ('Standing duty','weekly',1,$1)`,
+    [person]);
+  await T.raiseAdHoc({ title: 'Just this once', assignee_id: person,
+    due_date: '2026-08-26', origin: 'message' });
+
+  const library = await T.recurringTasks();
+  const adhoc = await T.adHocTasks();
+
+  assert.ok(library.every((t) => t.cadence !== 'once'), 'library holds no one-offs');
+  assert.ok(library.some((t) => t.title === 'Standing duty'));
+  assert.ok(adhoc.every((t) => t.cadence === 'once'), 'one-off list holds only one-offs');
+  assert.ok(adhoc.some((t) => t.title === 'Just this once'));
+});
+
 test('credential bands classify by days remaining', () => {
   assert.strictEqual(C.stateFor(-1), 'expired');
   assert.strictEqual(C.stateFor(0), 'expired');

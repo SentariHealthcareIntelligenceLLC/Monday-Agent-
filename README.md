@@ -118,6 +118,24 @@ The ones that matter most:
 | `DATABASE_SSL` | `true` for Supabase; `false` for a local postgres |
 | `CRON_SECRET` | Bearer token Vercel Cron sends to `/api/cron/*` |
 
+## Recurring duties vs. one-off tasks
+
+Two different things share the board:
+
+- **The recurring library** — the standing duties each role owns, on their own
+  cadence (`daily` … `yearly`). These are the steady state and are managed in
+  Rules / `POST /api/tasks`.
+- **One-off tasks** — work that is genuinely new. These have cadence `once`,
+  carry a single `due_date`, and never recur. They enter through exactly two
+  doors, which is what the dashboard's two boxes are for:
+  - the **Task board**'s "new one-off task" row (`origin: board`)
+  - the **Messages** composer, ticking *Track as a one-off task*
+    (`origin: message`) — so a request made in a message gets reminders and an
+    escalation path instead of scrolling away
+
+Both land on `POST /api/adhoc`, appear on the board immediately, and then follow
+the same reminder and escalation rules as everything else.
+
 ## API
 
 All endpoints require Basic auth except `/health` and `/webhook/whatsapp`.
@@ -127,10 +145,16 @@ GET    /health
 GET    /api/board?date=YYYY-MM-DD     today's task instances
 POST   /api/runs/:id/status           {status, note}
 GET    /api/people                    POST /api/people   PATCH /api/people/:id
-GET    /api/tasks                     POST /api/tasks    DELETE /api/tasks/:id
+DELETE /api/tasks/:id                 retire a duty
 GET    /api/gaps?days=30              completion rates + findings
 GET    /api/messages                  last 100 WhatsApp messages
 POST   /api/run/reminders|nudges|escalations    trigger a job now
+
+GET    /api/tasks                     the recurring duty library (never one-offs)
+POST   /api/tasks                     add a recurring duty
+GET    /api/adhoc                     one-off tasks, newest first
+POST   /api/adhoc                     raise a one-off {title, assignee_id, due_date,
+                                      origin: board|message}
 
 GET    /api/facilities                 POST /api/facilities  PATCH/DELETE /api/facilities/:id
 GET    /api/credentials?within=60     POST /api/credentials PATCH/DELETE /api/credentials/:id

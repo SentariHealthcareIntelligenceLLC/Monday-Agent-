@@ -441,6 +441,16 @@
     <div class="panel">
       <h2>Task board</h2>
       <p class="cap">Every routine duty, who owns it, and whether the agent has heard back. “Done” writes a timestamp — that timestamp is your compliance record.</p>
+      <div class="filters" style="border-bottom:1px dashed var(--axis);padding-bottom:12px;margin-bottom:12px">
+        <span class="freq" style="font-weight:600">New one-off task</span>
+        <input type="text" id="adhocTitle" placeholder="Something new that isn’t a routine duty…" style="flex:2;min-width:220px">
+        <select id="adhocWho"></select>
+        <input type="date" id="adhocDue">
+        <label class="freq" style="display:flex;align-items:center;gap:5px">
+          <input type="checkbox" id="adhocCrit"> Critical
+        </label>
+        <button class="btn sm primary" id="adhocAdd">Add to board</button>
+      </div>
       <div class="filters">
         <select id="fPerson"></select>
         <select id="fFacility"></select>
@@ -739,6 +749,13 @@
         <span class="fieldlab">Message</span>
         <textarea class="msg" id="msgText" placeholder="Type your message…"></textarea>
         <p class="cnt" id="msgMeta">0 characters</p>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px">
+          <label class="freq" style="display:flex;align-items:center;gap:6px">
+            <input type="checkbox" id="msgAsTask"> Track as a one-off task
+          </label>
+          <input type="date" id="msgTaskDue" title="Due date for the tracked task">
+          <span class="freq" style="color:var(--muted)">A tracked message gets reminders and escalates like any other task.</span>
+        </div>
         <div class="rowbtns">
           <button class="btn" id="msgClear">Clear</button>
           <button class="btn primary" id="msgSend">Send now</button>
@@ -1319,6 +1336,14 @@ function renderTiles(){
 
 /* ============================ TABLE ============================ */
 function fillFilters(){
+  const who=$('#adhocWho');
+  if(who){
+    who.innerHTML=PEOPLE.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+    const due=$('#adhocDue');
+    if(due && !due.value) due.value=SERVER_TODAY;
+    const mdue=$('#msgTaskDue');
+    if(mdue && !mdue.value) mdue.value=SERVER_TODAY;
+  }
   $('#fPerson').innerHTML   = '<option value="all">All team members</option>'+
     PEOPLE.map(p=>`<option value="${p.id}">${esc(p.name)} — ${p.role}</option>`).join('');
   $('#fFacility').innerHTML = '<option value="all">All facilities in view</option>'+
@@ -2775,10 +2800,35 @@ document.addEventListener('click',e=>{
       :msgScope==='role'?`${msgRole||'All roles'} (${ids.length})`
       :msgScope==='fac'?`${msgFac?facName(msgFac):'Remote / no site'} (${ids.length})`
       :`${ids.length} selected`;
-    ids.forEach(id=>chatPush(id,'out',txt));
-    MSGLOG.unshift({ts:nowStamp(),to:label,ch,txt});
-    logFeed(`Mass message sent — ${label} via ${ch}, ${ids.length*(MCH.wa&&MCH.em?2:1)} messages out.`);
-    $('#msgText').value=''; renderMsg(); return;
+    const asTask=$('#msgAsTask') && $('#msgAsTask').checked;
+    // Tracking a broadcast creates one task per recipient, which is rarely
+    // what someone means when they tick the box on a message to everyone.
+    if(asTask && ids.length>1 &&
+       !confirm(`This will create ${ids.length} separate tasks — one for each recipient — `+
+                `each with its own reminders and escalation.\n\nContinue?`)){
+      return;
+    }
+    busy(b, async()=>{
+      if(asTask){
+        // A message that asks for something becomes a tracked one-off, so it
+        // gets reminders and an escalation path instead of scrolling away.
+        for(const id of ids){
+          await API.post('/adhoc',{
+            title:txt.slice(0,120), details:txt,
+            assignee_id:Number(id), due_date:$('#msgTaskDue')?.value||SERVER_TODAY,
+            origin:'message',
+          });
+        }
+        logFeed(`Message tracked as a one-off task for ${label}.`);
+      }else{
+        ids.forEach(id=>chatPush(id,'out',txt));
+        MSGLOG.unshift({ts:nowStamp(),to:label,ch,txt});
+        logFeed(`Message sent — ${label} via ${ch}.`);
+      }
+      $('#msgText').value='';
+      await refresh();
+    });
+    return;
   }
 
   /* ---- daily lift ---- */
@@ -2978,6 +3028,25 @@ document.addEventListener('click',e=>{
     document.documentElement.dataset.theme=dark?'light':'dark';
     b.textContent=dark?'Dark mode':'Light mode';
     renderBar(); renderLine(); renderMonChart(); renderSched(); return;
+  }
+  /* A one-off raised from the board. Recurring duties are managed in Rules;
+     this is only for work that is genuinely new. */
+  if(b.id==='adhocAdd'){
+    const title=$('#adhocTitle').value.trim();
+    if(!title){ $('#adhocTitle').focus(); return; }
+    busy(b, async()=>{
+      await API.post('/adhoc',{
+        title,
+        assignee_id:Number($('#adhocWho').value),
+        due_date:$('#adhocDue').value||SERVER_TODAY,
+        critical:$('#adhocCrit').checked?1:0,
+        origin:'board',
+      });
+      $('#adhocTitle').value=''; $('#adhocCrit').checked=false;
+      logFeed(`One-off task raised from the board — “${title}”.`);
+      await refresh();
+    });
+    return;
   }
   if(b.id==='runBtn'){
     busy(b, async()=>{

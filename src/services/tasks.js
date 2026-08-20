@@ -18,6 +18,9 @@ const MONTH_STEP = { monthly: 1, quarterly: 3, semiannual: 6, yearly: 12 };
  * January fires in Jan/Apr/Jul/Oct.
  */
 function isDue(task, isoDate) {
+  // A one-off raised from the board or a message is due exactly once, on the
+  // date it was given. It never recurs.
+  if (task.cadence === 'once') return task.due_date === isoDate;
   if (task.cadence === 'daily') return weekdayOf(isoDate) <= 5 || Number(task.critical) === 1;
   if (task.cadence === 'weekly') return weekdayOf(isoDate) === (task.weekday || 1);
 
@@ -76,7 +79,7 @@ async function materializeRuns(isoDate = today()) {
 
 const RUN_JOIN = `
   SELECT r.*, t.title, t.details, t.cadence, t.due_time, t.category, t.critical,
-         t.lead_days, t.requires_photo, t.facility_id,
+         t.lead_days, t.requires_photo, t.facility_id, t.origin, t.raised_by_id,
          f.name AS facility_name, f.code AS facility_code,
          p.id AS person_id, p.name AS person_name, p.role, p.whatsapp_number,
          p.email AS person_email, p.channel, p.reports_to_id
@@ -251,8 +254,60 @@ async function completionTrend(days = 7, isoDate = today()) {
     }));
 }
 
+/**
+ * Raise a one-off task. This is what the Task board's "+" and the Messages
+ * composer create: work that is genuinely new, as opposed to the standing
+ * library of duties that recur on their own.
+ *
+ * The run is materialised immediately so the item appears on the board at
+ * once rather than waiting for the next overnight sweep.
+ */
+async function raiseAdHoc({
+  title, details = null, assignee_id, due_date, due_time = '17:00',
+  facility_id = null, critical = 0, requires_photo = 0,
+  origin = 'board', raised_by_id = null, source_message_id = null,
+}) {
+  if (!title) throw new Error('title is required');
+  if (!assignee_id) throw new Error('assignee_id is required');
+  if (!due_date) throw new Error('due_date is required for a one-off task');
+  if (!['board', 'message'].includes(origin)) {
+    throw new Error(`a one-off task must originate from the board or a message, got: ${origin}`);
+  }
+
+  const task = await db.one(
+    `INSERT INTO tasks (title, details, cadence, due_date, due_time, assignee_id,
+                        facility_id, critical, requires_photo, origin,
+                        raised_by_id, source_message_id, lead_days)
+     VALUES ($1,$2,'once',$3,$4,$5,$6,$7,$8,$9,$10,$11,0) RETURNING id`,
+    [title, details, due_date, due_time, assignee_id, facility_id,
+     critical ? 1 : 0, requires_photo ? 1 : 0, origin, raised_by_id, source_message_id]
+  );
+
+  await db.run(
+    `INSERT INTO task_runs (task_id, due_date, status) VALUES ($1, $2, 'pending')
+     ON CONFLICT (task_id, due_date) DO NOTHING`,
+    [task.id, due_date]
+  );
+
+  return db.one(`${RUN_JOIN} AND r.task_id = $1`, [task.id]);
+}
+
+/** The standing library — recurring duties only, never one-offs. */
+const recurringTasks = () =>
+  db.all(`SELECT t.*, p.name AS assignee FROM tasks t
+          JOIN people p ON p.id = t.assignee_id
+          WHERE t.active = 1 AND t.cadence <> 'once'
+          ORDER BY t.cadence, t.due_time`);
+
+/** One-off items, newest first. */
+const adHocTasks = (limit = 100) =>
+  db.all(`SELECT t.*, p.name AS assignee FROM tasks t
+          JOIN people p ON p.id = t.assignee_id
+          WHERE t.cadence = 'once' ORDER BY t.id DESC LIMIT ${Number(limit) || 100}`);
+
 module.exports = {
-  today, isDue, inReminderWindow, completionTrend, materializeRuns, openRunsFor, runsFor, openRunsForPerson,
+  today, isDue, inReminderWindow, completionTrend, raiseAdHoc,
+  recurringTasks, adHocTasks, materializeRuns, openRunsFor, runsFor, openRunsForPerson,
   overdueRuns, dueRunsFor, runsBetween, runsForFacilities, markRun, stamp, countReminder,
   setEscalationLevel, setPhoto, personByNumber, personById, chainOfCommand, analyzeGaps,
 };

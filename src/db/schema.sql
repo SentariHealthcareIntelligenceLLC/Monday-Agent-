@@ -53,8 +53,19 @@ CREATE TABLE IF NOT EXISTS tasks (
   title         TEXT    NOT NULL,
   details       TEXT,
   category      TEXT,
+  -- 'once' is a one-off item raised from the task board or a message; every
+  -- other value is a standing duty that recurs on its own schedule.
   cadence       TEXT    NOT NULL CHECK (cadence IN (
-                  'daily','weekly','monthly','quarterly','semiannual','yearly')),
+                  'once','daily','weekly','monthly','quarterly','semiannual','yearly')),
+  -- Where the task came from. The recurring library is the steady state;
+  -- 'board' and 'message' are the two ways a new one-off enters the system.
+  origin        TEXT    NOT NULL DEFAULT 'library'
+                  CHECK (origin IN ('library','board','message')),
+  due_date      TEXT,                        -- one-off tasks only (YYYY-MM-DD)
+  raised_by_id  INTEGER  REFERENCES people(id) ON DELETE SET NULL,
+  -- No FK: messages is declared after tasks, and SQLite cannot add a
+  -- constraint after the fact, so the two schemas would diverge.
+  source_message_id INTEGER,
   weekday       INTEGER,                     -- 1=Mon .. 7=Sun (weekly)
   day_of_month  INTEGER,                     -- 1..28 (monthly and longer)
   month_of_year INTEGER,                     -- 1..12 anchor for quarterly/semi/yearly

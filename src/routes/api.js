@@ -37,23 +37,49 @@ function register(app, prefix = '/api') {
   });
 
   // ---- Tasks ----
-  app.get(p('/tasks'), async (req, res) => res.json(await db.all(`
-    SELECT t.*, pe.name AS assignee FROM tasks t JOIN people pe ON pe.id = t.assignee_id
-    ORDER BY t.cadence, t.due_time`)));
+  // The standing library of recurring duties. One-off items live at /adhoc so
+  // the two never get mixed into the same list.
+  app.get(p('/tasks'), async (req, res) => res.json(await T.recurringTasks()));
+
+  app.get(p('/adhoc'), async (req, res) =>
+    res.json(await T.adHocTasks(Number(req.query.limit) || 100)));
+
+  /**
+   * Raise a new one-off task — the Task board's "+" and the Messages composer
+   * both land here. Recurring duties are created through POST /api/tasks.
+   */
+  app.post(p('/adhoc'), async (req, res) => {
+    try {
+      res.json(await T.raiseAdHoc(req.body), 201);
+    } catch (err) {
+      res.json({ error: err.message }, 400);
+    }
+  });
 
   app.post(p('/tasks'), async (req, res) => {
     const b = {
       details: null, category: null, weekday: null, day_of_month: null,
+      month_of_year: null, lead_days: 0, facility_id: null, requires_photo: 0,
       due_time: '17:00', critical: 0, ...req.body,
     };
     if (!b.title || !b.cadence || !b.assignee_id) {
       return res.json({ error: 'title, cadence and assignee_id are required' }, 400);
     }
+    if (b.cadence === 'once') {
+      return res.json({ error: 'one-off tasks are raised through POST /api/adhoc' }, 400);
+    }
+    const CADENCES = ['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'yearly'];
+    if (!CADENCES.includes(b.cadence)) {
+      return res.json({ error: `cadence must be one of: ${CADENCES.join(', ')}` }, 400);
+    }
     const row = await db.one(
       `INSERT INTO tasks
-        (title, details, category, cadence, weekday, day_of_month, due_time, assignee_id, critical)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
-      [b.title, b.details, b.category, b.cadence, b.weekday, b.day_of_month, b.due_time, b.assignee_id, b.critical]
+        (title, details, category, cadence, weekday, day_of_month, month_of_year,
+         lead_days, due_time, assignee_id, facility_id, requires_photo, critical, origin)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'library') RETURNING id`,
+      [b.title, b.details, b.category, b.cadence, b.weekday, b.day_of_month,
+       b.month_of_year ?? null, b.lead_days ?? 0, b.due_time, b.assignee_id,
+       b.facility_id ?? null, b.requires_photo ? 1 : 0, b.critical]
     );
     res.json({ id: row.id }, 201);
   });

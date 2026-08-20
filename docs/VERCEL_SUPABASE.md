@@ -10,15 +10,46 @@ The service runs in two shapes from one codebase:
 
 The backend is chosen at runtime: **set `DATABASE_URL` and it uses Postgres; leave it empty and it uses the SQLite file.** Nothing else changes.
 
-## 1. Create the Supabase schema
+## 1. Create or update the Supabase schema
 
-In the Supabase dashboard → SQL Editor, paste and run [`src/db/schema.pg.sql`](../src/db/schema.pg.sql).
-
-Or from your machine:
+**A brand-new database** gets everything from [`src/db/schema.pg.sql`](../src/db/schema.pg.sql) —
+paste it into the Supabase SQL Editor, or run:
 
 ```bash
 DATABASE_URL='postgresql://...' npm run migrate
 ```
+
+**A database that already has data** must not be recreated. Run the same
+command: it applies the files in [`src/db/migrations/`](../src/db/migrations/),
+which only add tables, columns and constraints — nothing is dropped and no row
+is rewritten. Applied filenames are recorded in `schema_migrations`, so
+re-running is a no-op.
+
+To see what would change without touching anything:
+
+```bash
+DATABASE_URL='postgresql://...' npm run migrate -- --list
+```
+
+If you would rather not give a shell the connection string, paste
+[`src/db/migrations/001_expand_schema.sql`](../src/db/migrations/001_expand_schema.sql)
+into the Supabase SQL Editor instead. It is idempotent, so running it twice is
+harmless — but then also run:
+
+```sql
+CREATE TABLE IF NOT EXISTS schema_migrations (
+  filename text PRIMARY KEY,
+  applied_at timestamptz NOT NULL DEFAULT now()
+);
+INSERT INTO schema_migrations (filename) VALUES ('001_expand_schema.sql')
+  ON CONFLICT DO NOTHING;
+```
+
+so the runner knows it is done.
+
+> Take a backup first (Supabase → Database → Backups). The migration is
+> additive and was tested against a copy of the original four-table schema
+> carrying live rows, but a backup costs nothing.
 
 Optionally load the starter org chart and routine-task library (**this deletes existing rows**):
 
@@ -41,7 +72,15 @@ postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/p
 Use the pooler, not the direct `5432` connection. Every concurrent lambda opens
 its own connection, and direct connections exhaust Postgres' slot limit quickly.
 
-## 3. Set environment variables in Vercel
+## 3. Storage bucket for photo proof
+
+Some duties close out only with a photo. Create a **private** bucket named
+`qcms-proof` (Supabase → Storage → New bucket, public **off**). The service
+uploads with the service-role key and hands the dashboard short-lived signed
+URLs; these are photographs from inside clinical spaces and must not sit on a
+public URL.
+
+## 4. Set environment variables in Vercel
 
 Project → Settings → Environment Variables:
 
@@ -57,12 +96,17 @@ Project → Settings → Environment Variables:
 | `WHATSAPP_VERIFY_TOKEN` | any string; paste the same one into Meta |
 | `WHATSAPP_APP_SECRET` | Meta App → Settings → Basic |
 | `DRY_RUN` | `true` until the Meta webhook verifies, then `false` |
+| `SUPABASE_URL` | project URL, for photo storage |
+| `SUPABASE_SERVICE_ROLE_KEY` | service role key (never the anon key) |
+| `STORAGE_BUCKET` | `qcms-proof` |
+| `RESEND_API_KEY` | only if you want the email channel |
+| `EMAIL_FROM` | verified sender address for email |
 
 Keep `DRY_RUN=true` for the first deploy. Outbound messages are logged to the
 `messages` table instead of being sent, so you can exercise the whole flow
 without messaging real staff.
 
-## 4. Scheduling, and why it looks odd
+## 5. Scheduling, and why it looks odd
 
 `vercel.json` triggers all four jobs **hourly**:
 
@@ -92,7 +136,7 @@ curl -H "Authorization: Bearer $CRON_SECRET" \
 > Vercel's Hobby plan allows a limited number of cron invocations and only
 > daily granularity on some accounts. Hourly triggers require Pro.
 
-## 5. Deployment protection
+## 6. Deployment protection
 
 A fresh Vercel project often has Deployment Protection (SSO) on, which makes
 **every** path return a 302 redirect — including Meta's webhook callback and
@@ -101,7 +145,7 @@ Vercel Cron. Meta cannot verify a protected webhook.
 Project → Settings → Deployment Protection → disable it for production, or add
 `/webhook/whatsapp` and `/api/cron/*` as protection bypass paths.
 
-## 6. Point Meta at the deployment
+## 7. Point Meta at the deployment
 
 Callback URL: `https://<your-app>.vercel.app/webhook/whatsapp`
 Verify token: whatever you set as `WHATSAPP_VERIFY_TOKEN`.
