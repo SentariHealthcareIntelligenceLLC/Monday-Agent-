@@ -412,10 +412,18 @@ CREATE INDEX IF NOT EXISTS idx_people_boss ON people(reports_to_id);
 --  The chain of command is recursive, so resolving "who does this
 --  escalate to" belongs in the database rather than in a loop that
 --  issues one query per level.
+--
+--  Every view is security_invoker. Postgres views otherwise run as their
+--  CREATOR, which would let anon read straight through them and bypass the
+--  RLS on the tables underneath — the view becomes a hole around the very
+--  protection the tables have. security_invoker makes the caller's own
+--  permissions and RLS apply, so a view can never expose more than the
+--  tables it selects from.
 -- =====================================================================
 
 -- Every person with their full management chain, nearest boss first.
-CREATE OR REPLACE VIEW v_chain_of_command AS
+CREATE OR REPLACE VIEW v_chain_of_command
+WITH (security_invoker = true) AS
 WITH RECURSIVE chain AS (
   SELECT p.id AS person_id, p.reports_to_id AS boss_id, 1 AS depth
   FROM people p
@@ -434,7 +442,8 @@ JOIN people b ON b.id = c.boss_id
 WHERE b.active = 1;
 
 -- Open work with the escalation level it has actually earned.
-CREATE OR REPLACE VIEW v_open_task_runs AS
+CREATE OR REPLACE VIEW v_open_task_runs
+WITH (security_invoker = true) AS
 SELECT r.id AS run_id, r.due_date, r.status, r.reminder_count, r.escalated_level,
        t.id AS task_id, t.title, t.cadence, t.origin, t.due_time,
        t.critical, t.requires_photo, t.lead_days,
@@ -449,7 +458,8 @@ LEFT JOIN facilities f ON f.id = t.facility_id
 WHERE r.status IN ('pending','snoozed','blocked') AND p.active = 1;
 
 -- Completion rate per person, for the dashboard's gap analysis.
-CREATE OR REPLACE VIEW v_person_completion AS
+CREATE OR REPLACE VIEW v_person_completion
+WITH (security_invoker = true) AS
 SELECT p.id, p.name, p.role,
        count(*) AS total,
        sum(CASE WHEN r.status = 'done'   THEN 1 ELSE 0 END) AS done,
