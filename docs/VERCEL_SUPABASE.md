@@ -12,6 +12,19 @@ The backend is chosen at runtime: **set `DATABASE_URL` and it uses Postgres; lea
 
 ## 1. Create or update the Supabase schema
 
+**Simplest path — one file, copy and paste.** Open
+[`supabase/schema.sql`](../supabase/schema.sql), copy the whole thing into the
+Supabase SQL Editor, and run it. It is one self-contained script that builds
+every table, constraint, index, role-aware view and RLS setting, and it is safe
+on a database that already holds data: nothing is dropped, no row is rewritten,
+and running it twice changes nothing.
+
+It also records itself in `schema_migrations`, so `npm run migrate` afterwards
+correctly reports "up to date" instead of replaying anything.
+
+The rest of this section covers the CLI equivalents.
+
+
 **A brand-new database** gets everything from [`src/db/schema.pg.sql`](../src/db/schema.pg.sql) —
 paste it into the Supabase SQL Editor, or run:
 

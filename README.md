@@ -118,6 +118,16 @@ The ones that matter most:
 | `DATABASE_SSL` | `true` for Supabase; `false` for a local postgres |
 | `CRON_SECRET` | Bearer token Vercel Cron sends to `/api/cron/*` |
 
+## Database
+
+`supabase/schema.sql` is the whole schema in one paste-able file — tables,
+constraints, indexes, role-aware views and RLS. Safe on a fresh database or one
+already holding data. See [docs/VERCEL_SUPABASE.md](docs/VERCEL_SUPABASE.md).
+
+Roles are a table (`roles`), not a bare CHECK, so the chain of command and the
+escalation ladder (`escalation_rules`) are data you can change without a
+deploy. `v_chain_of_command` resolves the management chain recursively.
+
 ## Recurring duties vs. one-off tasks
 
 Two different things share the board:
