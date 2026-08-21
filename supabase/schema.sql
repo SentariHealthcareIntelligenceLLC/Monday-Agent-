@@ -10,6 +10,15 @@
 --  running it twice changes nothing the second time.
 --
 --  Take a backup first anyway: Supabase -> Database -> Backups.
+--
+--  STRUCTURE ONLY. This file never rewrites a row, which is what makes it
+--  safe to re-run. One data fix lives outside it: migration 002 rewrites
+--  stored phone numbers into the bare E.164 digits Meta sends, so inbound
+--  replies match the right person. A fresh database needs nothing (the app
+--  normalizes on write); a database with numbers typed by hand before that
+--  change should also run:
+--      src/db/migrations/002_whatsapp_delivery.sql
+--  or simply:  DATABASE_URL='...' npm run migrate
 -- =====================================================================
 
 
@@ -136,6 +145,9 @@ CREATE TABLE IF NOT EXISTS people (
   channel           text    NOT NULL DEFAULT 'wa',
   reminder_freq     text    NOT NULL DEFAULT '2x',
   reports_to_id     bigint  REFERENCES people(id) ON DELETE SET NULL,
+  -- Set while the bot is waiting for a photo reply, so the next inbound image
+  -- is matched to the run that asked for it.
+  awaiting_photo_run_id bigint,
   timezone          text    NOT NULL DEFAULT 'America/Los_Angeles',
   active            integer NOT NULL DEFAULT 1,
   created_at        timestamptz NOT NULL DEFAULT now()
@@ -148,6 +160,7 @@ ALTER TABLE people ADD COLUMN IF NOT EXISTS hired_on      text;
 ALTER TABLE people ADD COLUMN IF NOT EXISTS languages     text;
 ALTER TABLE people ADD COLUMN IF NOT EXISTS channel       text NOT NULL DEFAULT 'wa';
 ALTER TABLE people ADD COLUMN IF NOT EXISTS reminder_freq text NOT NULL DEFAULT '2x';
+ALTER TABLE people ADD COLUMN IF NOT EXISTS awaiting_photo_run_id bigint;
 
 
 -- =====================================================================
@@ -231,10 +244,12 @@ CREATE TABLE IF NOT EXISTS messages (
   task_run_id   bigint REFERENCES task_runs(id) ON DELETE SET NULL,
   status        text,          -- sent | failed | dry_run | received
   error         text,
+  media_path    text,          -- Storage key for an inbound photo reply
   created_at    timestamptz NOT NULL DEFAULT now()
 );
 
-ALTER TABLE messages ADD COLUMN IF NOT EXISTS channel text NOT NULL DEFAULT 'wa';
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS channel    text NOT NULL DEFAULT 'wa';
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS media_path text;
 
 
 -- =====================================================================
@@ -406,6 +421,15 @@ CREATE INDEX IF NOT EXISTS idx_msgs_when   ON messages(created_at);
 CREATE INDEX IF NOT EXISTS idx_people_role ON people(role, active);
 CREATE INDEX IF NOT EXISTS idx_people_boss ON people(reports_to_id);
 
+-- Meta retries a webhook until it sees a 200, so the same reply can arrive
+-- more than once. This unique index is what makes a redelivery a no-op rather
+-- than a second completion.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_msg_wa_in
+  ON messages(wa_message_id) WHERE direction = 'in' AND wa_message_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_msg_wa_out
+  ON messages(wa_message_id) WHERE direction = 'out';
+CREATE INDEX IF NOT EXISTS idx_msg_person ON messages(person_id, created_at);
+
 
 -- =====================================================================
 --  SECTION 12 — ROLE-AWARE VIEWS
@@ -506,6 +530,7 @@ ALTER TABLE schema_migrations ENABLE ROW LEVEL SECURITY;
 
 INSERT INTO schema_migrations (filename) VALUES
   ('001_expand_schema.sql'),
+  ('002_whatsapp_delivery.sql'),
   ('supabase/schema.sql')
 ON CONFLICT (filename) DO NOTHING;
 
