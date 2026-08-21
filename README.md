@@ -118,6 +118,12 @@ The ones that matter most:
 | `DATABASE_SSL` | `true` for Supabase; `false` for a local postgres |
 | `CRON_SECRET` | Bearer token Vercel Cron sends to `/api/cron/*` |
 
+## Picking this up
+
+[HANDOFF.md](HANDOFF.md) is the continuation contract: current verified state of
+the repo, Supabase and Vercel, the decisions worth not relitigating, and what is
+still outstanding.
+
 ## Database
 
 `supabase/schema.sql` is the whole schema in one paste-able file — tables,
