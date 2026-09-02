@@ -1,26 +1,45 @@
 # Step 05 — First admin login
 
-**Purpose:** create and promote the first dashboard owner account.
+> **Reconstructed.** This step is required by `00_README_MANIFEST.md`, but the file was
+> never delivered with the pack. The procedure below is derived from what migration 0002
+> actually does; treat it as a best reconstruction and check it against the original if
+> that file turns up.
 
-**Preconditions:** step 02 complete (the signup trigger from migration 2 must exist).
+**Purpose:** create the first dashboard account and promote it to `owner`. Until one
+profile holds `owner` or `manager`, nobody can read anything through the dashboard —
+`handle_new_user()` lands every new signup as `viewer` with no `person_id`.
+
+**Preconditions:** step 02 complete. `SUPABASE_ANON_KEY` set (see `.env.example`).
 
 ## Actions
 
-1. Dashboard → Authentication → Users → **Invite user** → `nelson.kenny.k@gmail.com`.
-2. The trigger auto-creates a `profiles` row as `viewer` (no access). Promote it:
+1. Supabase → Authentication → Users → **Add user**, with the real email of the owner.
+   (Signing up through the dashboard login form works identically — the trigger fires
+   either way.)
+2. Confirm the trigger provisioned a profile:
 
-```sql
-update profiles set app_role = 'owner',
-  person_id = (select id from people where lower(email) = lower(profiles.email) limit 1)
-where email = 'nelson.kenny.k@gmail.com';
-```
+   ```sql
+   select id, email, app_role, person_id, active from profiles order by created_at;
+   ```
 
-`person_id` may resolve to NULL if the `people` table is empty or holds no matching
-email — that is fine; it links later when people data exists.
+   Expect one row, `app_role = 'viewer'`. If `people` already holds a row whose email
+   matches, `person_id` is linked automatically; otherwise it is null.
+3. Promote that row, and link it to the operator's `people` row if there is one:
 
-**Success criteria:**
-`select email, app_role, active from profiles where email = 'nelson.kenny.k@gmail.com';`
-returns one row with `app_role = 'owner'`, `active = true`.
-**On failure:** if the profiles row is missing, the invite happened before migration 2 —
-insert it manually with the auth user's UUID:
-`insert into profiles (id, email, app_role) values ('<auth.users.id>', 'nelson.kenny.k@gmail.com', 'owner') on conflict (id) do update set app_role='owner';`
+   ```sql
+   update profiles
+      set app_role  = 'owner',
+          person_id = (select id from people where lower(email) = lower('<owner email>') and active = 1)
+    where email = '<owner email>';
+   ```
+
+4. Log in to the dashboard as that user and confirm the tabs load.
+
+Rules: promote exactly one account to `owner` here. Everyone else stays `viewer` until an
+owner promotes them — that is the intended default, not a bug. Never grant `anon` a policy
+to work around a login problem (step 01).
+
+**Success criteria:** exactly one `profiles` row with `app_role = 'owner'`, and that user
+can read the dashboard.
+**On failure:** if no profile row appeared, the `on_auth_user_created` trigger is missing —
+re-run migration 0002 and re-check before creating users by hand.

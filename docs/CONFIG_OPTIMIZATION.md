@@ -33,7 +33,7 @@ The live deployment serves the dashboard HTML but **every `/api/*` call returns 
 
 Kept as-is deliberately: the six hourly crons with local-hour matching inside each job. That design is **DST-proof** (Vercel cron is UTC-only) — HANDOFF explicitly says not to convert these to fixed UTC hours. Changes:
 
-- **`regions`** pinned so the function runs next to the database. Set it to the region that matches your Supabase project (e.g. `sfo1` for us-west-1); cross-region hops add 50–150 ms to every one of the pooled Postgres round trips per request.
+- **`regions`** pinned so the function runs next to the database. Verified 2026-09-02: the Supabase project is in **us-west-2** (Oregon), so `vercel.json` pins **`pdx1`** — not the `sfo1` suggested here, which would sit a region away; cross-region hops add 50–150 ms to every one of the pooled Postgres round trips per request.
 - **`memory: 1024`** — more memory also means a faster CPU class on Vercel; the cron jobs that fan out reminders are the beneficiaries.
 - **Security headers** on all responses (nosniff, frame-deny, HSTS, no-referrer). The dashboard is Basic-auth on a public URL; these are free hardening.
 - Optional (needs one small code change, not included): collapse the six cron entries into a single `/api/cron/tick` that runs all due jobs — cuts invocations 6× and stays within Hobby's cron limits if the plan is ever downgraded. The per-job no-op-unless-hour-matches logic already makes this safe.
