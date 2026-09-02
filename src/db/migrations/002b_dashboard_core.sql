@@ -2,6 +2,13 @@
 --  Migration 0001 — Dashboard core schema
 --  QCMS Task Bot (SentariHealthcareIntelligenceLLC/Monday-Agent-)
 --
+--  Repo-native copy for `npm run migrate` (src/db/migrations runner),
+--  identical in content to supabase/migrations/20260901000001_dashboard_core.sql;
+--  each records the other in schema_migrations, so whichever path runs first
+--  the other is skipped. Numbered 002b so it lands after 002_whatsapp_delivery
+--  and before 003_auth_profiles, which needs the roles/escalation_rules tables
+--  this file creates.
+--
 --  Repackages supabase/schema.sql (repo @ 5ad9800) as a Supabase CLI
 --  migration. Fully idempotent: safe on a fresh database AND on the live
 --  "Monday Agent" project (xziunvsgzriuufcfdkvx), where it acts as the
@@ -425,6 +432,5 @@ INSERT INTO schema_migrations (filename) VALUES
   ('001_expand_schema.sql'),
   ('002_whatsapp_delivery.sql'),
   ('supabase/schema.sql'),
-  ('20260901000001_dashboard_core.sql'),
-  ('002b_dashboard_core.sql')
+  ('20260901000001_dashboard_core.sql')
 ON CONFLICT (filename) DO NOTHING;

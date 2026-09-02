@@ -26,6 +26,7 @@ writes `task_runs`/`messages` in real time, which is exactly what the dashboard 
 
 | File | Purpose |
 |---|---|
+| `src/db/migrations/002b_dashboard_core.sql` | Repo-native copy of the dashboard-core migration. Required before 003: `schema.pg.sql` has no `roles`/`escalation_rules`/`facility_roles` tables, which the auth policies reference. Numbered `002b` so it sorts after `002_whatsapp_delivery` and before `003_auth_profiles`. |
 | `src/db/migrations/003_auth_profiles.sql` | Repo-native copy of the auth migration; `npm run migrate` applies it. Includes a local-dev shim (creates stand-in `auth` schema/roles on plain Postgres; a no-op on Supabase). |
 | `src/db/migrations/004_whatsapp_connections.sql` | Repo-native copy of the WhatsApp-connections migration. |
 | `src/services/waConnections.js` | Runtime for the new tables: sender config from DB+Vault (env fallback), contact opt-in + 24 h window, deduped webhook event log, delivery receipts. Every function degrades to a no-op on SQLite or before migration — wiring it in cannot break the webhook. |
