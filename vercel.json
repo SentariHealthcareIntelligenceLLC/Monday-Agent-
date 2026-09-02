@@ -1,9 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "outputDirectory": "public",
+  "regions": ["sfo1"],
   "functions": {
     "api/index.js": {
-      "maxDuration": 60
+      "maxDuration": 60,
+      "memory": 1024
     }
   },
   "rewrites": [
@@ -12,30 +14,23 @@
       "destination": "/api/index"
     }
   ],
-  "crons": [
+  "headers": [
     {
-      "path": "/api/cron/materialize",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/cron/reminders",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/cron/nudges",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/cron/escalations",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/cron/credentials",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/cron/digest",
-      "schedule": "0 * * * *"
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains" }
+      ]
     }
+  ],
+  "crons": [
+    { "path": "/api/cron/materialize", "schedule": "0 * * * *" },
+    { "path": "/api/cron/reminders",   "schedule": "0 * * * *" },
+    { "path": "/api/cron/nudges",      "schedule": "0 * * * *" },
+    { "path": "/api/cron/escalations", "schedule": "0 * * * *" },
+    { "path": "/api/cron/credentials", "schedule": "0 * * * *" },
+    { "path": "/api/cron/digest",      "schedule": "0 * * * *" }
   ]
 }
