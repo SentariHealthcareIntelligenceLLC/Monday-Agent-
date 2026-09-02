@@ -2,6 +2,7 @@
 const config = require('../config');
 const logger = require('../logger');
 const wa = require('../services/whatsapp');
+const waConn = require('../services/waConnections');
 const T = require('../services/tasks');
 const storage = require('../services/storage');
 const { parseReply } = require('../services/replies');
@@ -30,13 +31,23 @@ function register(app, path = '/webhook/whatsapp') {
     try {
       for (const entry of req.body.entry || []) {
         for (const change of entry.changes || []) {
+          const profileName = change.value?.contacts?.[0]?.profile?.name || null;
+
           // Delivery receipts for messages we sent, and replies people sent us,
           // arrive through the same subscription.
           for (const status of change.value?.statuses || []) {
+            await waConn.recordDeliveryStatus(status);
             await wa.applyStatus(status);
           }
           for (const msg of change.value?.messages || []) {
-            await handleMessage(msg);
+            // Raw audit log; false means Meta redelivered something handled.
+            const fresh = await waConn.recordWebhookEvent({
+              eventType: 'message', waMessageId: msg.id, waId: msg.from,
+              payload: msg, signatureOk: true,
+            });
+            // Opt-in state + the 24h session window.
+            await waConn.touchInbound(msg.from, profileName, null);
+            if (fresh) await handleMessage(msg);
           }
         }
       }
