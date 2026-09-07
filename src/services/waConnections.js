@@ -99,7 +99,7 @@ async function touchInbound(waId, profileName, personId) {
     // is the common path once the backfill in migration 004 has run.
     const updated = await db.run(
       `UPDATE whatsapp_contacts SET
-         profile_name    = COALESCE($3, profile_name),
+         profile_name    = COALESCE($2, profile_name),
          opt_in_status   = 'opted_in',
          opted_in_at     = COALESCE(opted_in_at, now()),
          verified_at     = COALESCE(verified_at, now()),
@@ -107,7 +107,7 @@ async function touchInbound(waId, profileName, personId) {
          failure_count   = 0,
          last_error      = NULL
        WHERE wa_id = $1`,
-      [waId, null, profileName || null]);
+      [waId, profileName || null]);
     if (updated) return;
 
     // No row yet — someone added after the backfill, or a new number.
