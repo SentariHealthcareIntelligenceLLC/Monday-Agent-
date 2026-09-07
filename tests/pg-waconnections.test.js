@@ -67,6 +67,53 @@ test('touchInbound records inbound contacts on Postgres', { skip: !PG }, async (
     await db.run('UPDATE whatsapp_contacts SET wa_id = $2 WHERE person_id = $1', [person.id, wid]);
   });
 
+  await t.test('never attaches one person\'s state to another after a number is reassigned', async () => {
+    // A keeps the old number in whatsapp_contacts; the admin gives that number
+    // to B. An update keyed on wa_id alone would record B's inbound message
+    // against A.
+    const other = (await db.all(
+      'SELECT id FROM people WHERE id <> $1 AND active = 1 LIMIT 1', [person.id]))[0];
+    assert.ok(other, 'seed data must provide a second person');
+    await db.run('DELETE FROM whatsapp_contacts WHERE person_id IN ($1, $2)', [person.id, other.id]);
+    await db.run('UPDATE people SET whatsapp_number = NULL WHERE id = $1', [other.id]);
+
+    await wa.touchInbound(wid, 'Person A', null);          // A owns the number
+    await db.run('UPDATE people SET whatsapp_number = NULL WHERE id = $1', [person.id]);
+    await db.run('UPDATE people SET whatsapp_number = $2 WHERE id = $1', [other.id, wid]);
+    await wa.touchInbound(wid, 'Person B', null);          // now B owns it
+
+    const rows = await db.all(
+      'SELECT person_id, profile_name FROM whatsapp_contacts WHERE wa_id = $1', [wid]);
+    assert.strictEqual(rows.length, 1);
+    assert.strictEqual(Number(rows[0].person_id), Number(other.id),
+      'the contact must belong to the person people says owns the number');
+    assert.strictEqual(rows[0].profile_name, 'Person B');
+
+    await db.run('UPDATE people SET whatsapp_number = NULL WHERE id = $1', [other.id]);
+    await db.run('UPDATE people SET whatsapp_number = $2 WHERE id = $1', [person.id, wid]);
+    await db.run('DELETE FROM whatsapp_contacts WHERE person_id = $1', [other.id]);
+  });
+
+  await t.test('creates contact state on a first outbound send', async () => {
+    // A person onboarded after migration 004's backfill gets a reminder before
+    // ever messaging in: an update-only path would record nothing.
+    await db.run('DELETE FROM whatsapp_contacts WHERE person_id = $1', [person.id]);
+    await wa.touchOutbound(wid);
+    let row = (await db.all(
+      'SELECT last_outbound_at FROM whatsapp_contacts WHERE person_id = $1', [person.id]))[0];
+    assert.ok(row, 'the first send must create the contact row');
+    assert.notStrictEqual(row.last_outbound_at, null);
+
+    await db.run('DELETE FROM whatsapp_contacts WHERE person_id = $1', [person.id]);
+    await wa.recordFailure(wid, 'boom');
+    row = (await db.all(
+      'SELECT failure_count, last_error FROM whatsapp_contacts WHERE person_id = $1',
+      [person.id]))[0];
+    assert.ok(row, 'a failed first send must create the contact row too');
+    assert.strictEqual(Number(row.failure_count), 1);
+    assert.strictEqual(row.last_error, 'boom');
+  });
+
   await t.test('handles an unknown number without throwing or inserting', async () => {
     await wa.touchInbound('19995550000', 'Stranger', null);
     const n = (await db.all(

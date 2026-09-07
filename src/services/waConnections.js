@@ -92,12 +92,81 @@ async function recordWebhookEvent({ eventType, waMessageId, waId, payload, signa
   }, true);
 }
 
+/**
+ * Resolve which active person owns a number, per `people` — the source of
+ * truth. An explicit personId from the caller wins.
+ */
+async function resolvePersonId(waId, personId) {
+  if (personId) return personId;
+  const r = await db.all(
+    'SELECT id FROM people WHERE whatsapp_number = $1 AND active = 1 LIMIT 1', [waId]);
+  return r[0]?.id;
+}
+
+/**
+ * Guarantee that `person` owns exactly one contact row and that it is keyed to
+ * `waId`, then return true.
+ *
+ * Two constraints make this fiddly: whatsapp_contacts is UNIQUE on wa_id AND
+ * UNIQUE on person_id. So a naive keyed-by-number upsert goes wrong in two
+ * ways an admin can trigger just by editing people.whatsapp_number:
+ *
+ *   - the person already has a row under their previous number, so inserting
+ *     collides on person_id;
+ *   - the number was reassigned to someone else, so a stale row still claims
+ *     this wa_id for its previous owner. Updating by wa_id alone would then
+ *     record this person's opt-in, session window and profile name against
+ *     THAT person -- a cross-person mix-up, not just lost state.
+ *
+ * `people` decides who owns a number now, so a contradicting row is stale: it
+ * is repointed to its owner's current number when that is free, and removed
+ * when it is not (the row holds only connection state, all of it rederivable
+ * from the next message). Either way it is logged, because silently moving
+ * rows between people is exactly the kind of thing that should be visible.
+ */
+async function ensureContact(waId, pid) {
+  const stale = (await db.all(
+    'SELECT id, person_id FROM whatsapp_contacts WHERE wa_id = $1 AND person_id <> $2',
+    [waId, pid]))[0];
+
+  if (stale) {
+    const owner = (await db.all(
+      'SELECT whatsapp_number FROM people WHERE id = $1', [stale.person_id]))[0];
+    const current = owner?.whatsapp_number;
+    const free = current && current !== waId && (await db.all(
+      'SELECT 1 FROM whatsapp_contacts WHERE wa_id = $1', [current])).length === 0;
+
+    if (free) {
+      await db.run('UPDATE whatsapp_contacts SET wa_id = $2 WHERE id = $1', [stale.id, current]);
+    } else {
+      await db.run('DELETE FROM whatsapp_contacts WHERE id = $1', [stale.id]);
+    }
+    logger.warn({ waId, stalePersonId: stale.person_id, personId: pid, repointed: !!free },
+      'whatsapp contact row no longer matches people.whatsapp_number; reassigned');
+  }
+
+  // The person may hold a row under an older number: repoint it.
+  const moved = await db.run(
+    'UPDATE whatsapp_contacts SET wa_id = $2 WHERE person_id = $1 AND wa_id <> $2', [pid, waId]);
+  if (moved) return true;
+
+  await db.run(
+    `INSERT INTO whatsapp_contacts (person_id, wa_id, opt_in_status)
+     VALUES ($1, $2, 'pending')
+     ON CONFLICT (person_id) DO NOTHING`, [pid, waId]);
+  return true;
+}
+
 /** An inbound message proves the number is live: opt in + open the 24h window. */
 async function touchInbound(waId, profileName, personId) {
   return safe('touchInbound', async () => {
-    // Update first: an existing contact row needs no person lookup, and this
-    // is the common path once the backfill in migration 004 has run.
-    const updated = await db.run(
+    const pid = await resolvePersonId(waId, personId);
+    if (!pid) {
+      logger.warn({ waId }, 'touchInbound: no active person for number; contact not recorded');
+      return;
+    }
+    await ensureContact(waId, pid);
+    await db.run(
       `UPDATE whatsapp_contacts SET
          profile_name    = COALESCE($2, profile_name),
          opt_in_status   = 'opted_in',
@@ -106,67 +175,47 @@ async function touchInbound(waId, profileName, personId) {
          last_inbound_at = now(),
          failure_count   = 0,
          last_error      = NULL
-       WHERE wa_id = $1`,
-      [waId, profileName || null]);
-    if (updated) return;
-
-    // No row yet — someone added after the backfill, or a new number.
-    // person_id is NOT NULL, so resolve it rather than inserting null and
-    // having safe() swallow the constraint error: that would leave the
-    // contact un-opted-in and its 24h session window permanently shut.
-    const pid = personId
-      || (await db.all(
-        'SELECT id FROM people WHERE whatsapp_number = $1 AND active = 1 LIMIT 1',
-        [waId]))[0]?.id;
-    if (!pid) {
-      logger.warn({ waId }, 'touchInbound: no active person for number; contact not recorded');
-      return;
-    }
-    // The person may already hold a contact row under an old number (an admin
-    // edited people.whatsapp_number). person_id is UNIQUE, so inserting would
-    // violate that constraint and ON CONFLICT (wa_id) could not catch it --
-    // safe() would swallow it and the state would stay on the dead number.
-    // Repoint the existing row instead.
-    const moved = await db.run(
-      `UPDATE whatsapp_contacts SET
-         wa_id           = $2,
-         profile_name    = COALESCE($3, profile_name),
-         opt_in_status   = 'opted_in',
-         opted_in_at     = COALESCE(opted_in_at, now()),
-         verified_at     = COALESCE(verified_at, now()),
-         last_inbound_at = now(),
-         failure_count   = 0,
-         last_error      = NULL
        WHERE person_id = $1`,
-      [pid, waId, profileName || null]);
-    if (moved) return;
-
-    await db.run(
-      `INSERT INTO whatsapp_contacts (person_id, wa_id, profile_name, opt_in_status,
-                                      opted_in_at, verified_at, last_inbound_at)
-       VALUES ($1, $2, $3, 'opted_in', now(), now(), now())
-       ON CONFLICT (wa_id) DO UPDATE SET
-         profile_name    = COALESCE(EXCLUDED.profile_name, whatsapp_contacts.profile_name),
-         opt_in_status   = 'opted_in',
-         opted_in_at     = COALESCE(whatsapp_contacts.opted_in_at, now()),
-         verified_at     = COALESCE(whatsapp_contacts.verified_at, now()),
-         last_inbound_at = now(),
-         failure_count   = 0,
-         last_error      = NULL`,
-      [pid, waId, profileName || null]);
+      [pid, profileName || null]);
   });
 }
 
+/**
+ * A send is often the FIRST thing that happens to a person added after
+ * migration 004's one-time backfill, so this creates the contact row rather
+ * than assuming one exists — otherwise the connections dashboard shows no
+ * outbound timestamp for exactly the people who were just onboarded.
+ */
 async function touchOutbound(waId) {
-  return safe('touchOutbound', () => db.run(
-    `UPDATE whatsapp_contacts SET last_outbound_at = now() WHERE wa_id = $1`, [waId]));
+  return safe('touchOutbound', async () => {
+    const pid = await resolvePersonId(waId, null);
+    if (!pid) {
+      return db.run(
+        'UPDATE whatsapp_contacts SET last_outbound_at = now() WHERE wa_id = $1', [waId]);
+    }
+    await ensureContact(waId, pid);
+    return db.run(
+      'UPDATE whatsapp_contacts SET last_outbound_at = now() WHERE person_id = $1', [pid]);
+  });
 }
 
+/** Same first-send reasoning as touchOutbound: the row may not exist yet. */
 async function recordFailure(waId, error) {
-  return safe('recordFailure', () => db.run(
-    `UPDATE whatsapp_contacts
-        SET failure_count = failure_count + 1, last_error = $2 WHERE wa_id = $1`,
-    [waId, String(error).slice(0, 500)]));
+  return safe('recordFailure', async () => {
+    const detail = String(error).slice(0, 500);
+    const pid = await resolvePersonId(waId, null);
+    if (!pid) {
+      return db.run(
+        `UPDATE whatsapp_contacts
+            SET failure_count = failure_count + 1, last_error = $2 WHERE wa_id = $1`,
+        [waId, detail]);
+    }
+    await ensureContact(waId, pid);
+    return db.run(
+      `UPDATE whatsapp_contacts
+          SET failure_count = failure_count + 1, last_error = $2 WHERE person_id = $1`,
+      [pid, detail]);
+  });
 }
 
 /**
