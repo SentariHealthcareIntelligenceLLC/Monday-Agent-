@@ -18,16 +18,19 @@ Run each file completely, one at a time, via SQL Editor paste or
 | 3 | `20260901000003_whatsapp_connections.sql` | `whatsapp_accounts` (Vault secret names only), `whatsapp_contacts` (opt-in + 24 h session window), deduped `whatsapp_webhook_events`, `whatsapp_delivery_status` → rolls onto `messages.delivery_status`, view `v_wa_session_open`. |
 | 4 | `20260907000004_harden_function_grants.sql` | Pins `search_path` on the trigger helpers and revokes the PUBLIC/anon `EXECUTE` Postgres grants by default, which would otherwise publish each helper at `/rest/v1/rpc/<name>`. Role helpers become `authenticated`-only. |
 | 5 | `20260907000005_constrain_self_service_updates.sql` | Closes the self-service gaps in 0002: a deactivated user can no longer reactivate themselves, `created_at` is pinned, a `viewer` signup resolves to no person link, staff cannot rewrite scheduling columns or reopen a finalized run, and a photo-proof task cannot be marked done with no proof. |
+| 6 | `20260907000006_delivery_status_monotonic.sql` | Ranks the WhatsApp delivery lifecycle so a late out-of-order receipt from Meta cannot walk `messages.delivery_status` backwards (a stale `sent` overwriting `read`), while still letting `failed` take over. |
 
-Steps 4 and 5 are **not optional**. `supabase db push` applies them automatically, but a
+Steps 4, 5 and 6 are **not optional**. `supabase db push` applies them automatically, but a
 database brought up by pasting only the three September 1 files keeps the unsafe function
 grants and the vulnerable self-update policies those two files repair.
 
 Expected notices (not errors): `NOTICE` lines from `IF NOT EXISTS` clauses; a NOTICE about
 `people.role` FK only if pre-existing rows hold invalid role codes (report it if seen).
 
-**Success criteria:** all five files complete without ERROR, and
-`select filename from schema_migrations order by 1;` includes all five `202609…` names.
+**Success criteria:** all six files complete without ERROR, and
+`select filename from schema_migrations order by 1;` includes all six `202609…` names.
+Each file records its own filename, so this query is satisfiable on the paste path as
+well as through `supabase db push`.
 
 **On failure:** capture the exact ERROR line and statement, apply nothing further, report.
 Re-running a file after a fix is safe (idempotent).

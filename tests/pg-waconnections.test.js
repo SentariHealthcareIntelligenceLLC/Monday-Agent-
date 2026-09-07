@@ -114,6 +114,62 @@ test('touchInbound records inbound contacts on Postgres', { skip: !PG }, async (
     assert.strictEqual(row.last_error, 'boom');
   });
 
+  await t.test('keeps an unhandled event eligible after a failed handleMessage', async () => {
+    // The event is stamped processed only after handling, so a crash between
+    // the two must not make Meta's redelivery a no-op.
+    const id = 'wamid.test.redelivery';
+    await db.run('DELETE FROM whatsapp_webhook_events WHERE wa_message_id = $1', [id]);
+
+    const first = await wa.recordWebhookEvent(
+      { eventType: 'message', waMessageId: id, waId: wid, payload: { id }, signatureOk: true });
+    assert.strictEqual(first, true, 'a new event must be handled');
+
+    const redelivered = await wa.recordWebhookEvent(
+      { eventType: 'message', waMessageId: id, waId: wid, payload: { id }, signatureOk: true });
+    assert.strictEqual(redelivered, true,
+      'handling never completed, so the redelivery must still be handled');
+
+    await wa.markEventProcessed(id, 'message');
+    const afterDone = await wa.recordWebhookEvent(
+      { eventType: 'message', waMessageId: id, waId: wid, payload: { id }, signatureOk: true });
+    assert.strictEqual(afterDone, false, 'once handled, a redelivery is skipped');
+    await db.run('DELETE FROM whatsapp_webhook_events WHERE wa_message_id = $1', [id]);
+  });
+
+  await t.test('a late receipt cannot regress delivery status', async () => {
+    const wam = 'wamid.test.receipts';
+    await db.run('DELETE FROM whatsapp_delivery_status WHERE wa_message_id = $1', [wam]);
+    await db.run('DELETE FROM messages WHERE wa_message_id = $1', [wam]);
+    await db.run(
+      `INSERT INTO messages (direction, channel, wa_number, wa_message_id, body)
+       VALUES ('out', 'wa', $1, $2, 'hi')`, [wid, wam]);
+
+    await wa.recordDeliveryStatus({ id: wam, status: 'sent', timestamp: '1000' });
+    await wa.recordDeliveryStatus({ id: wam, status: 'read', timestamp: '3000' });
+    let row = (await db.all(
+      'SELECT delivery_status FROM messages WHERE wa_message_id = $1', [wam]))[0];
+    assert.strictEqual(row.delivery_status, 'read');
+
+    // Meta redelivers an older receipt out of order.
+    await wa.recordDeliveryStatus({ id: wam, status: 'delivered', timestamp: '2000' });
+    row = (await db.all(
+      'SELECT delivery_status FROM messages WHERE wa_message_id = $1', [wam]))[0];
+    assert.strictEqual(row.delivery_status, 'read', 'a late receipt must not walk the status back');
+
+    // A failure must still be able to take over.
+    await wa.recordDeliveryStatus({ id: wam, status: 'failed', timestamp: '4000' });
+    row = (await db.all(
+      'SELECT delivery_status FROM messages WHERE wa_message_id = $1', [wam]))[0];
+    assert.strictEqual(row.delivery_status, 'failed');
+
+    const occurred = await db.all(
+      `SELECT status, occurred_at FROM whatsapp_delivery_status
+        WHERE wa_message_id = $1 ORDER BY occurred_at`, [wam]);
+    assert.strictEqual(occurred[0].status, 'sent', "Meta's own timestamps must be persisted");
+    await db.run('DELETE FROM whatsapp_delivery_status WHERE wa_message_id = $1', [wam]);
+    await db.run('DELETE FROM messages WHERE wa_message_id = $1', [wam]);
+  });
+
   await t.test('handles an unknown number without throwing or inserting', async () => {
     await wa.touchInbound('19995550000', 'Stranger', null);
     const n = (await db.all(

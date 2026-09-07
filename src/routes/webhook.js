@@ -40,14 +40,21 @@ function register(app, path = '/webhook/whatsapp') {
             await wa.applyStatus(status);
           }
           for (const msg of change.value?.messages || []) {
-            // Raw audit log; false means Meta redelivered something handled.
-            const fresh = await waConn.recordWebhookEvent({
+            // Raw audit log. False means Meta redelivered something we have
+            // already HANDLED -- not merely seen: the event is stamped
+            // processed only after handleMessage() returns, so a crash mid-way
+            // leaves it eligible for the redelivery rather than dropping the
+            // reply silently.
+            const unhandled = await waConn.recordWebhookEvent({
               eventType: 'message', waMessageId: msg.id, waId: msg.from,
               payload: msg, signatureOk: true,
             });
             // Opt-in state + the 24h session window.
             await waConn.touchInbound(msg.from, profileName, null);
-            if (fresh) await handleMessage(msg);
+            if (unhandled) {
+              await handleMessage(msg);
+              await waConn.markEventProcessed(msg.id, 'message');
+            }
           }
         }
       }

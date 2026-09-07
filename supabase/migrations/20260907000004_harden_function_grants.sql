@@ -62,3 +62,8 @@ ON CONFLICT (filename) DO NOTHING;
 
 INSERT INTO schema_migrations (filename) VALUES ('005_harden_function_grants.sql')
 ON CONFLICT (filename) DO NOTHING;
+
+-- Record this file's own name so the step-06 verification query, which
+-- looks for the 202609... filenames, can actually pass on the paste path.
+INSERT INTO schema_migrations (filename) VALUES ('20260907000004_harden_function_grants.sql')
+ON CONFLICT (filename) DO NOTHING;

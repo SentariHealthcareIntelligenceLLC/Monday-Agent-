@@ -80,16 +80,32 @@ async function getAccount() {
 /** Log one raw webhook entry. Returns false when it's a Meta redelivery. */
 async function recordWebhookEvent({ eventType, waMessageId, waId, payload, signatureOk }) {
   return safe('recordWebhookEvent', async () => {
+    // processed_at is deliberately left NULL here and stamped only after the
+    // message is actually handled. Marking it at insert time meant that a
+    // crash or a throw inside handleMessage() left the event looking done, so
+    // Meta's redelivery was skipped and the reply -- a DONE, or a photo proof
+    // -- was lost for good. Dedupe is therefore "already handled", not
+    // "already seen": a redelivery of an unprocessed event is handled again,
+    // which is the safe direction for an idempotent command.
     const row = await db.one(
       `INSERT INTO whatsapp_webhook_events
-         (event_type, wa_message_id, wa_id, payload, signature_ok, processed_at)
-       VALUES ($1, $2, $3, $4, $5, now())
+         (event_type, wa_message_id, wa_id, payload, signature_ok)
+       VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (wa_message_id, event_type) WHERE wa_message_id IS NOT NULL
-       DO NOTHING
-       RETURNING id`,
+       DO UPDATE SET received_at = now()
+       RETURNING processed_at`,
       [eventType, waMessageId || null, waId || null, JSON.stringify(payload || {}), signatureOk ?? null]);
-    return Boolean(row);
+    return !row || row.processed_at === null;
   }, true);
+}
+
+/** Stamp an event handled, so a later Meta redelivery of it is skipped. */
+async function markEventProcessed(waMessageId, eventType) {
+  if (!waMessageId) return;
+  return safe('markEventProcessed', () => db.run(
+    `UPDATE whatsapp_webhook_events SET processed_at = now()
+      WHERE wa_message_id = $1 AND event_type = $2 AND processed_at IS NULL`,
+    [waMessageId, eventType || 'message']));
 }
 
 /**
@@ -228,10 +244,14 @@ async function recordDeliveryStatus(status) {
   const err = status.errors ? JSON.stringify(status.errors) : null;
   return safe('recordDeliveryStatus', async () => {
     await db.run(
-      `INSERT INTO whatsapp_delivery_status (wa_message_id, status, error_code, error_detail)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO whatsapp_delivery_status
+         (wa_message_id, status, error_code, error_detail, occurred_at)
+       VALUES ($1, $2, $3, $4, COALESCE($5::timestamptz, now()))
        ON CONFLICT (wa_message_id, status) DO NOTHING`,
-      [status.id, status.status, status.errors?.[0]?.code ? String(status.errors[0].code) : null, err]);
+      [status.id, status.status, status.errors?.[0]?.code ? String(status.errors[0].code) : null, err,
+        // Meta sends unix seconds as a string; keep its own event time rather
+        // than the insertion default, so out-of-order receipts are visible.
+        status.timestamp ? new Date(Number(status.timestamp) * 1000).toISOString() : null]);
     if (status.status === 'failed' && status.recipient_id) {
       await recordFailure(status.recipient_id, err || 'delivery failed');
     }
@@ -248,6 +268,6 @@ async function sessionOpen(personId) {
 }
 
 module.exports = {
-  getAccount, recordWebhookEvent, touchInbound, touchOutbound,
+  getAccount, recordWebhookEvent, markEventProcessed, touchInbound, touchOutbound,
   recordFailure, recordDeliveryStatus, sessionOpen,
 };
