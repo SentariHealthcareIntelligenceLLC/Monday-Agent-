@@ -95,6 +95,33 @@ async function recordWebhookEvent({ eventType, waMessageId, waId, payload, signa
 /** An inbound message proves the number is live: opt in + open the 24h window. */
 async function touchInbound(waId, profileName, personId) {
   return safe('touchInbound', async () => {
+    // Update first: an existing contact row needs no person lookup, and this
+    // is the common path once the backfill in migration 004 has run.
+    const updated = await db.run(
+      `UPDATE whatsapp_contacts SET
+         profile_name    = COALESCE($3, profile_name),
+         opt_in_status   = 'opted_in',
+         opted_in_at     = COALESCE(opted_in_at, now()),
+         verified_at     = COALESCE(verified_at, now()),
+         last_inbound_at = now(),
+         failure_count   = 0,
+         last_error      = NULL
+       WHERE wa_id = $1`,
+      [waId, null, profileName || null]);
+    if (updated) return;
+
+    // No row yet — someone added after the backfill, or a new number.
+    // person_id is NOT NULL, so resolve it rather than inserting null and
+    // having safe() swallow the constraint error: that would leave the
+    // contact un-opted-in and its 24h session window permanently shut.
+    const pid = personId
+      || (await db.all(
+        'SELECT id FROM people WHERE whatsapp_number = $1 AND active = 1 LIMIT 1',
+        [waId]))[0]?.id;
+    if (!pid) {
+      logger.warn({ waId }, 'touchInbound: no active person for number; contact not recorded');
+      return;
+    }
     await db.run(
       `INSERT INTO whatsapp_contacts (person_id, wa_id, profile_name, opt_in_status,
                                       opted_in_at, verified_at, last_inbound_at)
@@ -107,7 +134,7 @@ async function touchInbound(waId, profileName, personId) {
          last_inbound_at = now(),
          failure_count   = 0,
          last_error      = NULL`,
-      [personId || null, waId, profileName || null]);
+      [pid, waId, profileName || null]);
   });
 }
 
