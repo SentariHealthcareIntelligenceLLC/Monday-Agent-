@@ -49,6 +49,24 @@ test('touchInbound records inbound contacts on Postgres', { skip: !PG }, async (
     assert.strictEqual(row.opt_in_status, 'opted_in');
   });
 
+  await t.test('repoints an existing contact when the person changes number', async () => {
+    // person_id is UNIQUE: inserting a second row for the same person would
+    // violate it, and ON CONFLICT (wa_id) cannot catch that.
+    await db.run('DELETE FROM whatsapp_contacts WHERE person_id = $1', [person.id]);
+    await wa.touchInbound(wid, 'Before', null);
+    const moved = `${wid}9`;
+    await db.run('UPDATE people SET whatsapp_number = $2 WHERE id = $1', [person.id, moved]);
+    await wa.touchInbound(moved, 'After', null);
+
+    const rows = await db.all(
+      'SELECT wa_id, profile_name FROM whatsapp_contacts WHERE person_id = $1', [person.id]);
+    assert.strictEqual(rows.length, 1, 'the person keeps exactly one contact row');
+    assert.strictEqual(rows[0].wa_id, moved, 'the row must follow the new number');
+    assert.strictEqual(rows[0].profile_name, 'After');
+    await db.run('UPDATE people SET whatsapp_number = $2 WHERE id = $1', [person.id, wid]);
+    await db.run('UPDATE whatsapp_contacts SET wa_id = $2 WHERE person_id = $1', [person.id, wid]);
+  });
+
   await t.test('handles an unknown number without throwing or inserting', async () => {
     await wa.touchInbound('19995550000', 'Stranger', null);
     const n = (await db.all(

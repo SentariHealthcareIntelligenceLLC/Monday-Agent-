@@ -106,12 +106,15 @@ BEGIN
       USING ERRCODE = 'check_violation';
   END IF;
 
-  -- A finalized run is a closed record. Allowing done -> blocked/snoozed
-  -- would let staff reopen or rewrite a settled outcome and change
-  -- completion reporting after the fact; only an admin or the service
-  -- reopens one.
+  -- A finalized run is a closed record -- not just its status. Checking only
+  -- the status change would still let a staff client rewrite the note or
+  -- replace/remove the stored photo proof on a settled run while leaving
+  -- 'done' in place, so every staff-writable field is compared here. Only an
+  -- admin or the service touches a finalized run.
   IF OLD.status IN ('done', 'missed')
-     AND NEW.status IS DISTINCT FROM OLD.status THEN
+     AND (NEW.status     IS DISTINCT FROM OLD.status
+       OR NEW.note       IS DISTINCT FROM OLD.note
+       OR NEW.photo_path IS DISTINCT FROM OLD.photo_path) THEN
     RAISE EXCEPTION 'task_run % is already %; staff cannot change a finalized run', OLD.id, OLD.status
       USING ERRCODE = 'check_violation';
   END IF;
@@ -136,7 +139,11 @@ BEGIN
     NEW.responded_at := OLD.responded_at;
   END IF;
 
-  -- Anything that drives scheduling or escalation keeps its old value.
+  -- Anything that drives scheduling or escalation keeps its old value. The
+  -- primary key is included: RLS authorizes through task_id and says nothing
+  -- about id, so without this a staff client could rewrite a run's identity
+  -- or push the id past the sequence and make a later scheduler insert fail.
+  NEW.id              := OLD.id;
   NEW.task_id         := OLD.task_id;
   NEW.due_date        := OLD.due_date;
   NEW.reminder_count  := OLD.reminder_count;

@@ -122,6 +122,25 @@ async function touchInbound(waId, profileName, personId) {
       logger.warn({ waId }, 'touchInbound: no active person for number; contact not recorded');
       return;
     }
+    // The person may already hold a contact row under an old number (an admin
+    // edited people.whatsapp_number). person_id is UNIQUE, so inserting would
+    // violate that constraint and ON CONFLICT (wa_id) could not catch it --
+    // safe() would swallow it and the state would stay on the dead number.
+    // Repoint the existing row instead.
+    const moved = await db.run(
+      `UPDATE whatsapp_contacts SET
+         wa_id           = $2,
+         profile_name    = COALESCE($3, profile_name),
+         opt_in_status   = 'opted_in',
+         opted_in_at     = COALESCE(opted_in_at, now()),
+         verified_at     = COALESCE(verified_at, now()),
+         last_inbound_at = now(),
+         failure_count   = 0,
+         last_error      = NULL
+       WHERE person_id = $1`,
+      [pid, waId, profileName || null]);
+    if (moved) return;
+
     await db.run(
       `INSERT INTO whatsapp_contacts (person_id, wa_id, profile_name, opt_in_status,
                                       opted_in_at, verified_at, last_inbound_at)

@@ -419,6 +419,48 @@ ALTER TABLE lift_items        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE settings          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE schema_migrations ENABLE ROW LEVEL SECURITY;
 
+
+-- ================= NUMBER NORMALIZATION (from 002) ===================
+--  0001 records 002_whatsapp_delivery.sql as applied, which makes
+--  `npm run migrate` skip it. That is only honest if the one thing 002 does
+--  to existing rows happens here too: rewriting people.whatsapp_number to
+--  the E.164 digits Meta sends. Without it, a database upgraded through the
+--  Supabase path keeps legacy formatting ("(818) 555-0143"), and because
+--  personByNumber() compares Meta's normalized digits with exact equality,
+--  every inbound reply from those people is treated as unregistered.
+--
+--  whatsapp_number is UNIQUE, so a rewrite must not create a duplicate, in
+--  either of the two ways it could: the number is already held by another
+--  row (guarded by NOT EXISTS), or two rows normalize onto each other
+--  (guarded by keeping the lowest id per normalized value). A skipped row
+--  keeps its text and is visible and fixable from the dashboard, which
+--  beats aborting the migration over a data problem a human should resolve.
+--  Touches only rows that actually change, so re-running is a no-op.
+WITH normalized AS (
+  SELECT id,
+         whatsapp_number AS was,
+         CASE
+           WHEN length(regexp_replace(whatsapp_number, '\D', '', 'g')) = 10
+             THEN '1' || regexp_replace(whatsapp_number, '\D', '', 'g')
+           ELSE regexp_replace(whatsapp_number, '\D', '', 'g')
+         END AS now_
+    FROM people
+   WHERE whatsapp_number IS NOT NULL AND whatsapp_number <> ''
+),
+candidates AS (
+  SELECT id, was, now_,
+         row_number() OVER (PARTITION BY now_ ORDER BY id) AS rn
+    FROM normalized
+   WHERE now_ <> was
+     AND length(now_) BETWEEN 8 AND 15
+)
+UPDATE people p
+   SET whatsapp_number = c.now_
+  FROM candidates c
+ WHERE p.id = c.id
+   AND c.rn = 1
+   AND NOT EXISTS (SELECT 1 FROM people o WHERE o.whatsapp_number = c.now_ AND o.id <> c.id);
+
 -- ====================== RECORD AS APPLIED ============================
 
 INSERT INTO schema_migrations (filename) VALUES
