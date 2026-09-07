@@ -11,6 +11,7 @@
  */
 const crypto = require('crypto');
 const config = require('../config');
+const waConn = require('./waConnections');
 const logger = require('../logger');
 const { db } = require('../db');
 
@@ -110,16 +111,19 @@ async function post(payload, meta = {}) {
     if (!res.ok) {
       logger.error({ status: res.status, json }, 'WhatsApp send failed');
       await logMessage({ ...meta, wa_number: payload.to, body: JSON.stringify(payload), status: 'failed', error: JSON.stringify(json) });
+      await waConn.recordFailure(payload.to, json);
       return { error: json };
     }
     await logMessage({
       ...meta, wa_number: payload.to, body: JSON.stringify(payload),
       wa_message_id: json.messages?.[0]?.id, status: 'sent',
     });
+    await waConn.touchOutbound(payload.to);
     return json;
   } catch (err) {
     logger.error({ err }, 'WhatsApp send threw');
     await logMessage({ ...meta, wa_number: payload.to, body: JSON.stringify(payload), status: 'failed', error: String(err) });
+    await waConn.recordFailure(payload.to, err);
     return { error: String(err) };
   }
 }

@@ -44,3 +44,7 @@ jobs:
       - run: npm install --no-audit --no-fund
       - name: Apply schema and seed against Postgres
         run: npm run migrate && npm run seed
+      # The SQLite job cannot cover waConnections: every function no-ops off
+      # Postgres, so these paths only run here.
+      - name: Run Postgres-only tests
+        run: npm test

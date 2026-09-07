@@ -1,0 +1,393 @@
+<title>QCMS Task Bot Demo</title>
+<style>
+  :root{
+    color-scheme: light;
+    --plane:#f9f9f7; --surface:#fcfcfb;
+    --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --ring:rgba(11,11,11,0.10);
+    --series-1:#2a78d6; --series-1-soft:#cde2fb; --series-2:#eb6834;
+    --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
+    --good-text:#006300;
+    --wash:rgba(11,11,11,0.04);
+    --chip:rgba(11,11,11,0.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --plane:#0d0d0d; --surface:#1a1a19;
+      --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+      --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,0.10);
+      --series-1:#3987e5; --series-1-soft:#184f95; --series-2:#d95926;
+      --good-text:#0ca30c;
+      --wash:rgba(255,255,255,0.06);
+      --chip:rgba(255,255,255,0.07);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --plane:#0d0d0d; --surface:#1a1a19;
+    --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,0.10);
+    --series-1:#3987e5; --series-1-soft:#184f95; --series-2:#d95926;
+    --good-text:#0ca30c;
+    --wash:rgba(255,255,255,0.06);
+    --chip:rgba(255,255,255,0.07);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--plane);color:var(--ink);
+    font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:22px 16px 64px}
+
+  header.top{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;margin-bottom:6px}
+  h1{font-size:20px;margin:0;letter-spacing:-0.01em}
+  .sub{color:var(--ink2);font-size:13px;margin:2px 0 0}
+  .demochip{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    background:var(--series-1-soft);color:var(--ink);border-left:3px solid var(--series-1);
+    border-radius:5px;padding:4px 9px;white-space:nowrap}
+
+  .tabs{display:flex;gap:2px;border-bottom:1px solid var(--grid);margin:16px 0 18px;overflow-x:auto}
+  .tab{font:inherit;font-size:13px;background:none;border:none;border-bottom:2px solid transparent;
+    color:var(--ink2);padding:9px 13px;cursor:pointer;white-space:nowrap}
+  .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--series-1);font-weight:600}
+  .tab:focus-visible,.btn:focus-visible,.tog:focus-visible{outline:2px solid var(--series-1);outline-offset:2px}
+
+  .panel{display:none}
+  .panel.on{display:block}
+  .card{background:var(--surface);border:1px solid var(--ring);border-radius:12px;padding:16px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:860px){.grid2{grid-template-columns:1fr}}
+  h2{font-size:15px;margin:0 0 4px}
+  h3{font-size:12px;margin:0 0 8px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2)}
+  p.note{font-size:12.5px;color:var(--ink2);margin:0 0 12px;max-width:66ch}
+  code,kbd{background:var(--chip);border-radius:4px;padding:1px 5px;font-size:12px}
+
+  /* chat */
+  .thread{background:var(--wash);border:1px solid var(--ring);border-radius:10px;padding:12px;
+    height:380px;overflow:auto;display:flex;flex-direction:column;gap:8px}
+  .bub{max-width:86%;padding:7px 10px;border-radius:12px;font-size:12.5px;line-height:1.45;white-space:pre-wrap}
+  .bub.out{align-self:flex-start;background:var(--series-1);color:#fff;border-bottom-left-radius:4px}
+  .bub.in{align-self:flex-end;background:var(--surface);border:1px solid var(--ring);border-bottom-right-radius:4px}
+  .bub .bts{display:block;font-size:10px;margin-top:3px;opacity:.75}
+  .bub.out .bts{color:#eaf2ff}
+  .sysline{align-self:center;font-size:11px;color:var(--muted);text-align:center;padding:2px 0}
+  .chatbar{display:flex;gap:8px;margin-top:10px}
+  .chatbar input{flex:1;background:var(--surface);color:var(--ink);border:1px solid var(--ring);
+    border-radius:8px;padding:8px 10px;font:inherit;font-size:13px}
+  .btn{font:inherit;font-size:12.5px;background:var(--series-1);color:#fff;border:none;border-radius:8px;
+    padding:8px 13px;cursor:pointer;font-weight:600}
+  .btn.sec{background:var(--surface);color:var(--ink);border:1px solid var(--ring);font-weight:500}
+  .btn:hover{filter:brightness(1.06)}
+  .tries{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .tog{font:inherit;font-size:12px;background:var(--surface);color:var(--ink2);
+    border:1px solid var(--ring);border-radius:999px;padding:4px 10px;cursor:pointer}
+  .tog:hover{border-color:var(--series-1);color:var(--series-1)}
+
+  /* board */
+  table.board{border-collapse:collapse;width:100%;font-size:13px}
+  .board th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);
+    text-align:left;padding:6px 8px;border-bottom:1px solid var(--grid)}
+  .board td{padding:8px;border-bottom:1px solid var(--grid);vertical-align:top}
+  .board tr:last-child td{border-bottom:none}
+  .st{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px}
+  .st.pending{background:var(--chip);color:var(--ink2)}
+  .st.done{background:var(--good);color:#fff}
+  .st.blocked{background:var(--warning);color:#3a2b00}
+  .st.missed{background:var(--critical);color:#fff}
+  .st.snoozed{background:var(--chip);color:var(--ink2);border:1px dashed var(--axis)}
+  .who{color:var(--ink2);font-size:12px}
+  .rem{font-variant-numeric:tabular-nums;color:var(--ink2)}
+
+  /* escalation ladder */
+  .ladder{display:flex;flex-direction:column;gap:0;margin:10px 0}
+  .rung{display:flex;gap:12px;align-items:center;padding:11px 12px;border:1px solid var(--ring);
+    border-radius:10px;background:var(--surface);position:relative}
+  .rung + .rung{margin-top:18px}
+  .rung + .rung::before{content:"";position:absolute;left:32px;top:-19px;height:18px;border-left:2px dashed var(--axis)}
+  .rung .av{width:40px;height:40px;border-radius:50%;flex:none;display:grid;place-items:center;
+    background:var(--series-1-soft);font-weight:700;font-size:13px}
+  .rung .nm{font-weight:600;font-size:13.5px}
+  .rung .rl{font-size:11.5px;color:var(--ink2)}
+  .rung .trg{margin-left:auto;font-size:11px;color:var(--muted);text-align:right}
+  .rung.lit{border-color:var(--critical);box-shadow:0 0 0 1px var(--critical)}
+  .rung.lit .trg{color:var(--critical);font-weight:700}
+  .meter{display:flex;gap:4px;margin:14px 0 6px}
+  .meter i{flex:1;height:8px;border-radius:4px;background:var(--chip)}
+  .meter i.f{background:var(--warning)}
+  .meter i.f.crit{background:var(--critical)}
+  .mlab{font-size:11.5px;color:var(--ink2);margin-bottom:12px}
+  .mlab b{font-variant-numeric:tabular-nums}
+
+  /* gap bars */
+  .bars{display:flex;flex-direction:column;gap:9px;margin-top:6px}
+  .brow{display:grid;grid-template-columns:150px 1fr 52px;gap:10px;align-items:center;font-size:12.5px}
+  .brow .track{height:10px;border-radius:5px;background:var(--chip);overflow:hidden}
+  .brow .fill{height:100%;border-radius:5px;background:var(--series-1)}
+  .brow.low .fill{background:var(--critical)}
+  .brow.mid .fill{background:var(--warning)}
+  .brow .pct{font-variant-numeric:tabular-nums;text-align:right;color:var(--ink2)}
+  .finding{border-left:3px solid var(--warning);background:var(--wash);border-radius:0 8px 8px 0;
+    padding:9px 12px;font-size:12.5px;margin-top:9px}
+  .finding.crit{border-left-color:var(--critical)}
+  .finding b{display:block;margin-bottom:1px}
+
+  /* cycle timeline */
+  .cycle{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:8px}
+  .step{border:1px solid var(--ring);border-radius:11px;background:var(--surface);padding:13px}
+  .step .tm{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--series-1)}
+  .step .tt{font-weight:600;font-size:13px;margin:3px 0}
+  .step .dd{font-size:12px;color:var(--ink2)}
+
+  /* architecture */
+  .arch{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:8px}
+  .node{border:1px solid var(--ring);border-radius:11px;background:var(--surface);padding:13px}
+  .node h4{margin:0 0 6px;font-size:13px}
+  .node ul{margin:0;padding-left:16px;font-size:12px;color:var(--ink2)}
+  .node li{margin:3px 0}
+  .tagnew{font-size:10px;font-weight:700;letter-spacing:.05em;background:var(--good);color:#fff;
+    border-radius:4px;padding:1px 5px;vertical-align:1px}
+  .warnbox{border:1px solid var(--serious);border-radius:10px;padding:11px 13px;font-size:12.5px;
+    color:var(--ink2);margin-top:14px;background:var(--surface)}
+  .warnbox b{color:var(--ink)}
+  footer{margin-top:26px;font-size:11.5px;color:var(--muted)}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>QCMS Task Bot</h1>
+      <p class="sub">WhatsApp-driven routine-task management for clinic &amp; surgery-center operations — capabilities demonstration</p>
+    </div>
+    <span class="demochip">Simulated data · dry run</span>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-p="chat">WhatsApp replies</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="cycle">The daily cycle</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="esc">Escalation</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="gaps">Gap analysis</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="arch">Architecture</button>
+  </div>
+
+  <!-- ============ CHAT ============ -->
+  <section class="panel on" id="p-chat">
+    <div class="grid2">
+      <div class="card">
+        <h2>Reply like a staff member</h2>
+        <p class="note">No app to install. Maria (Medical Assistant) got her 08:00 list. Type a reply — the same parser that runs the real webhook handles it.</p>
+        <div class="thread" id="thread" aria-live="polite"></div>
+        <div class="chatbar">
+          <input id="chatIn" placeholder="Try: DONE 2 — or LIST, BLOCKED 1 no contrast left, SNOOZE 3, HELP" aria-label="WhatsApp reply">
+          <button class="btn" id="sendBtn">Send</button>
+        </div>
+        <div class="tries">
+          <button class="tog" data-t="LIST">LIST</button>
+          <button class="tog" data-t="DONE 2">DONE 2</button>
+          <button class="tog" data-t="DONE 1 finished at 8:40">DONE 1 finished at 8:40</button>
+          <button class="tog" data-t="BLOCKED 3 no contrast left">BLOCKED 3 no contrast left</button>
+          <button class="tog" data-t="SNOOZE 4">SNOOZE 4</button>
+          <button class="tog" data-t="HELP">HELP</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>…and the board updates live</h2>
+        <p class="note">Every reply lands on the admin Task board with a timestamp — that record is the compliance trail.</p>
+        <table class="board" id="boardTbl">
+          <thead><tr><th>#</th><th>Task</th><th>Owner</th><th>Status</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div class="warnbox" style="margin-top:16px"><b>A BLOCKED reply is not a failure —</b> it pages the manager immediately and is counted as a process signal in gap analysis, not a performance mark against the person.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CYCLE ============ -->
+  <section class="panel" id="p-cycle">
+    <div class="card">
+      <h2>One unattended loop, every day</h2>
+      <p class="note">Vercel Cron fires hourly; each job runs only when the local clinic hour matches — DST-proof by design. Weekly, monthly, quarterly and yearly duties roll into the same morning message on the day they fall due, with <code>lead_days</code> opening the window early for big items like accreditation packets.</p>
+      <div class="cycle">
+        <div class="step"><div class="tm">00:05</div><div class="tt">Materialize</div><div class="dd">Tomorrow's task instances are created from the recurring duty library.</div></div>
+        <div class="step"><div class="tm">08:00</div><div class="tt">Morning list</div><div class="dd">Each person gets one WhatsApp template listing everything they owe today.</div></div>
+        <div class="step"><div class="tm">13:00</div><div class="tt">Midday nudge</div><div class="dd">Anyone with open items gets a plain-text reminder.</div></div>
+        <div class="step"><div class="tm">17:00</div><div class="tt">Escalate</div><div class="dd">Open items are marked missed and walk up the chain of command.</div></div>
+        <div class="step"><div class="tm">17:30</div><div class="tt">Digest</div><div class="dd">Leadership gets the day's completion picture and anything blocked.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ESCALATION ============ -->
+  <section class="panel" id="p-esc">
+    <div class="grid2">
+      <div class="card">
+        <h2>Ignore it, and it climbs</h2>
+        <p class="note">The escalation ladder is <em>data</em> (<code>escalation_rules</code>), not code: 4 unanswered reminders notify the Manager, 6 reach the Owner. Press the button to let reminders go unanswered.</p>
+        <div class="meter" id="meter" aria-hidden="true"></div>
+        <p class="mlab">Unanswered reminders: <b id="remCount">0</b> / 6 — <span id="escState">no escalation</span></p>
+        <button class="btn" id="tickBtn">Send another reminder — no reply</button>
+        <button class="btn sec" id="resetEsc">Reset</button>
+      </div>
+      <div class="card">
+        <h2>Chain of command</h2>
+        <p class="note">Mirrors the org chart in <code>people.reports_to_id</code>, resolved recursively by <code>v_chain_of_command</code>. Critical tasks skip straight to the top the same day.</p>
+        <div class="ladder">
+          <div class="rung" id="r-owner"><span class="av">DR</span><div><div class="nm">Dr. Reyes</div><div class="rl">Owner</div></div><div class="trg">notified after 6 reminders</div></div>
+          <div class="rung" id="r-mgr"><span class="av">JT</span><div><div class="nm">Jordan T.</div><div class="rl">Manager</div></div><div class="trg">notified after 4 reminders</div></div>
+          <div class="rung"><span class="av">MG</span><div><div class="nm">Maria G.</div><div class="rl">Medical Assistant — task owner</div></div><div class="trg">reminded at 08:00 &amp; 13:00</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GAPS ============ -->
+  <section class="panel" id="p-gaps">
+    <div class="grid2">
+      <div class="card">
+        <h2>Completion, 30 days</h2>
+        <p class="note">The dashboard flags patterns, not just people. Under 80% draws attention; the finding decides whether it's a person, a supply chain, or the task itself.</p>
+        <div class="bars">
+          <div class="brow"><span>Jordan T. — Manager</span><div class="track"><div class="fill" style="width:96%"></div></div><span class="pct">96%</span></div>
+          <div class="brow"><span>Maria G. — Med Asst</span><div class="track"><div class="fill" style="width:91%"></div></div><span class="pct">91%</span></div>
+          <div class="brow"><span>Sam O. — OR Supervisor</span><div class="track"><div class="fill" style="width:88%"></div></div><span class="pct">88%</span></div>
+          <div class="brow mid"><span>Priya V. — Virtual Asst</span><div class="track"><div class="fill" style="width:74%"></div></div><span class="pct">74%</span></div>
+          <div class="brow low"><span>A/R follow-up (task)</span><div class="track"><div class="fill" style="width:52%"></div></div><span class="pct">52%</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Findings</h2>
+        <p class="note">Generated from the same <code>task_runs</code> record the reminders write — nothing is entered twice.</p>
+        <div class="finding"><b>Supply bottleneck, not a performance problem</b>Maria reported BLOCKED 3× in 30 days — all "no contrast left". Reorder cadence on contrast is the fix.</div>
+        <div class="finding crit"><b>Task completed 52% of the time: A/R follow-up</b>Under the 60% task threshold — usually the wrong role, the wrong hour, or too big to be one task. Currently assigned end-of-day to the Virtual Assistant across three facilities.</div>
+        <div class="finding"><b>Credential expiring in 21 days</b>Sam O. — BLS/CPR (AHA). Holder chased on the credential ladder; Owner copied at expiry.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ARCHITECTURE ============ -->
+  <section class="panel" id="p-arch">
+    <div class="card">
+      <h2>One codebase, two deployment shapes</h2>
+      <p class="note">Set <code>DATABASE_URL</code> → Vercel + Supabase Postgres with Vercel Cron. Leave it empty → a single Docker/VPS process on SQLite. One npm dependency (<code>pg</code>), no build step.</p>
+      <div class="arch">
+        <div class="node"><h4>Meta WhatsApp Cloud API</h4><ul>
+          <li>Template morning lists, plain-text nudges</li>
+          <li>Signed webhook (<code>X-Hub-Signature-256</code>)</li>
+          <li>Retries deduplicated by message id</li></ul></div>
+        <div class="node"><h4>Vercel</h4><ul>
+          <li>Serverless entrypoint + hourly cron, local-hour matched</li>
+          <li>Dashboard: board, team, planners, scheduling, time clock, messages, rules</li>
+          <li>Region pinned next to the database</li></ul></div>
+        <div class="node"><h4>Supabase Postgres</h4><ul>
+          <li>16 core tables, security-invoker views, RLS everywhere</li>
+          <li><span class="tagnew">NEW</span> Supabase Auth: <code>profiles</code>, role-based policies (owner / manager / staff / viewer)</li>
+          <li><span class="tagnew">NEW</span> WhatsApp connections: sender accounts (secrets in Vault), per-person opt-in, 24-hour session window, webhook event log, delivery receipts</li>
+          <li>Private Storage bucket for photo proof, signed URLs</li></ul></div>
+      </div>
+      <div class="warnbox"><b>PHI boundary:</b> WhatsApp Cloud API is not HIPAA-eligible and Meta signs no BAA — task names stay generic ("Verify insurance for tomorrow's list"), patients are referred to by internal ID only, and photo proof lives in a private bucket, never in the chat.</div>
+    </div>
+  </section>
+
+  <footer>Demonstration of <a href="https://monday-agent-eosin.vercel.app/" style="color:var(--series-1)">monday-agent-eosin.vercel.app</a> · QCMS Task Bot · all names, numbers and messages on this page are simulated.</footer>
+</div>
+
+<script>
+(function(){
+  // ---------- tabs ----------
+  var tabs=document.querySelectorAll('.tab');
+  tabs.forEach(function(t){t.addEventListener('click',function(){
+    tabs.forEach(function(x){x.setAttribute('aria-selected','false')});
+    t.setAttribute('aria-selected','true');
+    document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('on')});
+    document.getElementById('p-'+t.dataset.p).classList.add('on');
+  })});
+
+  // ---------- shared task state ----------
+  var tasks=[
+    {n:1,title:'Confirm tomorrow’s schedule & call list',owner:'Maria G.',status:'pending'},
+    {n:2,title:'Insurance eligibility — tomorrow’s patients',owner:'Maria G.',status:'pending'},
+    {n:3,title:'Angiosuite pre-procedure checklist',owner:'Maria G.',status:'pending',photo:true},
+    {n:4,title:'Supply inventory count & reorder',owner:'Maria G.',status:'pending'}
+  ];
+  function open_(){return tasks.filter(function(t){return t.status==='pending'||t.status==='snoozed'})}
+  function board(){
+    var tb=document.querySelector('#boardTbl tbody');tb.innerHTML='';
+    tasks.forEach(function(t){
+      var tr=document.createElement('tr');
+      tr.innerHTML='<td class="rem">'+t.n+'</td><td>'+t.title+(t.photo?' · <span class="who">photo proof</span>':'')+
+        '</td><td class="who">'+t.owner+'</td><td><span class="st '+t.status+'">'+t.status+'</span>'+
+        (t.note?'<div class="who">'+t.note+'</div>':'')+'</td>';
+      tb.appendChild(tr);
+    });
+  }
+
+  // ---------- chat ----------
+  var thread=document.getElementById('thread');
+  function stamp(){var d=new Date();return d.toTimeString().slice(0,5)}
+  function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+  function bub(dir,txt){
+    var b=document.createElement('div');b.className='bub '+dir;
+    b.innerHTML=esc(txt)+'<span class="bts">'+(dir==='out'?'QCMS Task Bot':'Maria')+' · '+stamp()+'</span>';
+    thread.appendChild(b);thread.scrollTop=thread.scrollHeight;
+  }
+  function sys(txt){var s=document.createElement('div');s.className='sysline';s.textContent=txt;
+    thread.appendChild(s);thread.scrollTop=thread.scrollHeight}
+  function listText(){
+    var o=open_();
+    if(!o.length)return 'Nothing open. Enjoy it while it lasts. ✅';
+    return 'Open today:\n'+o.map(function(t){return t.n+'. '+t.title+(t.photo?' (photo)':'')+(t.status==='snoozed'?' — snoozed':'')}).join('\n')+'\nReply DONE <#>, BLOCKED <#> <why>, SNOOZE <#>.';
+  }
+  function pick(numStr){
+    if(numStr)return tasks.find(function(t){return t.n===+numStr&&(t.status==='pending'||t.status==='snoozed')});
+    var o=open_();return o.length===1?o[0]:null;
+  }
+  function handle(raw){
+    var m=raw.trim();if(!m)return;
+    bub('in',m);
+    var mm=m.match(/^(done|blocked|snooze|list|status|help)\b\s*(\d+)?\s*(.*)$/i);
+    setTimeout(function(){
+      if(!mm){bub('out','Didn’t catch that. Reply HELP for the command list.');return}
+      var cmd=mm[1].toLowerCase(),num=mm[2],rest=mm[3];
+      if(cmd==='help'){bub('out','Commands:\nLIST — my open tasks\nDONE <#> [note] — complete\nBLOCKED <#> <why> — flag a blocker\nSNOOZE <#> — push to later today');return}
+      if(cmd==='list'||cmd==='status'){bub('out',listText());return}
+      var t=pick(num);
+      if(!t){bub('out',num?('No open item #'+num+'. Reply LIST to see what’s open.'):'More than one task is open — give me a number, e.g. DONE 2.');return}
+      if(cmd==='done'){
+        if(t.photo&&!rest){bub('out','#'+t.n+' needs photo proof — send the photo and I’ll close it. (Simulated here: DONE '+t.n+' with a note works.)');return}
+        t.status='done';t.note=rest||null;board();
+        bub('out','✅ #'+t.n+' “'+t.title+'” marked done at '+stamp()+(rest?' — noted: “'+rest+'”':'')+'. '+(open_().length? open_().length+' still open.':'That’s everything — clean board.'));
+      }else if(cmd==='blocked'){
+        t.status='blocked';t.note=rest||'no reason given';board();
+        bub('out','⚠️ #'+t.n+' flagged BLOCKED ('+(rest||'no reason given')+').');
+        sys('Manager Jordan T. alerted immediately — blockers never wait for the 17:00 sweep.');
+      }else if(cmd==='snooze'){
+        t.status='snoozed';board();
+        bub('out','💤 #'+t.n+' snoozed — it comes back with the 13:00 nudge and still escalates at 17:00 if untouched.');
+      }
+    },350);
+  }
+  document.getElementById('sendBtn').addEventListener('click',function(){var i=document.getElementById('chatIn');handle(i.value);i.value='';i.focus()});
+  document.getElementById('chatIn').addEventListener('keydown',function(e){if(e.key==='Enter'){handle(this.value);this.value=''}});
+  document.querySelectorAll('.tog[data-t]').forEach(function(b){b.addEventListener('click',function(){handle(b.dataset.t)})});
+
+  sys('Tuesday · 08:00 — morning template sent');
+  bub('out','Good morning Maria — 4 items today:\n1. Confirm tomorrow’s schedule & call list\n2. Insurance eligibility — tomorrow’s patients\n3. Angiosuite pre-procedure checklist (photo)\n4. Supply inventory count & reorder\nReply DONE <#>, BLOCKED <#> <why>, or LIST anytime.');
+  board();
+
+  // ---------- escalation sim ----------
+  var meter=document.getElementById('meter');
+  for(var i=0;i<6;i++){meter.appendChild(document.createElement('i'))}
+  var rc=0;
+  function paint(){
+    document.getElementById('remCount').textContent=rc;
+    var cells=meter.children;
+    for(var i=0;i<6;i++){cells[i].className=i<rc?('f'+(i>=4?' crit':'')):''}
+    var mgr=document.getElementById('r-mgr'),own=document.getElementById('r-owner'),st=document.getElementById('escState');
+    mgr.classList.toggle('lit',rc>=4);own.classList.toggle('lit',rc>=6);
+    st.textContent=rc>=6?'ESCALATED TO OWNER':rc>=4?'escalated to Manager':'no escalation';
+    st.style.color=rc>=6?'var(--critical)':rc>=4?'var(--serious)':'';
+  }
+  document.getElementById('tickBtn').addEventListener('click',function(){if(rc<6)rc++;paint()});
+  document.getElementById('resetEsc').addEventListener('click',function(){rc=0;paint()});
+  paint();
+})();
+</script>
