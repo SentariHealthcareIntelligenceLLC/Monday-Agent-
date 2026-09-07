@@ -104,3 +104,6 @@ DROP TRIGGER IF EXISTS trg_task_runs_clamp ON task_runs;
 CREATE TRIGGER trg_task_runs_clamp
   BEFORE UPDATE ON task_runs
   FOR EACH ROW EXECUTE FUNCTION clamp_task_run_self_update();
+
+INSERT INTO schema_migrations (filename) VALUES ('006_constrain_self_service_updates.sql')
+ON CONFLICT (filename) DO NOTHING;
