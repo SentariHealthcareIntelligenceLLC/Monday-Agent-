@@ -23,6 +23,16 @@
 --     exits early for service_role/postgres so the Node service and the
 --     cron jobs are untouched.
 --
+--  3. A 'viewer' signup whose email matched an active people row was linked
+--     to that person immediately by handle_new_user(), and
+--     app_current_person_id() never checked app_role. Every self-service
+--     policy keys off that person id, so an unapproved signup could read
+--     the employee's tasks, messages, credentials, shifts and punches and
+--     update their runs before any admin promoted the account. 003's own
+--     comment says new signups land "with no person link"; the code did
+--     not match. The helper now yields a person id only for an approved
+--     role, so a viewer sees reference data and nothing else.
+--
 --  Also pinned after review: profiles.created_at (audit metadata was still
 --  client-writable), the set of statuses staff may set (done/blocked/
 --  snoozed only -- 'missed' and 'pending' belong to the scheduler), and
@@ -31,6 +41,24 @@
 --  Idempotent; safe to re-run. A copy ships under supabase/migrations/ so
 --  the `supabase db push` / SQL Editor path applies it too.
 -- =====================================================================
+
+-- ============== 0. VIEWERS RESOLVE TO NO PERSON LINK =================
+--  Gate the helper rather than the individual policies: every self-service
+--  policy already routes through it, so one change closes them all.
+
+CREATE OR REPLACE FUNCTION app_current_person_id()
+RETURNS bigint
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT p.person_id FROM profiles p
+  WHERE p.id = auth.uid()
+    AND p.active
+    AND p.app_role IN ('owner', 'manager', 'staff')
+$$;
+
+REVOKE ALL ON FUNCTION app_current_person_id() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION app_current_person_id() TO authenticated;
 
 -- ===================== 1. PROFILES SELF-UPDATE =======================
 
@@ -75,6 +103,28 @@ BEGIN
   IF NEW.status IS DISTINCT FROM OLD.status
      AND NEW.status NOT IN ('done', 'blocked', 'snoozed') THEN
     RAISE EXCEPTION 'staff may only set task_runs.status to done, blocked or snoozed (got %)', NEW.status
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- A finalized run is a closed record. Allowing done -> blocked/snoozed
+  -- would let staff reopen or rewrite a settled outcome and change
+  -- completion reporting after the fact; only an admin or the service
+  -- reopens one.
+  IF OLD.status IN ('done', 'missed')
+     AND NEW.status IS DISTINCT FROM OLD.status THEN
+    RAISE EXCEPTION 'task_run % is already %; staff cannot change a finalized run', OLD.id, OLD.status
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- Photo-proof tasks are not complete without proof. The webhook path
+  -- verifies and stores the image; this stops a direct PostgREST call from
+  -- marking the run done with no proof attached at all. SQL cannot judge
+  -- whether the referenced object is a genuine photo -- that remains the
+  -- storage layer's job -- but an empty photo_path is unambiguous.
+  IF NEW.status = 'done' AND NEW.photo_path IS NULL
+     AND EXISTS (SELECT 1 FROM tasks t
+                 WHERE t.id = OLD.task_id AND t.requires_photo = 1) THEN
+    RAISE EXCEPTION 'task_run % requires photo proof before it can be marked done', OLD.id
       USING ERRCODE = 'check_violation';
   END IF;
 
